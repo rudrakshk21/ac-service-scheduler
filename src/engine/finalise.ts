@@ -11,10 +11,11 @@ export function finalise(ctx: Ctx, res: RawResult): void {
   for (const day of res.days) {
     for (const [t, r] of res.routes.get(day) ?? []) {
       recalc(ctx, r)
-      let clock = s.dayStartMin
+      const tp = ctx.techPlan[t]
+      let clock = tp.dayStartMin
       let brk = false
       let prev = r.startNode
-      if (r.travel + r.service > s.usableMin + 1e-6) {
+      if (r.travel + r.service > tp.usableMin + 1e-6) {
         for (const c of r.stops) res.flag.set(c, 'OVER CAPACITY')
       }
       for (let i = 0; i < r.stops.length; i++) {
@@ -23,8 +24,8 @@ export function finalise(ctx: Ctx, res: RawResult): void {
         const nxt = i + 1 < r.stops.length ? ctx.caseNode[r.stops[i + 1]] : r.endNode
         const tmin = tm[prev][node]
         clock += tmin
-        if (!brk && clock >= s.lunchStartMin) {
-          clock += s.breakMin
+        if (!brk && clock >= tp.lunchStartMin) {
+          clock += tp.breakMin
           brk = true
         }
         res.eta.set(c, formatClock(clock))

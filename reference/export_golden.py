@@ -122,7 +122,20 @@ def check_long_ends(inp, out, calls):
     assert max(len(r["stops"]) for r in out["routes"]) > 10, "no route has more than 10 stops"
 
 
+def check_tech_hours(inp, out, calls):
+    short = [r for r in out["routes"] if r["tech"] == 0 and r["stops"]]
+    assert short, "the short-hours technician has no route"
+    assert all(r["travelMin"] + r["serviceMin"] <= 240.0 + 1e-6 for r in short), "short-hours technician over 240 minutes"
+    firsts = [s["eta"] for s in _scheduled(out) if s["tech"] == 1 and s["visit"] == 1]
+    assert firsts and min(firsts) < "09:00", "the early starter does not start before 09:00"
+
+
+def check_short_overload(inp, out, calls):
+    assert any(s["flag"] == "OVER CAPACITY" for s in _scheduled(out)), "the short day is not flagged over capacity"
+
+
 CHECKS = {
+    "tech_hours": check_tech_hours, "short_day_overload": check_short_overload,
     "home_and_depot": check_ends, "home_to_home": check_home_to_home, "long_routes_with_ends": check_long_ends,
     "five_work_types": check_five, "skills_not_position": check_skills_not_position,
     "long_routes": check_long_routes, "pins": check_pins, "frozen": check_frozen, "overload_pin": check_overload,

@@ -75,6 +75,14 @@ export function checkInput(input: PlanInput): void {
     if (t.leaveTo !== undefined) needInt(`technicians[${i}].leaveTo`, t.leaveTo, -1_000_000)
     if (t.startPlace !== undefined) needInt(`technicians[${i}].startPlace`, t.startPlace, 0, input.places.length - 1)
     if (t.endPlace !== undefined) needInt(`technicians[${i}].endPlace`, t.endPlace, 0, input.places.length - 1)
+    for (const [k, v] of [
+      ['dayStartMin', t.dayStartMin],
+      ['usableMin', t.usableMin],
+      ['lunchStartMin', t.lunchStartMin],
+      ['breakMin', t.breakMin],
+    ] as const) {
+      if (v !== undefined) needNum(`technicians[${i}].${k}`, v, 0)
+    }
   })
 
   const seen = new Set<string>()

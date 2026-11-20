@@ -78,12 +78,16 @@ class TechIn:
     leave_to: dt.date | None = None
     start_area: int = -1         # area the day starts at, -1 = the base
     end_area: int = -1           # area the day ends at, -1 = the base
+    usable_min: float | None = None   # own working hours; None = the shared setting
+    start_min: float | None = None
+    lunch_min: float | None = None
+    break_min: float | None = None
 
 
 class Route:
-    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver", "s", "e")
+    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver", "s", "e", "usable")
 
-    def __init__(self, s=0, e=0):
+    def __init__(self, s=0, e=0, usable=None):
         self.stops: list[int] = []
         self.travel = 0.0
         self.service = 0.0
@@ -92,6 +96,7 @@ class Route:
         self.ver = 0
         self.s = s               # node the route starts at (0 = base)
         self.e = e               # node the route ends at (0 = base)
+        self.usable = usable     # usable minutes of this technician (None = the shared setting)
 
 
 class Result:
@@ -162,7 +167,8 @@ class Engine:
 
     def new_route(self, t):
         T = self.techs[t]
-        return Route(0 if T.start_area < 0 else T.start_area + 1, 0 if T.end_area < 0 else T.end_area + 1)
+        return Route(0 if T.start_area < 0 else T.start_area + 1, 0 if T.end_area < 0 else T.end_area + 1,
+                     T.usable_min)
 
     def travel_of(self, stops, s=0, e=0):
         if not stops:
@@ -203,7 +209,8 @@ class Engine:
 
     def fits(self, r: Route, c, delta):
         cat = self.cases[c].cat
-        if r.travel + delta + r.service + self.C.svc_min[cat] > self.C.usable_min + 1e-6:
+        usable = self.C.usable_min if r.usable is None else r.usable
+        if r.travel + delta + r.service + self.C.svc_min[cat] > usable + 1e-6:
             return False
         if r.frac + 1.0 / self.C.target[cat] > 1.0 + 1e-6:
             return False
@@ -414,16 +421,21 @@ class Engine:
         for day in res.days:
             for t, r in res.routes[day].items():
                 self.recalc(r)
-                clock, brk, prev = C.start_min, False, r.s
-                if r.travel + r.service > C.usable_min + 1e-6:
+                T = self.techs[t]
+                start_min = C.start_min if T.start_min is None else T.start_min
+                lunch_min = C.lunch_min if T.lunch_min is None else T.lunch_min
+                break_min = C.break_min if T.break_min is None else T.break_min
+                usable = C.usable_min if r.usable is None else r.usable
+                clock, brk, prev = start_min, False, r.s
+                if r.travel + r.service > usable + 1e-6:
                     for c in r.stops:
                         res.flag[c] = "OVER CAPACITY"
                 for i, c in enumerate(r.stops):
                     nxt = self.node(r.stops[i + 1]) if i + 1 < len(r.stops) else r.e
                     tmin = self.tm[prev][self.node(c)]
                     clock += tmin
-                    if not brk and clock >= C.lunch_min:
-                        clock += C.break_min
+                    if not brk and clock >= lunch_min:
+                        clock += break_min
                         brk = True
                     res.eta[c] = hm(clock)
                     res.travel_min[c] = tmin

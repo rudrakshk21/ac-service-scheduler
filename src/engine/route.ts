@@ -12,10 +12,13 @@ export class Route {
   readonly startNode: number
   /** Node the route ends at (0 = base). */
   readonly endNode: number
+  /** Usable minutes of this technician. Undefined: the shared setting. */
+  readonly usableMin: number | undefined
 
-  constructor(startNode = 0, endNode = 0) {
+  constructor(startNode = 0, endNode = 0, usableMin?: number) {
     this.startNode = startNode
     this.endNode = endNode
+    this.usableMin = usableMin
   }
 }
 
@@ -57,7 +60,8 @@ export function bestInsert(ctx: Ctx, r: Route, c: number): { delta: number; pos:
 /** Whether adding case `c` (extra travel `delta`) keeps the route within usable minutes and the daily ceilings. */
 export function fits(ctx: Ctx, r: Route, c: number, delta: number): boolean {
   const wt = ctx.workTypes[ctx.cases[c].workType]
-  if (r.travel + delta + r.service + wt.serviceMin > ctx.s.usableMin + 1e-6) return false
+  const usable = r.usableMin ?? ctx.s.usableMin
+  if (r.travel + delta + r.service + wt.serviceMin > usable + 1e-6) return false
   if (r.frac + 1.0 / wt.dailyCeiling > 1.0 + 1e-6) return false
   return true
 }

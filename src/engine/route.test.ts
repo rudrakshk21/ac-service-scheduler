@@ -89,6 +89,17 @@ describe('start and end places', () => {
   })
 })
 
+describe('per-technician usable minutes', () => {
+  it("fits uses the route's own limit instead of the shared one", () => {
+    const ctx = ctxFor([1])
+    const r = new Route(0, 0, 100)
+    r.service = 30
+    expect(fits(ctx, r, 0, 0)).toBe(false) // 30 + 75 > 100
+    r.service = 20
+    expect(fits(ctx, r, 0, 0)).toBe(true) // 20 + 75 <= 100
+  })
+})
+
 describe('fits', () => {
   it('rejects a case that would pass the usable minutes, accepts one that just fits', () => {
     const ctx = ctxFor([0, 1])

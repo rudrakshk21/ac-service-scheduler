@@ -145,7 +145,7 @@ export function runPlan(ctx: Ctx): RawResult {
     for (let t = 0; t < technicians.length; t++) {
       if (isAvailable(technicians[t], day)) {
         const tp = ctx.techPlan[t]
-        routes.set(t, new Route(tp.startNode, tp.endNode))
+        routes.set(t, new Route(tp.startNode, tp.endNode, tp.usableMin))
       }
     }
     const pool = left.filter((c) => {

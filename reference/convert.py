@@ -66,6 +66,8 @@ def to_python(inp):
             leave_from=day_date(t["leaveFrom"]) if "leaveFrom" in t else None,
             leave_to=day_date(t["leaveTo"]) if "leaveTo" in t else None,
             start_area=t.get("startPlace", -1), end_area=t.get("endPlace", -1),
+            usable_min=t.get("usableMin"), start_min=t.get("dayStartMin"),
+            lunch_min=t.get("lunchStartMin"), break_min=t.get("breakMin"),
         )
         for t in inp["technicians"]
     ]

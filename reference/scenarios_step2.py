@@ -60,6 +60,27 @@ def long_routes_with_ends():
     return inp
 
 
+def tech_hours():
+    inp = base(26, 60, 9, 12)
+    t = inp["technicians"]
+    t[0]["usableMin"] = 240.0
+    t[1].update({"dayStartMin": 480.0, "lunchStartMin": 720.0, "breakMin": 30.0})
+    t[2].update({"usableMin": 600.0, "breakMin": 0.0})
+    t[3]["dayStartMin"] = 600.0
+    return inp
+
+
+def short_day_overload():
+    inp = base(27, 30, 6, 8)
+    inp["technicians"][0]["usableMin"] = 120.0
+    for i in range(4):
+        inp["cases"][i]["workType"] = 0
+        inp["cases"][i]["pinnedTech"] = 0
+        inp["cases"][i]["earliestDay"] = START
+    return inp
+
+
 STEP2 = {f.__name__: f for f in (
     five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
+    tech_hours, short_day_overload,
 )}

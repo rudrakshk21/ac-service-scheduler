@@ -36,6 +36,11 @@ export interface Technician {
   startPlace?: number
   /** Place the day ends at (index into `places`). Absent: the base. */
   endPlace?: number
+  /** Own working hours. Each one absent: the shared setting of the same name. */
+  dayStartMin?: number
+  usableMin?: number
+  lunchStartMin?: number
+  breakMin?: number
 }
 
 export interface Place {

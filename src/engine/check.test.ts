@@ -36,6 +36,10 @@ describe('checkInput', () => {
     ['non-boolean active flag', (i) => { (i.technicians[0] as unknown as { active: unknown }).active = 'yes' }, 'technicians[0].active must be true or false'],
     ['start place out of range', (i) => { i.technicians[0].startPlace = 2 }, 'technicians[0].startPlace must be at most 0'],
     ['end place out of range', (i) => { i.technicians[0].endPlace = 3 }, 'technicians[0].endPlace must be at most 0'],
+    ['negative own usable minutes', (i) => { i.technicians[0].usableMin = -5 }, 'technicians[0].usableMin must be at least 0'],
+    ['negative own day start', (i) => { i.technicians[0].dayStartMin = -1 }, 'technicians[0].dayStartMin must be at least 0'],
+    ['negative own lunch start', (i) => { i.technicians[0].lunchStartMin = -1 }, 'technicians[0].lunchStartMin must be at least 0'],
+    ['negative own break', (i) => { i.technicians[0].breakMin = -1 }, 'technicians[0].breakMin must be at least 0'],
   ]
   it.each(cases)('rejects %s', (_label, mutate, message) => {
     const input = valid()
