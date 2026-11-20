@@ -46,6 +46,7 @@ def to_python(inp):
     cfg = engine.Cfg(
         cat_names=[w["name"] for w in inp["workTypes"]], req_skill=[w["requiredSkill"] for w in inp["workTypes"]],
         prio_names=[lv["name"] for lv in levels], prio_w=[float(lv["weight"]) for lv in levels],
+        due_w=float(s.get("dueWeight", 8.0)), due_window=float(s.get("urgencyWindowDays", 5.0)),
         store_lat=s["baseLat"], store_lon=s["baseLon"], speed=s["speedKmh"], road_factor=s["roadFactor"],
         hop_min=s["sameAreaHopMin"], usable_min=s["usableMin"], age_w=s["ageWeight"], bal_w=s["balanceWeight"],
         max_km=s["maxKm"], start_min=s["dayStartMin"], lunch_min=s["lunchStartMin"], break_min=s["breakMin"],
@@ -57,6 +58,7 @@ def to_python(inp):
         engine.CaseIn(
             id=c["id"], cat=c["workType"], area=c["place"], esc=c.get("escalated", False),
             reported=day_date(c["reportedDay"]), prio=c.get("priority", -1),
+            due=day_date(c["dueDay"]) if "dueDay" in c else None,
             req_tech=c.get("pinnedTech", -1),
             man_date=day_date(c["earliestDay"]) if "earliestDay" in c else None,
             freeze_tech=c.get("frozenTech", -1),

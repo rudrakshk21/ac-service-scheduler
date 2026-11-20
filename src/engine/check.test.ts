@@ -45,6 +45,9 @@ describe('checkInput', () => {
     ['no priority levels', (i) => { i.settings.priorityLevels = [] }, 'settings.priorityLevels must list at least one level'],
     ['priority level without a name', (i) => { i.settings.priorityLevels = [{ name: '', weight: 0 }] }, 'settings.priorityLevels[0].name must be text'],
     ['negative priority weight', (i) => { i.settings.priorityLevels = [{ name: 'A', weight: -1 }] }, 'settings.priorityLevels[0].weight must be at least 0'],
+    ['fractional due day', (i) => { i.cases[0].dueDay = 1.5 }, 'cases[0].dueDay must be a whole number'],
+    ['negative due weight', (i) => { i.settings.dueWeight = -1 }, 'settings.dueWeight must be at least 0'],
+    ['negative urgency window', (i) => { i.settings.urgencyWindowDays = -1 }, 'settings.urgencyWindowDays must be at least 0'],
   ]
   it.each(cases)('rejects %s', (_label, mutate, message) => {
     const input = valid()

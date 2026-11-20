@@ -59,6 +59,8 @@ export function checkInput(input: PlanInput): void {
     needText(`settings.priorityLevels[${i}].name`, l.name)
     needNum(`settings.priorityLevels[${i}].weight`, l.weight, 0)
   })
+  if (s.dueWeight !== undefined) needNum('settings.dueWeight', s.dueWeight, 0)
+  if (s.urgencyWindowDays !== undefined) needNum('settings.urgencyWindowDays', s.urgencyWindowDays, 0)
 
   if (input.workTypes.length === 0) fail('workTypes', 'must list at least one work type')
   input.workTypes.forEach((w, i) => {
@@ -110,5 +112,6 @@ export function checkInput(input: PlanInput): void {
     if (c.pinnedTech !== undefined) needInt(`cases[${i}].pinnedTech`, c.pinnedTech, 0, input.technicians.length - 1)
     if (c.frozenTech !== undefined) needInt(`cases[${i}].frozenTech`, c.frozenTech, 0, input.technicians.length - 1)
     if (c.earliestDay !== undefined) needInt(`cases[${i}].earliestDay`, c.earliestDay, -1_000_000)
+    if (c.dueDay !== undefined) needInt(`cases[${i}].dueDay`, c.dueDay, -1_000_000)
   })
 }

@@ -100,7 +100,25 @@ def escalated_on_custom_levels():
     return inp
 
 
+def _with_due_dates(inp):
+    for i, c in enumerate(inp["cases"]):
+        if i % 11 == 0:
+            c["dueDay"] = START - 3
+        elif i % 3 == 0:
+            c["dueDay"] = START + (i % 6)
+    return inp
+
+
+def due_dates():
+    return _with_due_dates(base(30, 110, 6, 10, horizonDays=2))
+
+
+def due_dates_strong():
+    return _with_due_dates(base(30, 110, 6, 10, horizonDays=2, dueWeight=40.0, urgencyWindowDays=10.0))
+
+
 STEP2 = {f.__name__: f for f in (
     five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
     tech_hours, short_day_overload, priority_levels, escalated_on_custom_levels,
+    due_dates, due_dates_strong,
 )}

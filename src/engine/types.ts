@@ -25,6 +25,10 @@ export interface Settings {
   startDay: number
   /** Priority levels, lowest first. Absent: Normal (weight 0) and Escalated (weight 100000). */
   priorityLevels?: PriorityLevel[]
+  /** Bonus points per day once a due date is near. Absent: 8. */
+  dueWeight?: number
+  /** Urgency starts this many days before the due day. Absent: 5. */
+  urgencyWindowDays?: number
 }
 
 export interface WorkType {
@@ -65,6 +69,8 @@ export interface CaseIn {
   escalated?: boolean
   /** Index into the priority levels. Absent: the last level when `escalated`, otherwise level 0. */
   priority?: number
+  /** Day the visit is promised by. Soft: urgency grows as it nears, and a later visit is flagged late. */
+  dueDay?: number
   reportedDay: number
   /** Manual technician: index into `technicians`. */
   pinnedTech?: number

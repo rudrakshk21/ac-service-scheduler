@@ -33,7 +33,10 @@ function greedy(
     for (const c of pool) {
       const cs = ctx.cases[c]
       const age = Math.min(90.0, Math.max(0.0, day - cs.reportedDay))
-      const bonus = age * ctx.s.ageWeight + ctx.caseWeight[c]
+      let bonus = age * ctx.s.ageWeight + ctx.caseWeight[c]
+      if (cs.dueDay !== undefined) {
+        bonus += ctx.dueWeight * Math.min(90.0, Math.max(0.0, ctx.dueWindow - (cs.dueDay - day)))
+      }
       for (const t of eligible.get(c) ?? []) {
         const r = routes.get(t)
         if (r === undefined) continue
@@ -192,7 +195,9 @@ export function runPlan(ctx: Ctx): RawResult {
   for (const c of left) {
     res.unscheduled.add(c)
     if (!res.unschedReason.has(c)) {
-      res.unschedReason.set(c, `Beyond planning horizon (${s.horizonDays} working days) or does not fit in a day`)
+      let reason = `Beyond planning horizon (${s.horizonDays} working days) or does not fit in a day`
+      if (cases[c].dueDay !== undefined) reason += '; due date missed'
+      res.unschedReason.set(c, reason)
     }
   }
   finalise(ctx, res)

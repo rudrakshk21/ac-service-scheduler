@@ -33,6 +33,8 @@ export interface Ctx {
   levels: PriorityLevel[]
   /** Priority bonus of each case (the weight of its level). */
   caseWeight: number[]
+  dueWeight: number
+  dueWindow: number
 }
 
 export function buildContext(input: PlanInput): Ctx {
@@ -56,5 +58,7 @@ export function buildContext(input: PlanInput): Ctx {
     })),
     levels,
     caseWeight: input.cases.map((c) => levels[c.priority ?? (c.escalated === true ? levels.length - 1 : 0)].weight),
+    dueWeight: s.dueWeight ?? 8,
+    dueWindow: s.urgencyWindowDays ?? 5,
   }
 }

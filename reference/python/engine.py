@@ -56,6 +56,8 @@ class Cfg:
     req_skill: list = field(default_factory=lambda: [0, 1, 2])
     prio_names: list = field(default_factory=lambda: ["Normal", "Escalated"])
     prio_w: list = field(default_factory=lambda: [0.0, 100000.0])   # bonus of each priority level
+    due_w: float = 8.0           # bonus points per day of urgency once a due date is near
+    due_window: float = 5.0      # urgency starts this many days before the due date
 
 
 @dataclass
@@ -70,6 +72,7 @@ class CaseIn:
     freeze_tech: int = -1
     subject: str = ""
     prio: int = -1               # priority level index; -1 = the last level when esc, else level 0
+    due: dt.date | None = None   # soft due date: urgency grows as it nears, later visits are flagged late
 
 
 @dataclass
@@ -358,8 +361,10 @@ class Engine:
             day += dt.timedelta(days=1)
         for c in left:
             res.unscheduled.add(c)
-            res.unsched_reason.setdefault(
-                c, "Beyond planning horizon (%d working days) or does not fit in a day" % C.horizon)
+            reason = "Beyond planning horizon (%d working days) or does not fit in a day" % C.horizon
+            if self.cases[c].due is not None:
+                reason += "; due date missed"
+            res.unsched_reason.setdefault(c, reason)
         self.finalise(res)
         return res
 
@@ -372,6 +377,8 @@ class Engine:
                 cs = self.cases[c]
                 age = min(90.0, max(0.0, float((day - cs.reported).days)))
                 bonus = age * C.age_w + self.weight[c]
+                if cs.due is not None:
+                    bonus += C.due_w * min(90.0, max(0.0, C.due_window - (cs.due - day).days))
                 for t in eligible[c]:
                     r = routes.get(t)
                     if r is None:
@@ -447,6 +454,11 @@ class Engine:
                     res.eta[c] = hm(clock)
                     res.travel_min[c] = tmin
                     res.visit[c] = i + 1
+                    due = self.cases[c].due
+                    if due is not None and day > due:
+                        late_days = (day - due).days
+                        late = "LATE BY %d DAY%s" % (late_days, "" if late_days == 1 else "S")
+                        res.flag[c] = res.flag[c] + "; " + late if c in res.flag else late
                     clock += C.svc_min[self.cases[c].cat]
                     prev = self.node(c)
                     pn = r.s if i == 0 else self.node(r.stops[i - 1])

@@ -31,6 +31,13 @@ export function finalise(ctx: Ctx, res: RawResult): void {
         res.eta.set(c, formatClock(clock))
         res.travelMin.set(c, tmin)
         res.visit.set(c, i + 1)
+        const due = ctx.cases[c].dueDay
+        if (due !== undefined && day > due) {
+          const lateDays = day - due
+          const late = `LATE BY ${lateDays} DAY${lateDays === 1 ? '' : 'S'}`
+          const had = res.flag.get(c)
+          res.flag.set(c, had === undefined ? late : `${had}; ${late}`)
+        }
         const wt = ctx.workTypes[ctx.cases[c].workType]
         clock += wt.serviceMin
         prev = node

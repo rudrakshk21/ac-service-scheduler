@@ -147,7 +147,17 @@ def check_escalated_custom(inp, out, calls):
     assert not any("; priority" in s["why"] for s in _scheduled(out)), "old-style cases must not name a level"
 
 
+def check_due(inp, out, calls):
+    due = {c["id"]: c["dueDay"] for c in inp["cases"] if "dueDay" in c}
+    late = [s for s in _scheduled(out) if "LATE BY" in s["flag"]]
+    assert late, "no visit is late"
+    assert all(s["id"] in due and s["day"] > due[s["id"]] for s in late), "late flag on a case that is not late"
+    assert all(s["day"] <= due[s["id"]] or "LATE BY" in s["flag"] for s in _scheduled(out) if s["id"] in due)
+    assert any(u["reason"].endswith("; due date missed") for u in out["unscheduled"]), "no case missed its due date"
+
+
 CHECKS = {
+    "due_dates": check_due, "due_dates_strong": check_due,
     "priority_levels": check_priority_levels, "escalated_on_custom_levels": check_escalated_custom,
     "tech_hours": check_tech_hours, "short_day_overload": check_short_overload,
     "home_and_depot": check_ends, "home_to_home": check_home_to_home, "long_routes_with_ends": check_long_ends,
