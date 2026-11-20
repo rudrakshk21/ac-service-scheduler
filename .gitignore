@@ -25,3 +25,6 @@ dist-ssr
 
 # Cloudflare Wrangler local state
 .wrangler
+
+# Real data exported for local tests only (never commit)
+/reference-local/
