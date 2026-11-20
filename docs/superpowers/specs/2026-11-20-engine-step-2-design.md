@@ -1,0 +1,168 @@
+# Planning engine, step 2: generalisation
+
+Date: 2026-11-20
+Status: design approved by the project owner on 2026-11-20 (sections 1 to 3); implementation plan not yet written
+Part of: AC Service Scheduler, requirements v4.1 (PL-7, PL-9 to PL-11), continues
+`2026-11-19-planning-engine-design.md` (section 7)
+
+## 1. Purpose
+
+Step 1 produced a TypeScript engine that gives the same plans as the validated Python reference, but still
+carries the shape of one service center: three work types, one base that every route starts and ends at, one
+working-day setting for everybody, and a single "escalated" flag. Step 2 removes those limits so that the
+engine fits any AC service center, without losing the exact match with the reference.
+
+Not in this step: certifications (FR-25.4), a weekly day off per technician, file import, screens, storage,
+the map, phone features. Those belong to later pieces.
+
+## 2. Decisions taken with the project owner (2026-11-20)
+
+| Question | Decision |
+|---|---|
+| How do priority levels work? | Configurable named levels with a weight each. Higher weight is planned earlier but still balances against travel. The default two levels equal today's behaviour. |
+| What does a due date do? | Soft. Urgency grows as the date nears. A visit after the due date is scheduled and flagged late. Nothing is dropped silently. |
+| Where does a technician's day start and end? | A separate start place and end place per technician, both defaulting to the base. |
+| How is visit time decided? | Work-type minutes, adjusted by product type, with a per-case override that wins. |
+| How is the work built? | Slice by slice, Python reference first, with the existing scenarios unchanged after every slice. Rejected: one big change to both engines (a changed plan cannot be traced to a feature); an independent TypeScript rewrite (loses the Python reference as a check). |
+
+## 3. Compatibility rule
+
+- Every new input field is optional. Its default reproduces the step 1 behaviour. An input written for step 1
+  gives the same plan.
+- The result shape does not grow for old inputs. New output fields, flags and reason text appear only when
+  the case or technician uses the new feature. This is what makes "the 16 existing golden files stay
+  byte-for-byte unchanged" a real test.
+- That rule is enforced permanently: `reference/golden/LEGACY.sha256` lists the checksum of each of the 16
+  legacy files, and a Python test in CI fails if any of them changes.
+- The input types keep working for the demo page (`src/demo`), which is not edited in this step.
+
+## 4. The six slices
+
+Order of work. Each slice is: change the Python reference, regenerate the golden files, check that the legacy
+files did not change, add the slice's new scenarios, then make the same change in TypeScript.
+
+### 4.1 Work types and skills as free lists
+
+- Any number of work types. Each has `name`, `serviceMin`, `dailyCeiling`, `requiredSkill`.
+- Skills are plain integer ids in `technician.skills`. A technician may do a case when the case's work type
+  requires a skill the technician has. `requiredSkill` no longer has to equal the work type's position.
+- Python: the three hard-coded lists (`CAT_NAMES`, `svc_min`, `target`) and the boolean skill array become
+  lists of any length taken from the input. Reason text uses the work type name as before.
+- The scoring and loops do not change.
+
+### 4.2 Start place and end place per technician
+
+- `technician.startPlace` and `technician.endPlace` (index into `places`). Absent means the base.
+- A route runs start, stops, end. The working-day time includes the first and the last leg.
+- Ordering (exact search up to 10 stops, 2-opt above) and relocation work with the technician's own start and
+  end instead of the base.
+- Inserting the first stop into an empty route costs the whole trip (start to stop to end), not only a detour.
+  With start and end at the base this is the same number as today.
+- A technician with no visits travels nothing, even when start and end differ.
+- Kilometres "from the previous stop" for the first stop are measured from the start place.
+- `startPlace` already exists in the TypeScript types and is ignored in step 1.
+
+### 4.3 Working hours and breaks per technician
+
+- `technician.dayStartMin`, `usableMin`, `lunchStartMin`, `breakMin`, each optional. A missing value uses the
+  shared setting.
+- The fit check, the over-capacity flag and the arrival-time calculation use the technician's own values.
+
+### 4.4 Priority levels
+
+- `settings.priorityLevels: { name, weight }[]`. Default: `Normal` weight 0, `Escalated` weight 100000.
+- `case.priority`: index into the levels. When it is absent, `escalated: true` means the last level and
+  `false` means level 0.
+- Bonus of a case in the greedy step: `age bonus + level weight`, as today.
+- The reason text names the level only when the case uses the new `priority` field, so old explanations
+  stay identical.
+
+### 4.5 Soft due dates
+
+- `case.dueDay` (day number). `settings.dueWeight` (default 8, points per day) and
+  `settings.urgencyWindowDays` (default 5).
+- Bonus: `dueWeight x min(90, max(0, urgencyWindowDays - (dueDay - day)))`, added to the case's bonus. It is
+  zero for cases without a due day.
+- A case scheduled on a day after its `dueDay` gets the flag `LATE BY n DAYS` (`n` in calendar days). When the
+  `OVER CAPACITY` flag also applies, the two are joined with `; `.
+- A case that never fits keeps its "beyond planning horizon" reason and gets `; due date missed` added when it
+  has a due day.
+
+### 4.6 Visit time
+
+- `productTypes?: { name, addMin?, factor? }[]` at the top of the input. `case.productType` (index) and
+  `case.serviceMin` (override) are optional.
+- Minutes of a case: the override when given, otherwise `workType.serviceMin x (factor ?? 1) + (addMin ?? 0)`.
+- Used in the fit check, the route's service total and the arrival-time calculation. The daily ceiling still
+  counts visits per work type.
+
+### 4.7 Input checks
+
+`check.ts` rejects invalid new fields with a plain message that names the field and the case or technician,
+for example "case 12 has priority 5 but only 2 levels exist". Covered: indexes out of range, negative or
+non-finite minutes and weights, a non-integer due day, an end place out of range.
+
+## 5. Testing
+
+- **Scenarios.** Two or three new synthetic scenarios per slice, all generated from a fixed seed over the
+  fictional city. Examples: five work types whose skills do not match their position; home-to-home and
+  home-to-depot technicians; a technician with short hours; four priority levels; due dates met, late and
+  never met; product factors with a per-case override. Python exports them to `reference/golden/`, the
+  TypeScript golden test compares them with the same rules as step 1 (discrete outputs exact, reals within
+  1e-9).
+- **Legacy files.** The checksum manifest in section 3. A slice is not accepted while any legacy file differs.
+- **Invariants.** The checker in `src/engine/testing/invariants.ts` uses each technician's own hours and the
+  first and last legs for the capacity rule. New rules: a visit has the late flag exactly when its day is after
+  its due day; visit minutes add up to the route's service total. The random input generator produces the new
+  optional fields.
+- **Real data (DS-1).** After every slice, run locally: the baseline plan and the one-technician-inactive plan
+  must still be identical to the reference. It never leaves the owner's PC.
+- Engine coverage stays at 90% or higher.
+
+## 6. Speed
+
+After the six slices, measure planning time on a synthetic 2,000-case, 100-technician scenario (the project's
+target size, NFR-4) and report the numbers. This step only measures. If the time is too long, the optimisation
+is proposed as its own piece, because it must give identical plans and may change the Python reference.
+
+## 7. Delivery
+
+Branch `engine-step-2`, commits per slice. Two pull requests:
+
+1. Slices 4.1 to 4.3 (free work types and skills, start and end places, per-technician hours).
+2. Slices 4.4 to 4.6, the input checks, the speed numbers and the updated documents.
+
+Each is pushed only on the owner's go-ahead and merged only after all checks are green. The live demo keeps
+working throughout because old inputs still work.
+
+## 8. Files touched
+
+| Area | Change |
+|---|---|
+| `reference/python/engine.py` | The six slices. Header comment lists each change. |
+| `reference/convert.py`, `scenarios.py`, `export_golden.py`, `test_reference.py` | New fields in the converters, new scenarios, new checks, the legacy manifest test |
+| `reference/golden/` | New scenario files. `LEGACY.sha256` added. Legacy files unchanged. |
+| `src/engine/types.ts`, `check.ts`, `context.ts` | New optional fields, validation, derived values (per-technician hours, per-case minutes, bonus table) |
+| `src/engine/geo.ts`, `route.ts`, `order.ts`, `plan.ts`, `finalise.ts` | Start and end places, per-technician limits, priority and due bonuses, flags and reason text |
+| `src/engine/testing/` | Generator, invariants |
+| `docs/superpowers/specs/2026-11-19-planning-engine-design.md` | Interface section updated at the end of step 2 |
+
+## 9. Risks
+
+| Risk | Mitigation |
+|---|---|
+| A slice changes a legacy plan by accident | The checksum manifest test fails in CI. Each slice is checked before the next starts. |
+| Start and end places break the exact ordering (fixed endpoints) | A brute-force comparison test on small routes with start different from end, as in step 1 for the base |
+| Due-date defaults (weight 8, window 5) turn out wrong for a real center | They are settings, not constants. The values are a starting point and are tuned later with real data. |
+| Planning too slow at 2,000 cases | Measured at the end (section 6) and handled as its own piece |
+| New fields leak into the demo or the types it uses | The demo is type-checked in CI. Old inputs must keep compiling. |
+
+## 10. Finish line
+
+- All legacy and new golden tests pass in the public pipeline.
+- On the owner's PC, DS-1 gives an identical plan for the baseline and for one technician inactive.
+- Invariant tests pass. Engine coverage is at least 90%.
+- Each slice has golden and unit tests. The pipeline is green on GitHub for both pull requests.
+- The speed numbers are reported.
+
+Estimate: 8 to 12 hours of build time, about three working sessions.

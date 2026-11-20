@@ -1,7 +1,7 @@
 # Planning engine: design
 
 Date: 2026-11-19
-Status: step 1 implemented and verified; step 2 plan not yet written
+Status: step 1 implemented and verified; step 2 design written in `2026-11-20-engine-step-2-design.md`
 Part of: AC Service Scheduler, requirements v4.1 (build phase P2, milestone M3)
 
 ## 1. Purpose
