@@ -1,7 +1,7 @@
 # Planning engine: design
 
 Date: 2026-11-19
-Status: approved in conversation, awaiting written review
+Status: step 1 implemented and verified; step 2 plan not yet written
 Part of: AC Service Scheduler, requirements v4.1 (build phase P2, milestone M3)
 
 ## 1. Purpose
@@ -75,6 +75,11 @@ general so that step 2 does not change the interface.
 | `plan.ts` | Day loop: pinned cases, greedy placement, relocation, roll-over |
 | `finalise.ts` | Arrival times, visit numbers, kilometres, reason text |
 | `index.ts` | Exports `plan` and the types |
+| `pymath.ts` | Python-compatible rounding, `int()`, modulo and clock text |
+| `context.ts` | The input plus the geometry computed once per plan |
+| `check.ts` | Plain-language rejection of invalid input |
+| `raw.ts` | The planner's working result, before conversion to the public shape |
+| `testing/` | Test support (fixtures, random input generator, comparison, safety-rule checker), excluded from coverage |
 
 Each file has a test file next to it. The Worker wrapper lives apart in `src/worker/` and only passes the
 input in and the result out.
@@ -114,8 +119,9 @@ Public scenarios, all synthetic, generated from a fixed seed over a fictional ci
 - arrival times on exact half minutes (rounding)
 
 Real data (DS-1) stays local. The exporter writes the 288-case plan and the technician-inactive plan into
-`reference-local/`, which Git ignores. `tests/reference/ds1.local.test.ts` runs only when that folder exists.
-In the public pipeline it is reported as skipped, never as passed.
+`reference-local/`, which Git ignores. `src/engine/ds1.local.test.ts` runs only when that folder exists.
+In the public pipeline it is reported as skipped, never as passed. Tests sit next to their modules in
+`src/engine/`, so that the type check covers them. Golden files are read with Vite's `import.meta.glob`.
 
 Other tests: small unit tests per file (distance values, the rounding function, calendar edge cases,
 Held-Karp compared with brute force on small inputs), and random-input tests with fast-check for the
