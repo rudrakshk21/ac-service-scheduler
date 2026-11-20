@@ -1262,6 +1262,7 @@ Then ask the owner to open pull request 2 from `https://github.com/rudrakshk21/a
   fitted, and the scenario's own self-check ("some case missed its due date") caught it.
 - A tie between two equally cheap insert positions goes to the earlier one (strict "less than", as in Python), so the
   route test asserts `front <= back`.
-- Work was done on two branches: `engine-step-2` (tasks 1 to 4, pull request 1) and `engine-step-2b` (tasks 5 to 9,
-  pull request 2, which contains the first branch's commits).
+- Work was done on two branches: `engine-step-2` (tasks 1 to 4) and `engine-step-2b` (tasks 5 to 9, which contains the
+  first branch's commits). To save the owner's clicks there is one pull request, from `engine-step-2b`; `engine-step-2`
+  stays as a checkpoint and can be deleted.
 - Speed measurement: five sizes instead of one (see the step 2 design, section 6).
