@@ -1,7 +1,8 @@
 # Planning engine, step 2: generalisation
 
 Date: 2026-11-20
-Status: design approved by the project owner on 2026-11-20 (sections 1 to 3); implementation plan not yet written
+Status: implemented on 2026-11-20 (plan: `docs/superpowers/plans/2026-11-20-planning-engine-step-2.md`); the six slices
+and the speed measurement are done. Pull requests 1 and 2 await the owner's merge.
 Part of: AC Service Scheduler, requirements v4.1 (PL-7, PL-9 to PL-11), continues
 `2026-11-19-planning-engine-design.md` (section 7)
 
@@ -124,6 +125,21 @@ non-finite minutes and weights, a non-integer due day, an end place out of range
 After the six slices, measure planning time on a synthetic 2,000-case, 100-technician scenario (the project's
 target size, NFR-4) and report the numbers. This step only measures. If the time is too long, the optimisation
 is proposed as its own piece, because it must give identical plans and may change the Python reference.
+
+**Measured on 2026-11-20** (`VITE_MEASURE_SPEED=1 npx vitest run src/engine/speed.measure.test.ts`, owner's
+laptop, Node, one thread, every step 2 feature in use):
+
+| Cases | Technicians | Horizon | Result | Time |
+|---|---|---|---|---|
+| 500 | 30 | 3 days | 202 scheduled, 298 unscheduled | 0.07 s |
+| 1,000 | 60 | 12 days | 987 scheduled | 0.43 s |
+| 2,000 | 100 | 15 days | 2,000 scheduled in 11 days | 4.0 s |
+| 2,000 | 100 | 30 days | 2,000 scheduled in 11 days | 6.1 s |
+| 2,000 | 25 | 30 days | 1,728 scheduled, 272 unscheduled, all 30 days used | 1.6 s |
+
+NFR-4 asks for 2,000 cases, 100 technicians and a 30-day horizon within 30 seconds on a typical office laptop.
+The measured 4 to 6 seconds leave a margin of about five. No optimisation is needed now. A phone is slower than a
+laptop; the reference phone (PD-9) has not been chosen, so a phone measurement is still open.
 
 ## 7. Delivery
 

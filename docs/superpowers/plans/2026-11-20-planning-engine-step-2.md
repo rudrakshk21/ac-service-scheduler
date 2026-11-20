@@ -1253,3 +1253,15 @@ Then ask the owner to open pull request 2 from `https://github.com/rudrakshk21/a
 - **Spec coverage:** 4.1 to Task 2; 4.2 to Task 3; 4.3 to Task 4; 4.4 to Task 5; 4.5 to Task 6; 4.6 to Task 7; 4.7 (input checks) inside each slice; section 3 (compatibility, checksum) to Task 1 and each slice's "legacy untouched" step; section 5 testing to Tasks 1 to 8; section 6 (speed) and 7 (delivery) to Task 4 step 8 and Task 9; finish line covered by the full local check and the DS-1 script.
 - **Placeholders:** none. Expected values in the new TypeScript tests were worked out by hand (comments show the arithmetic); if a test disagrees with the engine, first re-check that arithmetic and the Python reference before changing either side.
 - **Type consistency:** `TechPlan` grows in Task 4 (Task 3 defines `startNode`/`endNode` only); `Route` constructor `(startNode, endNode, usableMin?)`; `visitMinutes(input, c)` exported from `context.ts` in Task 7 and reimplemented independently in `invariants.ts` (`minutesOf`) on purpose; `Ctx` gains `techPlan`, `levels`, `caseWeight`, `dueWeight`, `dueWindow`, `caseService` across tasks 3 to 7.
+
+## Execution notes (what differed from the plan)
+
+- `src/engine/check.test.ts` already existed from step 1 and is a table of rejected inputs. The step 2 checks were
+  added as table rows, not as a new file (a first attempt to create the file was reverted from Git before commit).
+- The `due_dates` scenarios use 110 cases and a 2-day horizon (not 70 cases and 4 days): with 70 cases everything
+  fitted, and the scenario's own self-check ("some case missed its due date") caught it.
+- A tie between two equally cheap insert positions goes to the earlier one (strict "less than", as in Python), so the
+  route test asserts `front <= back`.
+- Work was done on two branches: `engine-step-2` (tasks 1 to 4, pull request 1) and `engine-step-2b` (tasks 5 to 9,
+  pull request 2, which contains the first branch's commits).
+- Speed measurement: five sizes instead of one (see the step 2 design, section 6).
