@@ -20,4 +20,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:coverage
+      - run: python3 -m unittest discover -s reference -p "test_*.py"
       - run: npm run build
