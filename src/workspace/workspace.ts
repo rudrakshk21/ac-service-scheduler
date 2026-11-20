@@ -25,6 +25,8 @@ export interface Workspace {
   /** Every change an import made, oldest first. */
   changes: ChangeLogEntry[]
   imports: ImportRecord[]
+  /** Days nobody works, `YYYY-MM-DD`, sorted. */
+  holidays: string[]
 }
 
 export class WorkspaceError extends Error {
@@ -37,16 +39,14 @@ export class WorkspaceError extends Error {
 const KEY = 'workspace'
 
 export function emptyWorkspace(): Workspace {
-  return { workspaceVersion: 1, site: starterSite(), technicians: [], cases: [], profiles: [], changes: [], imports: [] }
+  return { workspaceVersion: 1, site: starterSite(), technicians: [], cases: [], profiles: [], changes: [], imports: [], holidays: [] }
 }
 
 /**
- * The saved workspace, or null when nothing is saved yet. Data saved by a newer version of the app, or damaged data,
- * is not opened and not overwritten: the error says so in plain words.
+ * A workspace from a stored or restored value. Data made by a newer version of the app, or damaged data, is refused
+ * with a plain message. Lists that an older save did not have are filled in.
  */
-export async function loadWorkspace(store: KeyValueStore): Promise<Workspace | null> {
-  const raw = await store.get(KEY)
-  if (raw === undefined) return null
+export function readWorkspace(raw: unknown): Workspace {
   const damaged = new WorkspaceError('The saved data is damaged, so it was not opened and has not been changed.')
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw damaged
   const version = (raw as { workspaceVersion?: unknown }).workspaceVersion
@@ -55,6 +55,12 @@ export async function loadWorkspace(store: KeyValueStore): Promise<Workspace | n
   }
   if (version !== 1) throw damaged
   return { ...emptyWorkspace(), ...(raw as Partial<Workspace>) }
+}
+
+/** The saved workspace, or null when nothing is saved yet. Unreadable data is refused, never overwritten. */
+export async function loadWorkspace(store: KeyValueStore): Promise<Workspace | null> {
+  const raw = await store.get(KEY)
+  return raw === undefined ? null : readWorkspace(raw)
 }
 
 export async function saveWorkspace(store: KeyValueStore, w: Workspace): Promise<void> {
