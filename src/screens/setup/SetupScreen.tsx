@@ -1,4 +1,5 @@
 import { LevelsSection, SkillsSection, WorkTypesSection } from './CatalogueSection'
+import { DataSection } from './DataSection'
 import { HolidaysSection } from './HolidaysSection'
 import { PlacesSection } from './PlacesSection'
 import { RulesSection, SiteSection } from './SiteSection'
@@ -8,7 +9,7 @@ import './setup.css'
 
 const JUMPS: [string, string][] = [
   ['set-site', 'Your centre'], ['set-rules', 'Rules'], ['set-types', 'Work types'], ['set-skills', 'Skills'], ['set-levels', 'Priorities'],
-  ['set-places', 'Places'], ['set-techs', 'Technicians'], ['set-holidays', 'Holidays'],
+  ['set-places', 'Places'], ['set-techs', 'Technicians'], ['set-holidays', 'Holidays'], ['set-data', 'Files and data'],
 ]
 
 export default function SetupScreen() {
@@ -34,6 +35,7 @@ export default function SetupScreen() {
       <PlacesSection />
       <TechniciansSection />
       <HolidaysSection />
+      <DataSection />
     </section>
   )
 }
