@@ -94,6 +94,10 @@ input in and the result out.
    dedicated function. Integer conversion truncates toward zero, as in Python.
 5. Ordered containers: JavaScript `Map` filled in the same order as the Python dictionaries.
 6. Exact ordering up to 10 stops uses typed arrays and the same dynamic programme as Python.
+7. Travel times are rounded to 9 decimals with `floor(x * 1e9 + 0.5) / 1e9` (`snapMinutes` in TypeScript,
+   `snap` in the Python reference). Only multiply, add, floor and divide are used, which give the same result on
+   every device. This one change to the Python engine makes ties between equally short stop orders resolve by
+   the fixed loop order instead of by last-digit noise from the maths library.
 
 ## 6. Testing
 
@@ -176,7 +180,7 @@ Estimate: 3 to 4 working days for the port, 2 to 3 for step 2.
 
 | Risk | Mitigation |
 |---|---|
-| `Math.sin`, `cos`, `asin` can differ from Python's in the last digit, which could flip a tie | The golden test shows it at once. Fix: round distances to the same precision in both engines and regenerate the goldens. Any change to the Python reference must leave the DS-1 plan unchanged |
+| `sin`, `cos`, `asin` differ in the last digit between operating systems (and possibly browsers), which flips exact ties | **Happened.** The Python reference itself gave a different plan on Linux for one scenario. Fixed with rule 7 in section 5 (travel times rounded to 9 decimals in both engines). On the owner's real data every case keeps its technician and day, total travel is identical, and 11 of 140 routes visit the same stops in a different, equally short order. Accepted by the owner on 2026-11-20. A rounding boundary could still straddle a platform difference, with a probability per travel time of about one in a million, which is accepted |
 | Python and JavaScript rounding differ | Dedicated Python-style rounding function with its own table test |
 | Real data leaks into the public repository | Real data only in the ignored `reference-local/` folder. Golden scenarios are synthetic. Review every commit before pushing |
 | Greedy step too slow at 2,000 cases | Measure first, optimise under the golden tests (section 8) |

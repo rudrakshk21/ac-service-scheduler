@@ -12,6 +12,16 @@ export function haversineKm(la1: number, lo1: number, la2: number, lo2: number):
   return 2 * r * Math.asin(Math.sqrt(a))
 }
 
+/**
+ * Rounds travel minutes to 9 decimals. The maths library can differ in the last digit between devices;
+ * rounding makes every device see the same numbers, so a near-tie can no longer go a different way.
+ * Only multiply, add, floor and divide are used: IEEE arithmetic gives the same result everywhere
+ * (the Python reference uses the same four steps).
+ */
+export function snapMinutes(x: number): number {
+  return Math.floor(x * 1e9 + 0.5) / 1e9
+}
+
 export interface Geo {
   /** Travel minutes between nodes. Node 0 is the base; node i + 1 is places[i]. */
   tm: number[][]
@@ -37,7 +47,7 @@ export function buildGeo(s: Settings, places: Place[]): Geo {
       } else {
         tm[i][j] = Math.max(
           s.sameAreaHopMin * 0.5,
-          ((haversineKm(la[i], lo[i], la[j], lo[j]) * s.roadFactor) / s.speedKmh) * 60.0,
+          snapMinutes(((haversineKm(la[i], lo[i], la[j], lo[j]) * s.roadFactor) / s.speedKmh) * 60.0),
         )
       }
     }

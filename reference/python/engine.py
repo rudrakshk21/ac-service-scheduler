@@ -12,6 +12,11 @@ Method (per working day):
   3. each route is put in its optimal order (exact Held-Karp up to 10 stops, 2-opt beyond);
   4. cases are moved between routes when that saves travel; freed time is refilled.
 Cases that do not fit roll to the next working day.
+
+ONE CHANGE from the project engine (AC_Scheduler_Python/ac_scheduler/engine.py): travel times are rounded to
+9 decimals by snap(). The maths library differs in the last digit between operating systems, and an exact tie
+between two stop orders was decided by that noise, so the same input gave different plans on Windows and
+Linux. With snap() every machine sees the same numbers. All other code is unchanged.
 """
 from __future__ import annotations
 
@@ -102,6 +107,12 @@ def haversine_km(la1, lo1, la2, lo2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
+def snap(minutes: float) -> float:
+    """Rounds travel minutes to 9 decimals. Only multiply, add, floor and divide, which are exact everywhere
+    (the web engine does the same four steps in snapMinutes)."""
+    return math.floor(minutes * 1e9 + 0.5) / 1e9
+
+
 def hm(minutes: float) -> str:
     t = int(round(minutes))
     return "%02d:%02d" % ((t // 60) % 24, t % 60)
@@ -121,7 +132,7 @@ class Engine:
                     self.tm[i][j] = 0.0 if i == 0 else cfg.hop_min
                 else:
                     self.tm[i][j] = max(cfg.hop_min * 0.5,
-                                        haversine_km(la[i], lo[i], la[j], lo[j]) * cfg.road_factor / cfg.speed * 60.0)
+                                        snap(haversine_km(la[i], lo[i], la[j], lo[j]) * cfg.road_factor / cfg.speed * 60.0))
         self.zone: list[str] = []
         self.area_km: list[float] = []
         octants = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"]

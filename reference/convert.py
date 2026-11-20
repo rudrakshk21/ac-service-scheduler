@@ -7,6 +7,26 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "python"))
 import engine  # noqa: E402  (the reference engine, copied unchanged)
 
 EPOCH = dt.date(1970, 1, 1)
+EPS = 1e-9
+
+
+def same(a, b, path="result"):
+    """Returns a list of differences between two JSON values. Empty means the same.
+    Real numbers match within one part in a billion; everything else must match exactly."""
+    if isinstance(a, bool) or isinstance(b, bool) or a is None or b is None:
+        return [] if a == b and type(a) is type(b) else ["%s: %r != %r" % (path, a, b)]
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+        ok = abs(a - b) <= EPS * max(1.0, abs(a), abs(b))
+        return [] if ok else ["%s: %r != %r" % (path, a, b)]
+    if isinstance(a, dict) and isinstance(b, dict):
+        if set(a) != set(b):
+            return ["%s: keys %s != %s" % (path, sorted(a), sorted(b))]
+        return [d for k in a for d in same(a[k], b[k], path + "." + k)]
+    if isinstance(a, list) and isinstance(b, list):
+        if len(a) != len(b):
+            return ["%s: length %d != %d" % (path, len(a), len(b))]
+        return [d for i, (x, y) in enumerate(zip(a, b)) for d in same(x, y, "%s[%d]" % (path, i))]
+    return [] if a == b else ["%s: %r != %r" % (path, a, b)]
 
 
 def day_number(d):

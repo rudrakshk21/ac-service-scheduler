@@ -1,9 +1,8 @@
 """Checks the reference tooling: every scenario exercises what it is for, and the committed
 golden files are what the Python engine produces today.
 
-Real numbers are compared with a tolerance of one part in a billion, like the TypeScript golden test:
-the maths library of another operating system can differ in the last digits. Everything else
-(technician, day, visit, arrival time, text, stop order) must match exactly."""
+Real numbers are compared with a tolerance of one part in a billion, like the TypeScript golden test.
+Everything else (technician, day, visit, arrival time, text, stop order) must match exactly."""
 import json
 import sys
 import unittest
@@ -13,26 +12,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import export_golden  # noqa: E402
-
-EPS = 1e-9
-
-
-def same(a, b, path="result"):
-    """Returns a list of differences between two JSON values. Empty means the same."""
-    if isinstance(a, bool) or isinstance(b, bool) or a is None or b is None:
-        return [] if a == b and type(a) is type(b) else ["%s: %r != %r" % (path, a, b)]
-    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-        ok = abs(a - b) <= EPS * max(1.0, abs(a), abs(b))
-        return [] if ok else ["%s: %r != %r" % (path, a, b)]
-    if isinstance(a, dict) and isinstance(b, dict):
-        if set(a) != set(b):
-            return ["%s: keys %s != %s" % (path, sorted(a), sorted(b))]
-        return [d for k in a for d in same(a[k], b[k], path + "." + k)]
-    if isinstance(a, list) and isinstance(b, list):
-        if len(a) != len(b):
-            return ["%s: length %d != %d" % (path, len(a), len(b))]
-        return [d for i, (x, y) in enumerate(zip(a, b)) for d in same(x, y, "%s[%d]" % (path, i))]
-    return [] if a == b else ["%s: %r != %r" % (path, a, b)]
+from convert import engine, same  # noqa: E402
 
 
 class ReferenceTooling(unittest.TestCase):
@@ -48,6 +28,20 @@ class ReferenceTooling(unittest.TestCase):
             on_disk = json.loads(path.read_text(encoding="utf-8"))
             diffs = same(on_disk, payload, name)
             self.assertEqual(diffs[:5], [], name + " is stale: run py reference/export_golden.py")
+
+
+class Rounding(unittest.TestCase):
+    """snap() must round exactly like snapMinutes in src/engine/geo.ts (same cases as geo.test.ts)."""
+
+    def test_snap_matches_the_web_engine_cases(self):
+        for x, want in [(0, 0), (5, 5), (1.0000000004, 1), (1.0000000006, 1.000000001),
+                        (30.0226324900004, 30.02263249), (12.3456789014999, 12.345678901),
+                        (12.3456789015001, 12.345678902)]:
+            self.assertEqual(engine.snap(x), want, x)
+
+    def test_snap_is_idempotent(self):
+        for x in (0.5, 17.123456789012, 99.999999999999, 1234.5678901234):
+            self.assertEqual(engine.snap(engine.snap(x)), engine.snap(x))
 
 
 class Comparison(unittest.TestCase):
