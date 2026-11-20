@@ -8,10 +8,11 @@ export default defineConfig({
     include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts'],
+      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts', 'src/workspace/**/*.ts', 'src/screens/**/*.ts'],
       exclude: [
         'src/engine/**/*.test.ts', 'src/engine/testing/**',
         'src/intake/**/*.test.ts', 'src/intake/**/testing/**',
+        'src/workspace/**/*.test.ts', 'src/screens/**/*.test.ts',
       ],
       thresholds: { statements: 90, lines: 90 },
     },
