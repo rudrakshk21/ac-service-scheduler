@@ -113,3 +113,35 @@ describe('movedCases', () => {
     expect(movedCases(r, r)).toEqual({ moved: 0, techs: new Set() })
   })
 })
+
+describe('step 2 features on the board', () => {
+  const twoTechs = (): PlanInput => testInput({
+    places: [here],
+    technicians: [
+      { name: 'Early', skills: [0], active: true, dayStartMin: 480, usableMin: 300, breakMin: 30 },
+      { name: 'Normal', skills: [0], active: true },
+    ],
+    cases: ['1', '2'].map((id) => ({ id, workType: 0, place: 0, escalated: false, reportedDay: START, serviceMin: 50 })),
+  })
+  it('starts each lane at its own technician\'s day start', () => {
+    const input = twoTechs()
+    const lanes = lanesForDay(input, plan(input), START)
+    const first = (name: string) => lanes.find((l) => l.name === name)?.blocks[0].startMin
+    expect(first('Early')).toBe(480)
+    expect(first('Normal')).toBe(540)
+  })
+  it('sizes work blocks by the case\'s own minutes, not the work type\'s', () => {
+    const input = twoTechs()
+    const lanes = lanesForDay(input, plan(input), START)
+    const work = lanes.flatMap((l) => l.blocks.filter((b) => b.kind === 'work'))
+    expect(work.length).toBeGreaterThan(0)
+    for (const b of work) expect(b.endMin - b.startMin).toBe(50)
+    expect(lanes.flatMap((l) => l.stops).every((s) => s.serviceMin === 50)).toBe(true)
+  })
+  it('starts the axis at the earliest day start and covers the longest planned day', () => {
+    const input = twoTechs()
+    const axis = dayAxis(input, lanesForDay(input, plan(input), START))
+    expect(axis.startMin).toBe(480)
+    expect(axis.endMin).toBeGreaterThanOrEqual(540 + 480 + 60)
+  })
+})

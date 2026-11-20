@@ -3,7 +3,7 @@ import { useWorkspace } from '../workspace/useWorkspace'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
 import './shell.css'
 
-const Plan = lazy(() => import('../demo/DemoPage').then((m) => ({ default: m.DemoPage })))
+const Plan = lazy(() => import('./plan/PlanScreen'))
 const Placeholder = lazy(() => import('./Placeholder'))
 const ImportScreen = lazy(() => import('./import/ImportScreen'))
 const DataScreen = lazy(() => import('./data/DataScreen'))
