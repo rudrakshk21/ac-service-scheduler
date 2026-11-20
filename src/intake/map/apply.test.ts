@@ -110,6 +110,11 @@ describe('applyProfile: cases', () => {
     expect(out.quality.totalRowsSkipped).toBe(1)
     expect(out.quality.rowsRead).toBe(3)
   })
+  it('skips total rows written in several languages', () => {
+    const out = applyProfile(table(HEADERS, [row(), row({ 'Ticket No': 'Gesamt' }), row({ 'Ticket No': 'Summe 2026' }), row({ 'Ticket No': 'Somme' })]), profile(), site, IMPORT)
+    expect(out.cases.length).toBe(1)
+    expect(out.quality.totalRowsSkipped).toBe(3)
+  })
   it('keeps the first row of a duplicated identifier and reports the rest', () => {
     const out = applyProfile(table(HEADERS, [row({ Notes: 'first' }), row({ Notes: 'second' })]), profile(), site, IMPORT)
     expect(out.cases.length).toBe(1)

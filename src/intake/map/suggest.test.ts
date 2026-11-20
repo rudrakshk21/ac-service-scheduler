@@ -56,6 +56,21 @@ describe('suggestProfile: names', () => {
   })
 })
 
+describe('suggestProfile: nested JSON names and bare names', () => {
+  it('scores `location.lat` by its last part, a little lower than a plain name', () => {
+    const r = suggestProfile(
+      table(['id', 'created', 'category', 'location.lat', 'location.lon', 'location.city'], [['1', '2026-10-13', 'x', '20.1', '30.2', 'North']]),
+      'cases', null,
+    )
+    expect(find(r, 'caseId')).toMatchObject({ columns: ['id'], confidence: 1 })
+    expect(find(r, 'reportedAt')).toMatchObject({ columns: ['created'], confidence: 1 })
+    expect(find(r, 'latitude')).toMatchObject({ columns: ['location.lat'], confidence: 0.95 })
+    expect(find(r, 'longitude')).toMatchObject({ columns: ['location.lon'], confidence: 0.95 })
+    expect(find(r, 'area')).toMatchObject({ columns: ['location.city'], confidence: 0.95 })
+    expect(r.profile.columns.latitude).toEqual(['location.lat'])
+  })
+})
+
 describe('suggestProfile: values', () => {
   it('offers date-looking and id-looking columns with a lower confidence', () => {
     const r = suggestProfile(

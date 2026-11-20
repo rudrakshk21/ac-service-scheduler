@@ -9,7 +9,7 @@ import type { Kind } from './model'
 export const SEED_DICTIONARY: Record<Kind, Record<string, string[]>> = {
   cases: {
     caseId: [
-      'Display ID', 'Case ID', 'Ticket ID', 'Ticket No', 'Ticket Number', 'Work Order', 'Work Order No', 'Job No',
+      'ID', 'Display ID', 'Case ID', 'Ticket ID', 'Ticket No', 'Ticket Number', 'Work Order', 'Work Order No', 'Job No',
       'Job Number', 'Service Request', 'SR Number', 'Complaint No', 'Complaint Number', 'Call ID', 'Docket No',
       'Auftragsnummer', 'Auftrag Nr', 'Numero de ticket', 'Numero de caso',
     ],
@@ -19,7 +19,7 @@ export const SEED_DICTIONARY: Record<Kind, Record<string, string[]>> = {
     ],
     status: ['Status', 'Stage', 'State', 'Case Status', 'Call Status', 'Zustand', 'Statut', 'Estado'],
     reportedAt: [
-      'Reported on', 'Reported At', 'Reported Date', 'Created On', 'Created Date', 'Created At', 'Call Date', 'Logged On',
+      'Created', 'Reported on', 'Reported At', 'Reported Date', 'Created On', 'Created Date', 'Created At', 'Call Date', 'Logged On',
       'Registration Date', 'Opened At', 'Opened', 'Erstellt am', 'Erstellt', 'Date de creation', 'Fecha de creacion',
       'Fecha de registro',
     ],

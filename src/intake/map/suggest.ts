@@ -142,12 +142,15 @@ export function suggestProfile(
   }
 
   const nameSets = new Map(fields.map((f) => [f, nameSet(kind, f, site)]))
+  // A nested JSON column such as `location.lat` is also scored by its last part (`lat`), a little lower.
+  const tails = table.headers.map((h) => (h.includes('.') ? normaliseName(h.slice(h.lastIndexOf('.') + 1)) : ''))
   const cands: Candidate[] = []
   const named = new Set<number>()
   headers.forEach((h, col) => {
     if (personalCols.has(col)) return
     for (const field of fields) {
-      const s = nameScore(h, nameSets.get(field) as NameSet)
+      const names = nameSets.get(field) as NameSet
+      const s = Math.max(nameScore(h, names), tails[col] === '' ? 0 : 0.95 * nameScore(tails[col], names))
       if (s >= 0.6) {
         named.add(col)
         cands.push({

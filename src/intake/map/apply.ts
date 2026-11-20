@@ -73,7 +73,8 @@ export interface Imported {
   quality: QualityReport
 }
 
-const TOTAL_ROW = /^(total|grand total|sum)\b/i
+/** A row such as "Total" at the bottom of a sheet (English, German, Italian and French words). */
+const TOTAL_ROW = /^(total|grand total|sum|subtotal|gesamt|summe|totale|somme)\b/i
 
 function cellText(c: Cell | undefined): string | undefined {
   if (c === null || c === undefined) return undefined
