@@ -24,7 +24,7 @@ export const SEED_DICTIONARY: Record<Kind, Record<string, string[]>> = {
       'Fecha de registro',
     ],
     priority: ['Priority', 'Escalation Status', 'Urgency', 'Severity', 'Prioritat', 'Priorite', 'Prioridad'],
-    dueAt: ['Due Date', 'Due At', 'SLA Date', 'Target Date', 'Commitment Date', 'Faellig am', 'Fallig am', 'Date d echeance', 'Fecha limite'],
+    dueAt: ['Due', 'Deadline', 'Due Date', 'Due At', 'SLA Date', 'Target Date', 'Commitment Date', 'Faellig am', 'Fallig am', 'Date d echeance', 'Fecha limite'],
     area: ['Location', 'Area', 'Locality', 'City', 'Town', 'Place', 'Ort', 'Stadt', 'Standort', 'Localite', 'Ville', 'Localidad', 'Ciudad', 'Zona'],
     postalCode: ['PIN Code', 'PIN', 'Postal Code', 'Zip', 'Zip Code', 'Postcode', 'PLZ', 'Postleitzahl', 'Code postal', 'Codigo postal'],
     address: ['Address', 'Street Address', 'Anschrift', 'Adresse', 'Direccion'],
