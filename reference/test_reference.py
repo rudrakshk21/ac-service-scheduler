@@ -3,6 +3,7 @@ golden files are what the Python engine produces today.
 
 Real numbers are compared with a tolerance of one part in a billion, like the TypeScript golden test.
 Everything else (technician, day, visit, arrival time, text, stop order) must match exactly."""
+import hashlib
 import json
 import sys
 import unittest
@@ -12,14 +13,16 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import export_golden  # noqa: E402
+import scenarios  # noqa: E402
 from convert import engine, same  # noqa: E402
 
 
 class ReferenceTooling(unittest.TestCase):
-    def test_there_are_sixteen_distinct_scenarios(self):
+    def test_scenario_names_are_distinct_and_include_the_sixteen_originals(self):
         names = [name for name, _ in export_golden.build_all()]
-        self.assertEqual(len(names), 16)
-        self.assertEqual(len(set(names)), 16)
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(len(scenarios.SCENARIOS), 16)
+        self.assertTrue(set(scenarios.SCENARIOS) <= set(names))
 
     def test_golden_files_are_current(self):
         for name, payload in export_golden.build_all():
@@ -28,6 +31,18 @@ class ReferenceTooling(unittest.TestCase):
             on_disk = json.loads(path.read_text(encoding="utf-8"))
             diffs = same(on_disk, payload, name)
             self.assertEqual(diffs[:5], [], name + " is stale: run py reference/export_golden.py")
+
+
+class LegacyGoldens(unittest.TestCase):
+    """The 16 original golden files must never change: step 2 may only add scenarios."""
+
+    def test_the_sixteen_original_files_are_byte_for_byte_unchanged(self):
+        text = (export_golden.GOLDEN_DIR / "LEGACY.sha256").read_text(encoding="utf-8")
+        entries = [line.split("  ") for line in text.split("\n") if line.strip()]
+        self.assertEqual(sorted(name[:-5] for _, name in entries), sorted(scenarios.SCENARIOS))
+        for digest, name in entries:
+            data = (export_golden.GOLDEN_DIR / name).read_bytes()
+            self.assertEqual(hashlib.sha256(data).hexdigest(), digest, name + " changed: a slice altered an old plan")
 
 
 class Rounding(unittest.TestCase):
