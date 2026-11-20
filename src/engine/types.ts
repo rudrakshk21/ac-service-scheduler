@@ -4,6 +4,15 @@ export interface PriorityLevel {
   weight: number
 }
 
+/** A kind of unit. A visit takes the work type's minutes times `factor` plus `addMin`. */
+export interface ProductType {
+  name: string
+  /** Minutes added to the work type's visit time. Absent: 0. */
+  addMin?: number
+  /** Multiplier of the work type's visit time. Absent: 1. */
+  factor?: number
+}
+
 /** Planning settings. Times are minutes, distances kilometres, dates whole day numbers since 1970-01-01. */
 export interface Settings {
   baseLat: number
@@ -71,6 +80,10 @@ export interface CaseIn {
   priority?: number
   /** Day the visit is promised by. Soft: urgency grows as it nears, and a later visit is flagged late. */
   dueDay?: number
+  /** Index into `productTypes`. */
+  productType?: number
+  /** Own visit minutes. They win over the work type and the product. */
+  serviceMin?: number
   reportedDay: number
   /** Manual technician: index into `technicians`. */
   pinnedTech?: number
@@ -83,6 +96,7 @@ export interface CaseIn {
 export interface PlanInput {
   settings: Settings
   workTypes: WorkType[]
+  productTypes?: ProductType[]
   technicians: Technician[]
   places: Place[]
   cases: CaseIn[]

@@ -39,7 +39,7 @@ export function finalise(ctx: Ctx, res: RawResult): void {
           res.flag.set(c, had === undefined ? late : `${had}; ${late}`)
         }
         const wt = ctx.workTypes[ctx.cases[c].workType]
-        clock += wt.serviceMin
+        clock += ctx.caseService[c]
         prev = node
         const pn = i === 0 ? r.startNode : ctx.caseNode[r.stops[i - 1]]
         const detour = tm[pn][node] + tm[node][nxt] - tm[pn][nxt]

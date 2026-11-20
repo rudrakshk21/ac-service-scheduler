@@ -58,6 +58,7 @@ class Cfg:
     prio_w: list = field(default_factory=lambda: [0.0, 100000.0])   # bonus of each priority level
     due_w: float = 8.0           # bonus points per day of urgency once a due date is near
     due_window: float = 5.0      # urgency starts this many days before the due date
+    products: list = field(default_factory=list)   # (added minutes, factor) per product type
 
 
 @dataclass
@@ -73,6 +74,8 @@ class CaseIn:
     subject: str = ""
     prio: int = -1               # priority level index; -1 = the last level when esc, else level 0
     due: dt.date | None = None   # soft due date: urgency grows as it nears, later visits are flagged late
+    product: int = -1            # product type index, -1 = none
+    svc_override: float | None = None   # own visit minutes; win over the work type and the product
 
 
 @dataclass
@@ -170,6 +173,16 @@ class Engine:
         for k in cases:
             level = k.prio if k.prio >= 0 else (len(cfg.prio_w) - 1 if k.esc else 0)
             self.weight.append(cfg.prio_w[level])
+        self.svc = []           # visit minutes of each case
+        for k in cases:
+            if k.svc_override is not None:
+                m = k.svc_override
+            else:
+                m = cfg.svc_min[k.cat]
+                if k.product >= 0:
+                    add, factor = cfg.products[k.product]
+                    m = m * factor + add
+            self.svc.append(m)
 
     # ---- helpers ----
     def node(self, c):
@@ -220,7 +233,7 @@ class Engine:
     def fits(self, r: Route, c, delta):
         cat = self.cases[c].cat
         usable = self.C.usable_min if r.usable is None else r.usable
-        if r.travel + delta + r.service + self.C.svc_min[cat] > usable + 1e-6:
+        if r.travel + delta + r.service + self.svc[c] > usable + 1e-6:
             return False
         if r.frac + 1.0 / self.C.target[cat] > 1.0 + 1e-6:
             return False
@@ -233,7 +246,7 @@ class Engine:
         r.frac = 0.0
         for c in r.stops:
             cat = self.cases[c].cat
-            r.service += self.C.svc_min[cat]
+            r.service += self.svc[c]
             r.frac += 1.0 / self.C.target[cat]
 
     def order(self, r: Route):
@@ -459,7 +472,7 @@ class Engine:
                         late_days = (day - due).days
                         late = "LATE BY %d DAY%s" % (late_days, "" if late_days == 1 else "S")
                         res.flag[c] = res.flag[c] + "; " + late if c in res.flag else late
-                    clock += C.svc_min[self.cases[c].cat]
+                    clock += self.svc[c]
                     prev = self.node(c)
                     pn = r.s if i == 0 else self.node(r.stops[i - 1])
                     detour = self.tm[pn][self.node(c)] + self.tm[self.node(c)][nxt] - self.tm[pn][nxt]

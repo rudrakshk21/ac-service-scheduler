@@ -156,7 +156,27 @@ def check_due(inp, out, calls):
     assert any(u["reason"].endswith("; due date missed") for u in out["unscheduled"]), "no case missed its due date"
 
 
+def check_products(inp, out, calls):
+    cases = {c["id"]: c for c in inp["cases"]}
+    wts = inp["workTypes"]
+    prods = inp["productTypes"]
+
+    def minutes(c):
+        if "serviceMin" in c:
+            return c["serviceMin"]
+        m = wts[c["workType"]]["serviceMin"]
+        if "productType" in c:
+            p = prods[c["productType"]]
+            m = m * p.get("factor", 1.0) + p.get("addMin", 0.0)
+        return m
+
+    for r in out["routes"]:
+        assert abs(sum(minutes(cases[i]) for i in r["stops"]) - r["serviceMin"]) < 1e-9, "route minutes do not add up"
+    assert any("serviceMin" in cases[s["id"]] for s in _scheduled(out)), "no overridden case was scheduled"
+
+
 CHECKS = {
+    "product_types": check_products,
     "due_dates": check_due, "due_dates_strong": check_due,
     "priority_levels": check_priority_levels, "escalated_on_custom_levels": check_escalated_custom,
     "tech_hours": check_tech_hours, "short_day_overload": check_short_overload,

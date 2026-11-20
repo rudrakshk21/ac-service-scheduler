@@ -104,6 +104,17 @@ describe('plan (hand-checked cases; the golden files do the rigorous work)', () 
     expect(r.scheduled.find((s) => s.id === '2')?.flag).toBe('OVER CAPACITY')
   })
 
+  it('uses product minutes and a per-case override for visit time', () => {
+    const r = plan(testInput({
+      places: [here], technicians: [tech('T', [0])],
+      productTypes: [{ name: 'Cassette', addMin: 30 }, { name: 'Ducted', factor: 1.5, addMin: 15 }],
+      cases: [aCase('1', 0, { productType: 0 }), aCase('2', 0, { productType: 1 }), aCase('3', 0, { serviceMin: 45 })],
+    }))
+    const route = r.routes.find((x) => x.stops.length === 3)
+    // Installation is 120 min: 120 + 30 = 150; 120 x 1.5 + 15 = 195; the override is 45.
+    expect(route?.serviceMin).toBe(150 + 195 + 45)
+  })
+
   it('places a pinned case on its day with the manual technician', () => {
     const r = plan(testInput({
       places: [here],

@@ -117,8 +117,20 @@ def due_dates_strong():
     return _with_due_dates(base(30, 110, 6, 10, horizonDays=2, dueWeight=40.0, urgencyWindowDays=10.0))
 
 
+def product_types():
+    inp = base(31, 60, 9, 12)
+    inp["productTypes"] = [{"name": "Split"}, {"name": "Cassette", "addMin": 30.0},
+                           {"name": "Ducted", "factor": 1.5, "addMin": 15.0}]
+    for i, c in enumerate(inp["cases"]):
+        if i % 2 == 0:
+            c["productType"] = i % 3
+        if i % 13 == 0:
+            c["serviceMin"] = 45.0
+    return inp
+
+
 STEP2 = {f.__name__: f for f in (
     five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
     tech_hours, short_day_overload, priority_levels, escalated_on_custom_levels,
-    due_dates, due_dates_strong,
+    due_dates, due_dates_strong, product_types,
 )}

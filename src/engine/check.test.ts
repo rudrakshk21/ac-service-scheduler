@@ -48,6 +48,11 @@ describe('checkInput', () => {
     ['fractional due day', (i) => { i.cases[0].dueDay = 1.5 }, 'cases[0].dueDay must be a whole number'],
     ['negative due weight', (i) => { i.settings.dueWeight = -1 }, 'settings.dueWeight must be at least 0'],
     ['negative urgency window', (i) => { i.settings.urgencyWindowDays = -1 }, 'settings.urgencyWindowDays must be at least 0'],
+    ['product type that does not exist', (i) => { i.productTypes = [{ name: 'A' }]; i.cases[0].productType = 4 }, 'cases[0].productType is 4 but only 1 product types exist'],
+    ['negative own visit minutes', (i) => { i.cases[0].serviceMin = -1 }, 'cases[0].serviceMin must be at least 0'],
+    ['product without a name', (i) => { i.productTypes = [{ name: '' }] }, 'productTypes[0].name must be text'],
+    ['product factor of zero', (i) => { i.productTypes = [{ name: 'A', factor: 0 }] }, 'productTypes[0].factor must be greater than 0'],
+    ['product added minutes not a number', (i) => { i.productTypes = [{ name: 'A', addMin: NaN }] }, 'productTypes[0].addMin must be a finite number'],
   ]
   it.each(cases)('rejects %s', (_label, mutate, message) => {
     const input = valid()

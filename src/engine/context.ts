@@ -35,6 +35,19 @@ export interface Ctx {
   caseWeight: number[]
   dueWeight: number
   dueWindow: number
+  /** Visit minutes of each case. */
+  caseService: number[]
+}
+
+/** Visit minutes of a case: its own override, else the work type's minutes x the product's factor + its added minutes. */
+export function visitMinutes(input: PlanInput, c: CaseIn): number {
+  if (c.serviceMin !== undefined) return c.serviceMin
+  let m = input.workTypes[c.workType].serviceMin
+  if (c.productType !== undefined) {
+    const p = input.productTypes?.[c.productType]
+    if (p !== undefined) m = m * (p.factor ?? 1) + (p.addMin ?? 0)
+  }
+  return m
 }
 
 export function buildContext(input: PlanInput): Ctx {
@@ -60,5 +73,6 @@ export function buildContext(input: PlanInput): Ctx {
     caseWeight: input.cases.map((c) => levels[c.priority ?? (c.escalated === true ? levels.length - 1 : 0)].weight),
     dueWeight: s.dueWeight ?? 8,
     dueWindow: s.urgencyWindowDays ?? 5,
+    caseService: input.cases.map((c) => visitMinutes(input, c)),
   }
 }

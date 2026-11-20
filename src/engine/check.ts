@@ -62,6 +62,13 @@ export function checkInput(input: PlanInput): void {
   if (s.dueWeight !== undefined) needNum('settings.dueWeight', s.dueWeight, 0)
   if (s.urgencyWindowDays !== undefined) needNum('settings.urgencyWindowDays', s.urgencyWindowDays, 0)
 
+  const products = input.productTypes ?? []
+  products.forEach((p, i) => {
+    needText(`productTypes[${i}].name`, p.name)
+    if (p.addMin !== undefined) needNum(`productTypes[${i}].addMin`, p.addMin)
+    if (p.factor !== undefined) needPositive(`productTypes[${i}].factor`, p.factor)
+  })
+
   if (input.workTypes.length === 0) fail('workTypes', 'must list at least one work type')
   input.workTypes.forEach((w, i) => {
     needText(`workTypes[${i}].name`, w.name)
@@ -113,5 +120,12 @@ export function checkInput(input: PlanInput): void {
     if (c.frozenTech !== undefined) needInt(`cases[${i}].frozenTech`, c.frozenTech, 0, input.technicians.length - 1)
     if (c.earliestDay !== undefined) needInt(`cases[${i}].earliestDay`, c.earliestDay, -1_000_000)
     if (c.dueDay !== undefined) needInt(`cases[${i}].dueDay`, c.dueDay, -1_000_000)
+    if (c.serviceMin !== undefined) needNum(`cases[${i}].serviceMin`, c.serviceMin, 0)
+    if (c.productType !== undefined) {
+      needInt(`cases[${i}].productType`, c.productType, 0)
+      if (c.productType >= products.length) {
+        fail(`cases[${i}].productType`, `is ${c.productType} but only ${products.length} product types exist`)
+      }
+    }
   })
 }

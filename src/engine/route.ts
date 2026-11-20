@@ -61,7 +61,7 @@ export function bestInsert(ctx: Ctx, r: Route, c: number): { delta: number; pos:
 export function fits(ctx: Ctx, r: Route, c: number, delta: number): boolean {
   const wt = ctx.workTypes[ctx.cases[c].workType]
   const usable = r.usableMin ?? ctx.s.usableMin
-  if (r.travel + delta + r.service + wt.serviceMin > usable + 1e-6) return false
+  if (r.travel + delta + r.service + ctx.caseService[c] > usable + 1e-6) return false
   if (r.frac + 1.0 / wt.dailyCeiling > 1.0 + 1e-6) return false
   return true
 }
@@ -74,7 +74,7 @@ export function recalc(ctx: Ctx, r: Route): void {
   r.frac = 0.0
   for (const c of r.stops) {
     const wt = ctx.workTypes[ctx.cases[c].workType]
-    r.service += wt.serviceMin
+    r.service += ctx.caseService[c]
     r.frac += 1.0 / wt.dailyCeiling
   }
 }
