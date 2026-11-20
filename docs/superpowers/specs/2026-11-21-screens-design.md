@@ -1,7 +1,7 @@
 # Screens: design
 
 Date: 2026-11-21
-Status: design decided by the assistant under the owner's delegation ("start the screens, do it on autopilot"); built in two pull requests
+Status: design decided by the assistant under the owner's delegation ("start the screens, do it on autopilot"); built in two pull requests. Pull request A (workspace, shell, import, data) is built; pull request B (plan, set-up) is next
 Part of: AC Service Scheduler, requirements v4.1 (FR-01, FR-17 to FR-24, NFR usability), the third of five pieces
 
 ## 1. Purpose
@@ -111,3 +111,16 @@ step heading when the step changes; touch targets are at least 44 px; text scale
 - Tests, lint, type check and build pass; both checks green on GitHub; the live site verified after each merge.
 
 Estimate: 14 to 20 hours of build time in total.
+
+## 11. As built in pull request A
+
+- Verified in the browser at 375 px: a file pushed through the real file input passes File, Columns, Words and Check;
+  Continue is held with a plain reason until every category is matched; the import survives a reload (IndexedDB holds
+  the cases, the places created from coordinates, the saved matching and the import record); the same file imported
+  again is recognised, skips Columns and Words, and previews "24 unchanged".
+- Differences from the plan above: the third step is called **Words** (not Values) in the interface; the date-order
+  question names both readings ("Day first: 4 May 2026" / "Month first: 5 April 2026"); the step list shows only the
+  current step's name on a phone so all four fit; the memory-only banner appears when storage is blocked or saved data
+  was made by a newer version.
+- Not in A: manual technician choice lists only technicians that were imported; there is no technician or place editor
+  yet (pull request B).

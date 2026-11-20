@@ -6,10 +6,11 @@ import './shell.css'
 const Plan = lazy(() => import('../demo/DemoPage').then((m) => ({ default: m.DemoPage })))
 const Placeholder = lazy(() => import('./Placeholder'))
 const ImportScreen = lazy(() => import('./import/ImportScreen'))
+const DataScreen = lazy(() => import('./data/DataScreen'))
 
 function Screen({ tab }: { tab: Tab }) {
   if (tab === 'plan') return <Plan />
-  if (tab === 'data') return <Placeholder title="Data" text="The cases and technicians you import will be listed here." />
+  if (tab === 'data') return <DataScreen />
   if (tab === 'import') return <ImportScreen />
   return <Placeholder title="Set-up" text="Work types, skills, places and rules for your centre will be set here." />
 }

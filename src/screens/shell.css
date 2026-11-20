@@ -4,6 +4,14 @@
   --warn: #8f5b00;
   --bad: #b8325a;
   --nav-h: 68px;
+  /* Work-type colours, from refrigerant cylinders: green, blue, rose, then three more. */
+  --w0: #1e7f57;
+  --w1: #2468b5;
+  --w2: #b8325a;
+  --w3: #8f5b00;
+  --w4: #6b4bb0;
+  --w5: #0b7a80;
+  --on-work: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -11,6 +19,13 @@
     --ok: #3fbf86;
     --warn: #d9a03a;
     --bad: #ee6f95;
+    --w0: #3fbf86;
+    --w1: #5b9be6;
+    --w2: #ee6f95;
+    --w3: #d9a03a;
+    --w4: #a58bea;
+    --w5: #3dbdc4;
+    --on-work: #0b1519;
   }
 }
 
