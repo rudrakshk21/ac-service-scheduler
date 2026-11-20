@@ -20,5 +20,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:coverage
-      - run: python3 -m unittest discover -s reference -p "test_*.py"
+      - name: Python reference tests
+        run: |
+          set -o pipefail
+          python3 -m unittest discover -s reference -p "test_*.py" 2>&1 | tee python-test.log || {
+            echo "::error title=Python reference tests failed::$(tail -c 1200 python-test.log | tr '\n' '|')"
+            exit 1
+          }
       - run: npm run build
