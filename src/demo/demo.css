@@ -1,0 +1,337 @@
+/* The dispatch board. Work-type colours follow refrigerant gas cylinders: green, blue, rose. */
+.page {
+  --w0: #1e7f57;
+  --w1: #2468b5;
+  --w2: #b8325a;
+  --w3: #8f5b00;
+  --w4: #6b4bb0;
+  --w5: #0b7a80;
+  --on-work: #ffffff;
+  --travel: #8da0a8;
+  --flash: rgba(11, 92, 168, 0.16);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page {
+    --w0: #3fbf86;
+    --w1: #5b9be6;
+    --w2: #ee6f95;
+    --w3: #d9a03a;
+    --w4: #a58bea;
+    --w5: #3dbdc4;
+    --on-work: #0b1519;
+    --travel: #6f838c;
+    --flash: rgba(109, 179, 242, 0.2);
+  }
+}
+
+.w0 { --c: var(--w0); }
+.w1 { --c: var(--w1); }
+.w2 { --c: var(--w2); }
+.w3 { --c: var(--w3); }
+.w4 { --c: var(--w4); }
+.w5 { --c: var(--w5); }
+
+/* Header */
+.top {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.top h1 {
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.lede {
+  margin-top: 8px;
+  max-width: 62ch;
+  color: var(--ink-soft);
+}
+
+.note {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.error {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--w2);
+  background: var(--surface);
+}
+
+/* Day picker */
+.days {
+  display: flex;
+  gap: 8px;
+  margin: 0 -16px 16px;
+  padding: 2px 16px 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.day {
+  flex: 0 0 auto;
+  display: grid;
+  min-width: 84px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.day-name { font-weight: 700; line-height: 1.2; }
+.day-date { font-size: 0.875rem; color: var(--ink-soft); line-height: 1.2; }
+.day-count { margin-top: 2px; font-size: 0.8125rem; color: var(--ink-soft); line-height: 1.2; }
+
+.day[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.day[aria-pressed='true'] .day-date,
+.day[aria-pressed='true'] .day-count {
+  color: var(--paper);
+  opacity: 0.85;
+}
+
+/* Legend and change line */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.legend li { display: flex; align-items: center; gap: 8px; }
+
+.swatch {
+  width: 18px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+.swatch.travel {
+  background: repeating-linear-gradient(135deg, var(--travel) 0 3px, transparent 3px 6px);
+}
+
+.swatch.break {
+  background: transparent;
+  border: 1.5px dashed var(--travel);
+}
+
+.change {
+  min-height: 1.5em;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+/* Board */
+.axis {
+  position: relative;
+  height: 22px;
+  margin-bottom: 4px;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.tick { position: absolute; top: 0; transform: translateX(-1px); padding-left: 3px; }
+.tick:not(:nth-child(3n + 1)) { display: none; }
+
+.lanes { display: grid; gap: 10px; }
+
+.lane {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.lane[data-off='true'] .lane-name { color: var(--ink-soft); }
+
+.lane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lane-title { display: grid; min-width: 0; }
+.lane-name { font-weight: 700; line-height: 1.2; }
+.lane-meta { font-size: 0.875rem; color: var(--ink-soft); }
+
+/* The switch */
+.switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.track {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--travel);
+  transition: background 120ms;
+}
+
+.track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: transform 120ms;
+}
+
+.switch input:checked + .track { background: var(--w0); }
+.switch input:checked + .track::after { transform: translateX(18px); }
+.switch input:focus-visible + .track { outline: 3px solid var(--accent); outline-offset: 2px; }
+.switch input:disabled + .track { opacity: 0.6; }
+.switch-text { font-size: 0.9375rem; }
+
+/* The lane bar */
+.bar {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px calc(100% / 9)) var(--paper);
+  cursor: pointer;
+  text-align: left;
+}
+
+.bar-empty {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+.bar[aria-expanded='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+.block {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.block.work { background: var(--c); color: var(--on-work); font-variant-numeric: tabular-nums; }
+.block.work b { font-weight: 700; }
+.block.work small { font-size: 0.6875rem; opacity: 0.85; }
+
+.block.travel {
+  top: 16px;
+  bottom: 16px;
+  background: repeating-linear-gradient(135deg, var(--travel) 0 3px, transparent 3px 6px);
+}
+
+.block.break {
+  border: 1.5px dashed var(--travel);
+  border-radius: 4px;
+}
+
+/* The stops of a lane */
+.stops { display: grid; gap: 4px; padding-top: 4px; border-top: 1px solid var(--line); }
+
+.stop {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 4px 12px;
+  padding: 8px 0;
+}
+
+.stop + .stop { border-top: 1px solid var(--line); }
+.stop-time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.stop-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.stop-why { font-size: 0.875rem; color: var(--ink-soft); max-width: 70ch; }
+.stop-leg { grid-column: 2; font-size: 0.8125rem; color: var(--ink-soft); }
+
+.chip {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--c);
+  color: var(--on-work);
+  font-size: 0.8125rem;
+}
+
+.flag { font-size: 0.8125rem; font-weight: 700; color: var(--w2); }
+
+/* Highlight of the lanes that gained or lost cases. Two names so that it restarts on every change. */
+@keyframes flash-a { from { background-color: var(--flash); } to { background-color: var(--surface); } }
+@keyframes flash-b { from { background-color: var(--flash); } to { background-color: var(--surface); } }
+.lane[data-pulse='a'] { animation: flash-a 1400ms ease-out; }
+.lane[data-pulse='b'] { animation: flash-b 1400ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lane[data-pulse] { animation: none; }
+  .track, .track::after { transition: none; }
+}
+
+/* Wide screens: name and switch on the left, the day on the right */
+@media (min-width: 760px) {
+  .page { padding: 32px 24px 64px; }
+  .top { grid-template-columns: 1fr auto; align-items: start; gap: 24px; }
+  .note { justify-self: end; }
+  .days { margin: 0 0 16px; padding: 2px 0 6px; }
+  .axis { margin-left: 264px; }
+  .tick:not(:nth-child(3n + 1)) { display: block; }
+  .lane {
+    grid-template-columns: 240px 1fr;
+    align-items: center;
+    column-gap: 24px;
+  }
+  .stops { grid-column: 1 / -1; }
+  .lane-head { flex-direction: column; align-items: flex-start; gap: 0; }
+}
