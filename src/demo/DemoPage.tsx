@@ -19,7 +19,7 @@ export function DemoPage() {
   const day = days.find((d) => d.day === picked)?.day ?? days[0]?.day
 
   return (
-    <main className="page">
+    <div className="page">
       <header className="top">
         <div>
           <h1>AC Service Scheduler</h1>
@@ -85,6 +85,6 @@ export function DemoPage() {
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={toggleTechnician} />
         </>
       )}
-    </main>
+    </div>
   )
 }
