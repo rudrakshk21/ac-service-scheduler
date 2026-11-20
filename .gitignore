@@ -31,3 +31,6 @@ dist-ssr
 
 # Test coverage reports
 coverage
+
+# Local tool settings
+.claude
