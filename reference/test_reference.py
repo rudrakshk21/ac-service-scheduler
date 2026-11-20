@@ -38,7 +38,7 @@ class LegacyGoldens(unittest.TestCase):
 
     def test_the_sixteen_original_files_are_byte_for_byte_unchanged(self):
         text = (export_golden.GOLDEN_DIR / "LEGACY.sha256").read_text(encoding="utf-8")
-        entries = [line.split("  ") for line in text.split("\n") if line.strip()]
+        entries = [line.strip().split("  ") for line in text.splitlines() if line.strip()]
         self.assertEqual(sorted(name[:-5] for _, name in entries), sorted(scenarios.SCENARIOS))
         for digest, name in entries:
             data = (export_golden.GOLDEN_DIR / name).read_bytes()
