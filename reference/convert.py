@@ -38,13 +38,14 @@ def day_date(n):
 
 
 def to_python(inp):
-    """Builds the Python Engine for a PlanInput dict. The reference knows only three work types
-    (required skill = work type), a Sunday rest day and a base start for every route."""
+    """Builds the Python Engine for a PlanInput dict. The reference knows only Sunday as a rest day and a
+    base start for every route (until the start and end place slice)."""
     s = inp["settings"]
     assert set(s["restWeekdays"]) <= {6}, "the Python reference only knows Sunday as a rest day"
-    assert [w["requiredSkill"] for w in inp["workTypes"]] == [0, 1, 2], "the Python reference has exactly 3 work types"
     assert all("startPlace" not in t for t in inp["technicians"]), "the Python reference starts every route at the base"
+    n_skills = 1 + max([w["requiredSkill"] for w in inp["workTypes"]] + [k for t in inp["technicians"] for k in t["skills"]])
     cfg = engine.Cfg(
+        cat_names=[w["name"] for w in inp["workTypes"]], req_skill=[w["requiredSkill"] for w in inp["workTypes"]],
         store_lat=s["baseLat"], store_lon=s["baseLon"], speed=s["speedKmh"], road_factor=s["roadFactor"],
         hop_min=s["sameAreaHopMin"], usable_min=s["usableMin"], age_w=s["ageWeight"], bal_w=s["balanceWeight"],
         max_km=s["maxKm"], start_min=s["dayStartMin"], lunch_min=s["lunchStartMin"], break_min=s["breakMin"],
@@ -63,7 +64,7 @@ def to_python(inp):
     ]
     techs = [
         engine.TechIn(
-            name=t["name"], skill=[i in t["skills"] for i in range(3)], active=t["active"],
+            name=t["name"], skill=[i in t["skills"] for i in range(n_skills)], active=t["active"],
             leave_from=day_date(t["leaveFrom"]) if "leaveFrom" in t else None,
             leave_to=day_date(t["leaveTo"]) if "leaveTo" in t else None,
         )

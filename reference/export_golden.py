@@ -10,6 +10,7 @@ sys.path.insert(0, str(HERE))
 import convert  # noqa: E402
 from convert import engine, from_python, to_python  # noqa: E402
 from scenarios import SCENARIOS, START  # noqa: E402
+from scenarios_step2 import STEP2  # noqa: E402
 
 GOLDEN_DIR = HERE / "golden"
 
@@ -92,7 +93,22 @@ def check_large(inp, out, calls):
     assert len(_scheduled(out)) > 150, "too few cases scheduled"
 
 
+def check_five(inp, out, calls):
+    ids = {s["id"] for s in _scheduled(out)}
+    kinds = {c["workType"] for c in inp["cases"] if c["id"] in ids}
+    assert kinds == {0, 1, 2, 3, 4}, "not every work type was scheduled: %s" % sorted(kinds)
+
+
+def check_skills_not_position(inp, out, calls):
+    need = {i: w["requiredSkill"] for i, w in enumerate(inp["workTypes"])}
+    cases = {c["id"]: c for c in inp["cases"]}
+    for s in _scheduled(out):
+        assert need[cases[s["id"]]["workType"]] in inp["technicians"][s["tech"]]["skills"], "wrong skill for " + s["id"]
+    assert len(_scheduled(out)) > 40, "too few cases scheduled"
+
+
 CHECKS = {
+    "five_work_types": check_five, "skills_not_position": check_skills_not_position,
     "long_routes": check_long_routes, "pins": check_pins, "frozen": check_frozen, "overload_pin": check_overload,
     "unscheduled_reasons": check_unscheduled, "half_minutes": check_half, "escalated_many": check_escalated,
     "holiday": check_holiday, "sunday_work": check_sunday_work, "three_techs_default": check_sunday_rest,
@@ -103,7 +119,7 @@ CHECKS = {
 def build_all():
     """Runs every scenario and its self-check. Returns [(name, payload)]."""
     built = []
-    for name, build in SCENARIOS.items():
+    for name, build in list(SCENARIOS.items()) + list(STEP2.items()):
         inp = build()
         result, calls = run_scenario(inp)
         check = CHECKS.get(name)

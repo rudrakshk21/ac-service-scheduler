@@ -17,6 +17,10 @@ ONE CHANGE from the project engine (AC_Scheduler_Python/ac_scheduler/engine.py):
 9 decimals by snap(). The maths library differs in the last digit between operating systems, and an exact tie
 between two stop orders was decided by that noise, so the same input gave different plans on Windows and
 Linux. With snap() every machine sees the same numbers. All other code is unchanged.
+
+STEP 2 (generalisation, docs/superpowers/specs/2026-11-20-engine-step-2-design.md): work types and skills as free
+lists, a start and an end place per technician, working hours per technician, priority levels, soft due dates and
+visit time by product. Every new field is optional; for an input that uses none of them the plan is identical.
 """
 from __future__ import annotations
 
@@ -48,6 +52,8 @@ class Cfg:
     sundays: bool = False
     start: dt.date = field(default_factory=dt.date.today)
     holidays: set = field(default_factory=set)
+    cat_names: list = field(default_factory=lambda: list(CAT_NAMES))
+    req_skill: list = field(default_factory=lambda: [0, 1, 2])
 
 
 @dataclass
@@ -263,7 +269,9 @@ class Engine:
         self.recalc(r)
 
     def can_do(self, t, c):
-        return self.techs[t].skill[self.cases[c].cat]
+        need = self.C.req_skill[self.cases[c].cat]
+        have = self.techs[t].skill
+        return need < len(have) and have[need]
 
     # ---- planning ----
     def plan(self) -> Result:
@@ -415,7 +423,7 @@ class Engine:
                     detour = self.tm[pn][self.node(c)] + self.tm[self.node(c)][nxt] - self.tm[pn][nxt]
                     if c not in res.why:
                         res.why[c] = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
-                            self.techs[t].name, CAT_NAMES[self.cases[c].cat],
+                            self.techs[t].name, C.cat_names[self.cases[c].cat],
                             "no extra travel" if detour < 1 else "adds %d min detour" % int(round(detour)),
                             len(r.stops), "s" if len(r.stops) > 1 else "", self.zone[self.cases[c].area])
         for day in res.days:
