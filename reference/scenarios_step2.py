@@ -32,4 +32,34 @@ def skills_not_position():
     return inp
 
 
-STEP2 = {f.__name__: f for f in (five_work_types, skills_not_position)}
+def home_and_depot():
+    inp = base(23, 60, 9, 12)
+    for i in (0, 1, 2, 3):
+        inp["technicians"][i]["startPlace"] = i
+    for i in (2, 3, 4):
+        inp["technicians"][i]["endPlace"] = (i + 5) % 12
+    return inp
+
+
+def home_to_home():
+    inp = base(24, 50, 6, 8)
+    for i, t in enumerate(inp["technicians"]):
+        t["startPlace"] = i
+        t["endPlace"] = i
+    return inp
+
+
+def long_routes_with_ends():
+    inp = base(25, 45, 3, 3)
+    for w in inp["workTypes"]:
+        w["serviceMin"] = 10.0
+        w["dailyCeiling"] = 40.0
+    for t in inp["technicians"]:
+        t["startPlace"] = 0
+        t["endPlace"] = 1
+    return inp
+
+
+STEP2 = {f.__name__: f for f in (
+    five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
+)}

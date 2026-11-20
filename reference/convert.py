@@ -38,11 +38,9 @@ def day_date(n):
 
 
 def to_python(inp):
-    """Builds the Python Engine for a PlanInput dict. The reference knows only Sunday as a rest day and a
-    base start for every route (until the start and end place slice)."""
+    """Builds the Python Engine for a PlanInput dict. The reference knows only Sunday as a rest day."""
     s = inp["settings"]
     assert set(s["restWeekdays"]) <= {6}, "the Python reference only knows Sunday as a rest day"
-    assert all("startPlace" not in t for t in inp["technicians"]), "the Python reference starts every route at the base"
     n_skills = 1 + max([w["requiredSkill"] for w in inp["workTypes"]] + [k for t in inp["technicians"] for k in t["skills"]])
     cfg = engine.Cfg(
         cat_names=[w["name"] for w in inp["workTypes"]], req_skill=[w["requiredSkill"] for w in inp["workTypes"]],
@@ -67,6 +65,7 @@ def to_python(inp):
             name=t["name"], skill=[i in t["skills"] for i in range(n_skills)], active=t["active"],
             leave_from=day_date(t["leaveFrom"]) if "leaveFrom" in t else None,
             leave_to=day_date(t["leaveTo"]) if "leaveTo" in t else None,
+            start_area=t.get("startPlace", -1), end_area=t.get("endPlace", -1),
         )
         for t in inp["technicians"]
     ]

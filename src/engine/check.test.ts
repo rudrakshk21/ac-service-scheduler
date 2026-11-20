@@ -34,6 +34,8 @@ describe('checkInput', () => {
     ['pinned technician out of range', (i) => { i.cases[0].pinnedTech = 4 }, 'cases[0].pinnedTech must be at most 0'],
     ['negative skill', (i) => { i.technicians[0].skills = [-1] }, 'technicians[0].skills[0] must be at least 0'],
     ['non-boolean active flag', (i) => { (i.technicians[0] as unknown as { active: unknown }).active = 'yes' }, 'technicians[0].active must be true or false'],
+    ['start place out of range', (i) => { i.technicians[0].startPlace = 2 }, 'technicians[0].startPlace must be at most 0'],
+    ['end place out of range', (i) => { i.technicians[0].endPlace = 3 }, 'technicians[0].endPlace must be at most 0'],
   ]
   it.each(cases)('rejects %s', (_label, mutate, message) => {
     const input = valid()

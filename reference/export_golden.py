@@ -107,7 +107,23 @@ def check_skills_not_position(inp, out, calls):
     assert len(_scheduled(out)) > 40, "too few cases scheduled"
 
 
+def check_ends(inp, out, calls):
+    moved = {i for i, t in enumerate(inp["technicians"]) if t.get("startPlace", -1) != t.get("endPlace", -1)}
+    assert any(s["tech"] in moved for s in _scheduled(out)), "no technician with different start and end was used"
+
+
+def check_home_to_home(inp, out, calls):
+    assert len(_scheduled(out)) > 30, "too few cases scheduled"
+    firsts = [s for s in _scheduled(out) if s["visit"] == 1]
+    assert any(s["prevKm"] == 0.0 for s in firsts), "no first stop sits at the technician's own start place"
+
+
+def check_long_ends(inp, out, calls):
+    assert max(len(r["stops"]) for r in out["routes"]) > 10, "no route has more than 10 stops"
+
+
 CHECKS = {
+    "home_and_depot": check_ends, "home_to_home": check_home_to_home, "long_routes_with_ends": check_long_ends,
     "five_work_types": check_five, "skills_not_position": check_skills_not_position,
     "long_routes": check_long_routes, "pins": check_pins, "frozen": check_frozen, "overload_pin": check_overload,
     "unscheduled_reasons": check_unscheduled, "half_minutes": check_half, "escalated_many": check_escalated,

@@ -32,8 +32,10 @@ export interface Technician {
   active: boolean
   leaveFrom?: number
   leaveTo?: number
-  /** Step 2. Ignored in step 1: every route starts and ends at the base. */
+  /** Place the day starts at (index into `places`). Absent: the base. */
   startPlace?: number
+  /** Place the day ends at (index into `places`). Absent: the base. */
+  endPlace?: number
 }
 
 export interface Place {

@@ -76,18 +76,22 @@ class TechIn:
     active: bool = True
     leave_from: dt.date | None = None
     leave_to: dt.date | None = None
+    start_area: int = -1         # area the day starts at, -1 = the base
+    end_area: int = -1           # area the day ends at, -1 = the base
 
 
 class Route:
-    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver")
+    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver", "s", "e")
 
-    def __init__(self):
+    def __init__(self, s=0, e=0):
         self.stops: list[int] = []
         self.travel = 0.0
         self.service = 0.0
         self.frac = 0.0
         self.pinned = False
         self.ver = 0
+        self.s = s               # node the route starts at (0 = base)
+        self.e = e               # node the route ends at (0 = base)
 
 
 class Result:
@@ -156,15 +160,19 @@ class Engine:
     def node(self, c):
         return self.cases[c].area + 1
 
-    def travel_of(self, stops):
+    def new_route(self, t):
+        T = self.techs[t]
+        return Route(0 if T.start_area < 0 else T.start_area + 1, 0 if T.end_area < 0 else T.end_area + 1)
+
+    def travel_of(self, stops, s=0, e=0):
         if not stops:
             return 0.0
-        t, prev = 0.0, 0
+        t, prev = 0.0, s
         for c in stops:
             nd = self.node(c)
             t += self.tm[prev][nd]
             prev = nd
-        return t + self.tm[prev][0]
+        return t + self.tm[prev][e]
 
     def is_workday(self, d):
         if d.weekday() == 6 and not self.C.sundays:
@@ -180,11 +188,14 @@ class Engine:
         return True
 
     def best_insert(self, r: Route, c):
-        delta, pos, n, cn = float("inf"), 0, len(r.stops), self.node(c)
-        tm = self.tm
+        n, cn, tm = len(r.stops), self.node(c), self.tm
+        if n == 0:
+            # an empty route costs the whole trip (start, stop, end), not only a detour
+            return tm[r.s][cn] + tm[cn][r.e], 0
+        delta, pos = float("inf"), 0
         for p in range(n + 1):
-            prev = 0 if p == 0 else self.node(r.stops[p - 1])
-            nxt = 0 if p == n else self.node(r.stops[p])
+            prev = r.s if p == 0 else self.node(r.stops[p - 1])
+            nxt = r.e if p == n else self.node(r.stops[p])
             d = tm[prev][cn] + tm[cn][nxt] - tm[prev][nxt]
             if d < delta:
                 delta, pos = d, p
@@ -200,7 +211,7 @@ class Engine:
 
     def recalc(self, r: Route):
         r.ver += 1
-        r.travel = self.travel_of(r.stops)
+        r.travel = self.travel_of(r.stops, r.s, r.e)
         r.service = 0.0
         r.frac = 0.0
         for c in r.stops:
@@ -221,7 +232,7 @@ class Engine:
             dp = [[inf] * n for _ in range(full)]
             par = [[-1] * n for _ in range(full)]
             for j in range(n):
-                dp[1 << j][j] = tm[0][nodes[j]]
+                dp[1 << j][j] = tm[r.s][nodes[j]]
             for m in range(1, full):
                 row = dp[m]
                 for j in range(n):
@@ -238,7 +249,7 @@ class Engine:
                             par[nm][k] = j
             best, bj = inf, 0
             for j in range(n):
-                v = dp[full - 1][j] + tm[nodes[j]][0]
+                v = dp[full - 1][j] + tm[nodes[j]][r.e]
                 if v < best:
                     best, bj = v, j
             seq, mask, cur = [], full - 1, bj
@@ -254,14 +265,14 @@ class Engine:
             while imp and guard < 200:
                 guard += 1
                 imp = False
-                cur = self.travel_of(r.stops)
+                cur = self.travel_of(r.stops, r.s, r.e)
                 for i in range(n - 1):
                     if imp:
                         break
                     for j in range(i + 1, n):
                         t = list(r.stops)
                         t[i:j + 1] = reversed(t[i:j + 1])
-                        v = self.travel_of(t)
+                        v = self.travel_of(t, r.s, r.e)
                         if v < cur - 1e-6:
                             r.stops = t
                             imp = True
@@ -296,7 +307,7 @@ class Engine:
                 day += dt.timedelta(days=1)
                 continue
             worked += 1
-            routes: dict[int, Route] = {t: Route() for t in range(len(self.techs)) if self.available(t, day)}
+            routes: dict[int, Route] = {t: self.new_route(t) for t in range(len(self.techs)) if self.available(t, day)}
             pool = [c for c in left if not (self.cases[c].man_date and self.cases[c].man_date > day)]
             for c in list(pool):
                 cs = self.cases[c]
@@ -379,7 +390,7 @@ class Engine:
                     continue
                 for c in r.stops:
                     without = [x for x in r.stops if x != c]
-                    saved = r.travel - self.travel_of(without)
+                    saved = r.travel - self.travel_of(without, r.s, r.e)
                     for t in eligible[c]:
                         if t == k or t not in routes or routes[t].pinned:
                             continue
@@ -403,12 +414,12 @@ class Engine:
         for day in res.days:
             for t, r in res.routes[day].items():
                 self.recalc(r)
-                clock, brk, prev = C.start_min, False, 0
+                clock, brk, prev = C.start_min, False, r.s
                 if r.travel + r.service > C.usable_min + 1e-6:
                     for c in r.stops:
                         res.flag[c] = "OVER CAPACITY"
                 for i, c in enumerate(r.stops):
-                    nxt = self.node(r.stops[i + 1]) if i + 1 < len(r.stops) else 0
+                    nxt = self.node(r.stops[i + 1]) if i + 1 < len(r.stops) else r.e
                     tmin = self.tm[prev][self.node(c)]
                     clock += tmin
                     if not brk and clock >= C.lunch_min:
@@ -419,7 +430,7 @@ class Engine:
                     res.visit[c] = i + 1
                     clock += C.svc_min[self.cases[c].cat]
                     prev = self.node(c)
-                    pn = 0 if i == 0 else self.node(r.stops[i - 1])
+                    pn = r.s if i == 0 else self.node(r.stops[i - 1])
                     detour = self.tm[pn][self.node(c)] + self.tm[self.node(c)][nxt] - self.tm[pn][nxt]
                     if c not in res.why:
                         res.why[c] = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
@@ -428,7 +439,7 @@ class Engine:
                             len(r.stops), "s" if len(r.stops) > 1 else "", self.zone[self.cases[c].area])
         for day in res.days:
             for t, r in res.routes[day].items():
-                prev_area = -1
+                prev_area = r.s - 1
                 for c in r.stops:
                     a = self.cases[c].area
                     if prev_area < 0:

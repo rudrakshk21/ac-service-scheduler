@@ -1,6 +1,12 @@
 import { buildGeo, type Geo } from './geo'
 import type { CaseIn, PlanInput, Place, Settings, Technician, WorkType } from './types'
 
+/** What is resolved once per technician: where the day starts and ends (nodes of the travel table, 0 = base). */
+export interface TechPlan {
+  startNode: number
+  endNode: number
+}
+
 /** The input plus everything computed once per plan. */
 export interface Ctx {
   s: Settings
@@ -11,6 +17,8 @@ export interface Ctx {
   geo: Geo
   /** Node of each case in the travel table: its place index + 1 (node 0 is the base). */
   caseNode: number[]
+  /** Per technician, in input order. */
+  techPlan: TechPlan[]
 }
 
 export function buildContext(input: PlanInput): Ctx {
@@ -22,5 +30,9 @@ export function buildContext(input: PlanInput): Ctx {
     cases: input.cases,
     geo: buildGeo(input.settings, input.places),
     caseNode: input.cases.map((c) => c.place + 1),
+    techPlan: input.technicians.map((t) => ({
+      startNode: t.startPlace === undefined ? 0 : t.startPlace + 1,
+      endNode: t.endPlace === undefined ? 0 : t.endPlace + 1,
+    })),
   }
 }

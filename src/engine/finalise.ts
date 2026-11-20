@@ -13,14 +13,14 @@ export function finalise(ctx: Ctx, res: RawResult): void {
       recalc(ctx, r)
       let clock = s.dayStartMin
       let brk = false
-      let prev = 0
+      let prev = r.startNode
       if (r.travel + r.service > s.usableMin + 1e-6) {
         for (const c of r.stops) res.flag.set(c, 'OVER CAPACITY')
       }
       for (let i = 0; i < r.stops.length; i++) {
         const c = r.stops[i]
         const node = ctx.caseNode[c]
-        const nxt = i + 1 < r.stops.length ? ctx.caseNode[r.stops[i + 1]] : 0
+        const nxt = i + 1 < r.stops.length ? ctx.caseNode[r.stops[i + 1]] : r.endNode
         const tmin = tm[prev][node]
         clock += tmin
         if (!brk && clock >= s.lunchStartMin) {
@@ -33,7 +33,7 @@ export function finalise(ctx: Ctx, res: RawResult): void {
         const wt = ctx.workTypes[ctx.cases[c].workType]
         clock += wt.serviceMin
         prev = node
-        const pn = i === 0 ? 0 : ctx.caseNode[r.stops[i - 1]]
+        const pn = i === 0 ? r.startNode : ctx.caseNode[r.stops[i - 1]]
         const detour = tm[pn][node] + tm[node][nxt] - tm[pn][nxt]
         if (!res.why.has(c)) {
           const extra = detour < 1 ? 'no extra travel' : `adds ${pyInt(pyRound(detour))} min detour`
@@ -48,7 +48,7 @@ export function finalise(ctx: Ctx, res: RawResult): void {
   }
   for (const day of res.days) {
     for (const r of res.routes.get(day)?.values() ?? []) {
-      let prevPlace = -1
+      let prevPlace = r.startNode - 1
       for (const c of r.stops) {
         const a = ctx.cases[c].place
         let km: number

@@ -74,6 +74,7 @@ export function checkInput(input: PlanInput): void {
     if (t.leaveFrom !== undefined) needInt(`technicians[${i}].leaveFrom`, t.leaveFrom, -1_000_000)
     if (t.leaveTo !== undefined) needInt(`technicians[${i}].leaveTo`, t.leaveTo, -1_000_000)
     if (t.startPlace !== undefined) needInt(`technicians[${i}].startPlace`, t.startPlace, 0, input.places.length - 1)
+    if (t.endPlace !== undefined) needInt(`technicians[${i}].endPlace`, t.endPlace, 0, input.places.length - 1)
   })
 
   const seen = new Set<string>()

@@ -76,7 +76,7 @@ function relocate(ctx: Ctx, routes: Map<number, Route>, eligible: Map<number, nu
       if (r.pinned) continue
       for (const c of r.stops) {
         const without = r.stops.filter((x) => x !== c)
-        const saved = r.travel - travelOf(ctx, without)
+        const saved = r.travel - travelOf(ctx, without, r.startNode, r.endNode)
         for (const t of eligible.get(c) ?? []) {
           const target = routes.get(t)
           if (t === k || target === undefined || target.pinned) continue
@@ -143,7 +143,10 @@ export function runPlan(ctx: Ctx): RawResult {
     worked += 1
     const routes = new Map<number, Route>()
     for (let t = 0; t < technicians.length; t++) {
-      if (isAvailable(technicians[t], day)) routes.set(t, new Route())
+      if (isAvailable(technicians[t], day)) {
+        const tp = ctx.techPlan[t]
+        routes.set(t, new Route(tp.startNode, tp.endNode))
+      }
     }
     const pool = left.filter((c) => {
       const md = cases[c].earliestDay
