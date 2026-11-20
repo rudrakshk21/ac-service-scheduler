@@ -61,6 +61,34 @@ export function guessKind(table: SourceTable, site: SiteProfile): Kind {
   return best
 }
 
+const DELIMITER_NAMES: Record<string, string> = { ',': 'comma', ';': 'semicolon', '	': 'tab', '|': 'bar' }
+const ENCODING_NAMES: Record<string, string> = {
+  'utf-8': 'UTF-8', 'utf-16le': 'UTF-16', 'utf-16be': 'UTF-16', 'windows-1252': 'Windows-1252 (Western European)',
+}
+
+/** One plain sentence about what was found in a file: format, encoding, delimiter, header row, row count. */
+export function describeTable(t: SourceTable): string {
+  const rows = `${t.rows.length} ${t.rows.length === 1 ? 'row' : 'rows'}`
+  if (t.format === 'xlsx') return `Excel sheet "${t.sheet}", header on row ${t.headerRow + 1}, ${rows}`
+  if (t.format === 'json') return `JSON, ${rows}`
+  const enc = ENCODING_NAMES[t.detected.encoding] ?? t.detected.encoding
+  const delimiter = t.detected.delimiter === null ? '' : `${DELIMITER_NAMES[t.detected.delimiter] ?? t.detected.delimiter}-separated, `
+  return `${enc}, ${delimiter}header on row ${t.headerRow + 1}, ${rows}`
+}
+
+/** The two ways a date such as 04/05/2026 can be read, written out so the user can pick one. */
+export function dateReadings(value: string): { dmy: string; mdy: string } | null {
+  const parts = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})/.exec(value.trim())
+  if (parts === null) return null
+  const a = Number(parts[1])
+  const b = Number(parts[2])
+  const y = parts[3].length === 2 ? 2000 + Number(parts[3]) : Number(parts[3])
+  if (a > 12 || b > 12 || a === 0 || b === 0) return null
+  const show = (month: number, day: number): string =>
+    new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, month - 1, day)))
+  return { dmy: show(b, a), mdy: show(a, b) }
+}
+
 const text = (c: Cell): string | null => (c === null ? null : c instanceof Date ? c.toISOString().slice(0, 10) : String(c))
 
 export function sampleValues(table: SourceTable, header: string, n = 3): string[] {
@@ -227,7 +255,7 @@ export interface FlowState {
 
 export type FlowAction =
   | { type: 'file'; table: SourceTable; fileName: string; kind: Kind; result: SuggestResult; known: MappingProfile | null }
-  | { type: 'kind'; kind: Kind; result: SuggestResult }
+  | { type: 'kind'; kind: Kind; result: SuggestResult; known?: MappingProfile | null }
   | { type: 'columns'; field: string; headers: string[] }
   | { type: 'singleWorkType'; name: string | null }
   | { type: 'dateOrder'; order: 'dmy' | 'mdy' | 'ymd' }
@@ -252,7 +280,7 @@ export function flowReducer(s: FlowState, a: FlowAction): FlowState {
         profile: a.known ?? a.result.profile, knownProfile: a.known !== null,
       }
     case 'kind':
-      return { ...s, kind: a.kind, result: a.result, profile: a.result.profile, knownProfile: false, error: null }
+      return { ...s, kind: a.kind, result: a.result, profile: a.known ?? a.result.profile, knownProfile: (a.known ?? null) !== null, error: null }
     case 'columns':
       return withProfile((p) => setColumns(p, a.field, a.headers))
     case 'singleWorkType':

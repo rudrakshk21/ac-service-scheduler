@@ -1,0 +1,143 @@
+/* The guided import. Numbers appear only here, because the four steps really are a sequence. */
+.steps {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 4px;
+  overflow-x: auto;
+}
+
+.steps li {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.steps li[aria-current='step'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.steps .n {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.steps li.done .n { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+/* On a phone only the current step keeps its name, so all four fit. */
+@media (max-width: 520px) {
+  .steps li { padding: 0 8px; }
+  .steps li:not([aria-current='step']) .lbl { display: none; }
+}
+
+.step-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.step-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.step-nav .why { flex: 1 1 100%; order: -1; color: var(--ink-soft); }
+
+/* File step */
+.drop {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  place-items: center;
+  padding: 32px 16px;
+  border: 2px dashed var(--line);
+  border-radius: 14px;
+  text-align: center;
+  background: var(--surface);
+}
+
+.drop:hover, .drop.over { border-color: var(--accent); }
+.drop:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.drop strong { font-size: 1.0625rem; }
+
+.drop input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.kinds { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; }
+.kinds legend { font-weight: 600; padding: 0; margin-bottom: 4px; }
+.kinds label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.kinds input { width: 20px; height: 20px; }
+
+.scroll-x { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.preview { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+.preview th, .preview td { padding: 6px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.preview th { background: var(--paper); font-weight: 600; }
+.preview tr:last-child td { border-bottom: 0; }
+
+details.options summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+details.options .grid { display: grid; gap: 12px; padding-top: 8px; }
+
+/* Columns and values */
+.fieldrow { display: grid; gap: 8px; }
+.fieldrow-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.fieldrow .samples { color: var(--ink-soft); font-size: 0.875rem; overflow-wrap: anywhere; }
+.group-title { font-size: 1rem; font-weight: 700; margin-top: 8px; }
+
+.valuerow { display: grid; gap: 8px; }
+.valuerow.open { border-left: 4px solid var(--warn); }
+.valuerow .source { font-weight: 600; overflow-wrap: anywhere; }
+
+@media (min-width: 760px) {
+  .fieldrow { grid-template-columns: 1fr 1fr; align-items: start; column-gap: 24px; }
+  .fieldrow .full { grid-column: 1 / -1; }
+  .valuerow { grid-template-columns: 1fr 14ch 1fr; align-items: center; column-gap: 16px; }
+}
+
+/* Check step */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.fact { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.fact b { display: block; font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: minmax(7rem, 11rem) 1fr 4ch; gap: 10px; align-items: center; font-size: 0.9375rem; }
+.bar .track { display: block; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.bar .fill { display: block; height: 100%; background: var(--ok); }
+.bar .pct { text-align: right; font-variant-numeric: tabular-nums; }
+
+.issues { display: grid; gap: 6px; }
+.issues li { padding: 8px 12px; border-left: 4px solid var(--warn); background: var(--surface); overflow-wrap: anywhere; }
+
+.done-box { display: grid; gap: 12px; padding: 20px; border: 1px solid var(--ok); border-radius: 14px; background: var(--surface); }

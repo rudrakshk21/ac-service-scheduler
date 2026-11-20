@@ -5,7 +5,7 @@ import { suggestProfile } from '../../intake/map/suggest'
 import { buildTable, type Cell, type SourceTable } from '../../intake/read/table'
 import { starterSite } from '../../intake/site/starter'
 import {
-  canContinue, fieldRows, flowReducer, guessKind, initialFlow, labelOf, levelOf, sampleValues, setColumns, setValue, valueFields,
+  canContinue, dateReadings, describeTable, fieldRows, flowReducer, guessKind, initialFlow, labelOf, levelOf, sampleValues, setColumns, setValue, valueFields,
   valueOptions, valueRows, type FlowState,
 } from './importFlow'
 
@@ -224,5 +224,38 @@ describe('flowReducer', () => {
     expect(flowReducer(initialFlow, { type: 'next' })).toBe(initialFlow)
     expect(flowReducer(initialFlow, { type: 'back' })).toBe(initialFlow)
     expect(flowReducer(initialFlow, { type: 'columns', field: 'a', headers: ['b'] })).toBe(initialFlow)
+  })
+})
+
+describe('describeTable', () => {
+  it('says what was found in plain words', () => {
+    expect(describeTable(CASES)).toBe('UTF-8, comma-separated, header on row 1, 4 rows')
+    const euro = buildTable([['Id', 'Ort'], ['1', 'Köln']], { format: 'csv', fileName: 'f.csv', sheets: [], sheet: '', encoding: 'windows-1252', encodingConfident: false, delimiter: ';', delimiterConfident: true })
+    expect(describeTable(euro)).toBe('Windows-1252 (Western European), semicolon-separated, header on row 1, 1 row')
+    const xl = buildTable([['Id'], ['1']], { format: 'xlsx', fileName: 'f.xlsx', sheets: ['A', 'Data'], sheet: 'Data', encoding: 'xlsx', encodingConfident: true, delimiter: null, delimiterConfident: true })
+    expect(describeTable(xl)).toBe('Excel sheet "Data", header on row 1, 1 row')
+    const js = buildTable([['id'], ['1'], ['2']], { format: 'json', fileName: 'f.json', sheets: [], sheet: '', encoding: 'utf-8', encodingConfident: true, delimiter: null, delimiterConfident: true })
+    expect(describeTable(js)).toBe('JSON, 2 rows')
+  })
+})
+
+describe('dateReadings', () => {
+  it('writes out both readings of an ambiguous date', () => {
+    expect(dateReadings('04/05/2026')).toEqual({ dmy: '4 May 2026', mdy: '5 April 2026' })
+    expect(dateReadings('06.07.26')).toEqual({ dmy: '6 July 2026', mdy: '7 June 2026' })
+  })
+  it('gives nothing when the date is not ambiguous or not numeric', () => {
+    for (const v of ['13/05/2026', '05/13/2026', '2026-05-04', 'May 4', '', '00/05/2026']) expect(dateReadings(v)).toBeNull()
+  })
+})
+
+describe('kind change with a saved mapping', () => {
+  it('uses the saved mapping for the new kind when there is one', () => {
+    const s = flowReducer(initialFlow, { type: 'file', table: CASES, fileName: 'f.csv', kind: 'cases', result: suggestProfile(CASES, 'cases', site), known: null })
+    const t = suggestProfile(CASES, 'technicians', site)
+    const known = { ...blank('technicians'), name: 'saved' }
+    const next = flowReducer(s, { type: 'kind', kind: 'technicians', result: t, known })
+    expect(next.knownProfile).toBe(true)
+    expect(next.profile).toBe(known)
   })
 })
