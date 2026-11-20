@@ -1,3 +1,9 @@
+/** A named priority level. A higher weight is planned earlier (it is added to the case's bonus). */
+export interface PriorityLevel {
+  name: string
+  weight: number
+}
+
 /** Planning settings. Times are minutes, distances kilometres, dates whole day numbers since 1970-01-01. */
 export interface Settings {
   baseLat: number
@@ -17,6 +23,8 @@ export interface Settings {
   restWeekdays: number[]
   holidays: number[]
   startDay: number
+  /** Priority levels, lowest first. Absent: Normal (weight 0) and Escalated (weight 100000). */
+  priorityLevels?: PriorityLevel[]
 }
 
 export interface WorkType {
@@ -53,7 +61,10 @@ export interface CaseIn {
   id: string
   workType: number
   place: number
-  escalated: boolean
+  /** Shorthand for the last priority level. Absent: false. Ignored when `priority` is given. */
+  escalated?: boolean
+  /** Index into the priority levels. Absent: the last level when `escalated`, otherwise level 0. */
+  priority?: number
   reportedDay: number
   /** Manual technician: index into `technicians`. */
   pinnedTech?: number

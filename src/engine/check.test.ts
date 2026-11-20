@@ -40,6 +40,11 @@ describe('checkInput', () => {
     ['negative own day start', (i) => { i.technicians[0].dayStartMin = -1 }, 'technicians[0].dayStartMin must be at least 0'],
     ['negative own lunch start', (i) => { i.technicians[0].lunchStartMin = -1 }, 'technicians[0].lunchStartMin must be at least 0'],
     ['negative own break', (i) => { i.technicians[0].breakMin = -1 }, 'technicians[0].breakMin must be at least 0'],
+    ['priority level that does not exist', (i) => { i.cases[0].priority = 5 }, 'cases[0].priority is 5 but only 2 priority levels exist'],
+    ['negative priority', (i) => { i.cases[0].priority = -1 }, 'cases[0].priority must be at least 0'],
+    ['no priority levels', (i) => { i.settings.priorityLevels = [] }, 'settings.priorityLevels must list at least one level'],
+    ['priority level without a name', (i) => { i.settings.priorityLevels = [{ name: '', weight: 0 }] }, 'settings.priorityLevels[0].name must be text'],
+    ['negative priority weight', (i) => { i.settings.priorityLevels = [{ name: 'A', weight: -1 }] }, 'settings.priorityLevels[0].weight must be at least 0'],
   ]
   it.each(cases)('rejects %s', (_label, mutate, message) => {
     const input = valid()

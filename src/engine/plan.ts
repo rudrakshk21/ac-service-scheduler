@@ -33,7 +33,7 @@ function greedy(
     for (const c of pool) {
       const cs = ctx.cases[c]
       const age = Math.min(90.0, Math.max(0.0, day - cs.reportedDay))
-      const bonus = age * ctx.s.ageWeight + (cs.escalated ? 100000.0 : 0.0)
+      const bonus = age * ctx.s.ageWeight + ctx.caseWeight[c]
       for (const t of eligible.get(c) ?? []) {
         const r = routes.get(t)
         if (r === undefined) continue

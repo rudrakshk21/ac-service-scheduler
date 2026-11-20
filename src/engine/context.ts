@@ -1,5 +1,11 @@
 import { buildGeo, type Geo } from './geo'
-import type { CaseIn, PlanInput, Place, Settings, Technician, WorkType } from './types'
+import type { CaseIn, PlanInput, Place, PriorityLevel, Settings, Technician, WorkType } from './types'
+
+/** The two levels of step 1: a normal case and an escalated one (a huge bonus, so it is planned first). */
+export const DEFAULT_LEVELS: PriorityLevel[] = [
+  { name: 'Normal', weight: 0 },
+  { name: 'Escalated', weight: 100000 },
+]
 
 /** What is resolved once per technician: where the day starts and ends (nodes of the travel table, 0 = base)
  *  and the working hours (own value, else the shared setting). */
@@ -24,10 +30,14 @@ export interface Ctx {
   caseNode: number[]
   /** Per technician, in input order. */
   techPlan: TechPlan[]
+  levels: PriorityLevel[]
+  /** Priority bonus of each case (the weight of its level). */
+  caseWeight: number[]
 }
 
 export function buildContext(input: PlanInput): Ctx {
   const s = input.settings
+  const levels = s.priorityLevels ?? DEFAULT_LEVELS
   return {
     s,
     workTypes: input.workTypes,
@@ -44,5 +54,7 @@ export function buildContext(input: PlanInput): Ctx {
       lunchStartMin: t.lunchStartMin ?? s.lunchStartMin,
       breakMin: t.breakMin ?? s.breakMin,
     })),
+    levels,
+    caseWeight: input.cases.map((c) => levels[c.priority ?? (c.escalated === true ? levels.length - 1 : 0)].weight),
   }
 }

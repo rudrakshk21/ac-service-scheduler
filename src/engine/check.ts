@@ -53,6 +53,13 @@ export function checkInput(input: PlanInput): void {
   s.restWeekdays.forEach((d, i) => needInt(`settings.restWeekdays[${i}]`, d, 0, 6))
   s.holidays.forEach((d, i) => needInt(`settings.holidays[${i}]`, d, -1_000_000))
 
+  const levels = s.priorityLevels ?? [{ name: 'Normal', weight: 0 }, { name: 'Escalated', weight: 100000 }]
+  if (levels.length === 0) fail('settings.priorityLevels', 'must list at least one level')
+  levels.forEach((l, i) => {
+    needText(`settings.priorityLevels[${i}].name`, l.name)
+    needNum(`settings.priorityLevels[${i}].weight`, l.weight, 0)
+  })
+
   if (input.workTypes.length === 0) fail('workTypes', 'must list at least one work type')
   input.workTypes.forEach((w, i) => {
     needText(`workTypes[${i}].name`, w.name)
@@ -92,7 +99,13 @@ export function checkInput(input: PlanInput): void {
     seen.add(c.id)
     needInt(`cases[${i}].workType`, c.workType, 0, input.workTypes.length - 1)
     needInt(`cases[${i}].place`, c.place, 0, input.places.length - 1)
-    needBool(`cases[${i}].escalated`, c.escalated)
+    if (c.escalated !== undefined) needBool(`cases[${i}].escalated`, c.escalated)
+    if (c.priority !== undefined) {
+      needInt(`cases[${i}].priority`, c.priority, 0)
+      if (c.priority >= levels.length) {
+        fail(`cases[${i}].priority`, `is ${c.priority} but only ${levels.length} priority levels exist`)
+      }
+    }
     needInt(`cases[${i}].reportedDay`, c.reportedDay, -1_000_000)
     if (c.pinnedTech !== undefined) needInt(`cases[${i}].pinnedTech`, c.pinnedTech, 0, input.technicians.length - 1)
     if (c.frozenTech !== undefined) needInt(`cases[${i}].frozenTech`, c.frozenTech, 0, input.technicians.length - 1)

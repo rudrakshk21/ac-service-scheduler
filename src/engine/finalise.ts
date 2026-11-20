@@ -39,10 +39,10 @@ export function finalise(ctx: Ctx, res: RawResult): void {
         if (!res.why.has(c)) {
           const extra = detour < 1 ? 'no extra travel' : `adds ${pyInt(pyRound(detour))} min detour`
           const stops = `${r.stops.length} stop${r.stops.length > 1 ? 's' : ''}`
-          res.why.set(
-            c,
-            `Skill match (${ctx.technicians[t].name} approved for ${wt.name}); ${extra}; route of ${stops} in ${ctx.geo.zone[ctx.cases[c].place]}`,
-          )
+          let why = `Skill match (${ctx.technicians[t].name} approved for ${wt.name}); ${extra}; route of ${stops} in ${ctx.geo.zone[ctx.cases[c].place]}`
+          const level = ctx.cases[c].priority
+          if (level !== undefined) why += `; priority ${ctx.levels[level].name}`
+          res.why.set(c, why)
         }
       }
     }

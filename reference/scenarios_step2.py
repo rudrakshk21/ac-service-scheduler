@@ -80,7 +80,27 @@ def short_day_overload():
     return inp
 
 
+LEVELS_4 = [{"name": "Low", "weight": 0.0}, {"name": "Normal", "weight": 0.0},
+            {"name": "High", "weight": 150.0}, {"name": "Emergency", "weight": 100000.0}]
+
+
+def priority_levels():
+    inp = base(28, 80, 9, 12)
+    inp["settings"]["priorityLevels"] = copy.deepcopy(LEVELS_4)
+    for i, c in enumerate(inp["cases"]):
+        c["priority"] = 3 if i % 7 == 0 else 2 if i % 5 == 0 else 0 if i % 4 == 0 else 1
+    return inp
+
+
+def escalated_on_custom_levels():
+    inp = base(29, 60, 9, 12)
+    inp["settings"]["priorityLevels"] = copy.deepcopy(LEVELS_4)
+    for i in (2, 9, 17):
+        inp["cases"][i]["escalated"] = True
+    return inp
+
+
 STEP2 = {f.__name__: f for f in (
     five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
-    tech_hours, short_day_overload,
+    tech_hours, short_day_overload, priority_levels, escalated_on_custom_levels,
 )}

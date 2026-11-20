@@ -54,6 +54,8 @@ class Cfg:
     holidays: set = field(default_factory=set)
     cat_names: list = field(default_factory=lambda: list(CAT_NAMES))
     req_skill: list = field(default_factory=lambda: [0, 1, 2])
+    prio_names: list = field(default_factory=lambda: ["Normal", "Escalated"])
+    prio_w: list = field(default_factory=lambda: [0.0, 100000.0])   # bonus of each priority level
 
 
 @dataclass
@@ -67,6 +69,7 @@ class CaseIn:
     man_date: dt.date | None = None
     freeze_tech: int = -1
     subject: str = ""
+    prio: int = -1               # priority level index; -1 = the last level when esc, else level 0
 
 
 @dataclass
@@ -160,6 +163,10 @@ class Engine:
                 ang += 360
             self.area_km.append(km)
             self.zone.append("Central" if km < 4 else octants[int(round(ang / 45.0)) % 8])
+        self.weight = []        # priority bonus of each case
+        for k in cases:
+            level = k.prio if k.prio >= 0 else (len(cfg.prio_w) - 1 if k.esc else 0)
+            self.weight.append(cfg.prio_w[level])
 
     # ---- helpers ----
     def node(self, c):
@@ -364,7 +371,7 @@ class Engine:
             for c in pool:
                 cs = self.cases[c]
                 age = min(90.0, max(0.0, float((day - cs.reported).days)))
-                bonus = age * C.age_w + (100000.0 if cs.esc else 0.0)
+                bonus = age * C.age_w + self.weight[c]
                 for t in eligible[c]:
                     r = routes.get(t)
                     if r is None:
@@ -445,10 +452,13 @@ class Engine:
                     pn = r.s if i == 0 else self.node(r.stops[i - 1])
                     detour = self.tm[pn][self.node(c)] + self.tm[self.node(c)][nxt] - self.tm[pn][nxt]
                     if c not in res.why:
-                        res.why[c] = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
+                        why = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
                             self.techs[t].name, C.cat_names[self.cases[c].cat],
                             "no extra travel" if detour < 1 else "adds %d min detour" % int(round(detour)),
                             len(r.stops), "s" if len(r.stops) > 1 else "", self.zone[self.cases[c].area])
+                        if self.cases[c].prio >= 0:
+                            why += "; priority " + C.prio_names[self.cases[c].prio]
+                        res.why[c] = why
         for day in res.days:
             for t, r in res.routes[day].items():
                 prev_area = r.s - 1

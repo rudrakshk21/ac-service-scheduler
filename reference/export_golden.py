@@ -134,7 +134,21 @@ def check_short_overload(inp, out, calls):
     assert any(s["flag"] == "OVER CAPACITY" for s in _scheduled(out)), "the short day is not flagged over capacity"
 
 
+def check_priority_levels(inp, out, calls):
+    top = {c["id"] for c in inp["cases"] if c["priority"] == 3}
+    firsts = [s for s in _scheduled(out) if s["id"] in top and s["day"] == START]
+    assert firsts, "no emergency case on the first day"
+    assert all(s["why"].endswith("; priority Emergency") for s in _scheduled(out) if s["id"] in top)
+
+
+def check_escalated_custom(inp, out, calls):
+    ids = {c["id"] for c in inp["cases"] if c.get("escalated")}
+    assert any(s["id"] in ids and s["day"] == START for s in _scheduled(out)), "escalated case not on the first day"
+    assert not any("; priority" in s["why"] for s in _scheduled(out)), "old-style cases must not name a level"
+
+
 CHECKS = {
+    "priority_levels": check_priority_levels, "escalated_on_custom_levels": check_escalated_custom,
     "tech_hours": check_tech_hours, "short_day_overload": check_short_overload,
     "home_and_depot": check_ends, "home_to_home": check_home_to_home, "long_routes_with_ends": check_long_ends,
     "five_work_types": check_five, "skills_not_position": check_skills_not_position,

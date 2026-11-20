@@ -41,9 +41,11 @@ def to_python(inp):
     """Builds the Python Engine for a PlanInput dict. The reference knows only Sunday as a rest day."""
     s = inp["settings"]
     assert set(s["restWeekdays"]) <= {6}, "the Python reference only knows Sunday as a rest day"
+    levels = s.get("priorityLevels") or [{"name": "Normal", "weight": 0.0}, {"name": "Escalated", "weight": 100000.0}]
     n_skills = 1 + max([w["requiredSkill"] for w in inp["workTypes"]] + [k for t in inp["technicians"] for k in t["skills"]])
     cfg = engine.Cfg(
         cat_names=[w["name"] for w in inp["workTypes"]], req_skill=[w["requiredSkill"] for w in inp["workTypes"]],
+        prio_names=[lv["name"] for lv in levels], prio_w=[float(lv["weight"]) for lv in levels],
         store_lat=s["baseLat"], store_lon=s["baseLon"], speed=s["speedKmh"], road_factor=s["roadFactor"],
         hop_min=s["sameAreaHopMin"], usable_min=s["usableMin"], age_w=s["ageWeight"], bal_w=s["balanceWeight"],
         max_km=s["maxKm"], start_min=s["dayStartMin"], lunch_min=s["lunchStartMin"], break_min=s["breakMin"],
@@ -53,7 +55,8 @@ def to_python(inp):
     )
     cases = [
         engine.CaseIn(
-            id=c["id"], cat=c["workType"], area=c["place"], esc=c["escalated"], reported=day_date(c["reportedDay"]),
+            id=c["id"], cat=c["workType"], area=c["place"], esc=c.get("escalated", False),
+            reported=day_date(c["reportedDay"]), prio=c.get("priority", -1),
             req_tech=c.get("pinnedTech", -1),
             man_date=day_date(c["earliestDay"]) if "earliestDay" in c else None,
             freeze_tech=c.get("frozenTech", -1),

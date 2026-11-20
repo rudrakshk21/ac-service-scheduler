@@ -47,6 +47,18 @@ describe('plan (hand-checked cases; the golden files do the rigorous work)', () 
     expect(r.scheduled.find((s) => s.id === '4')?.day).toBe(START)
   })
 
+  it('plans a high-priority level first and names it in the reason', () => {
+    const levels = [{ name: 'Low', weight: 0 }, { name: 'Emergency', weight: 100000 }]
+    const cases = [aCase('1', 0), aCase('2', 0), aCase('3', 0), aCase('4', 0, { priority: 1 })]
+    const r = plan(testInput({
+      settings: testSettings({ priorityLevels: levels }), places: [here], technicians: [tech('T', [0])], cases,
+    }))
+    const s = r.scheduled.find((x) => x.id === '4')
+    expect(s?.day).toBe(START)
+    expect(s?.why.endsWith('; priority Emergency')).toBe(true)
+    expect(r.scheduled.find((x) => x.id === '1')?.why.includes('priority')).toBe(false)
+  })
+
   it('places a pinned case on its day with the manual technician', () => {
     const r = plan(testInput({
       places: [here],
