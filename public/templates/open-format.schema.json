@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AC service scheduler open data format",
+  "description": "Cases, technicians and places in the field names of the common data model. Files in this format import with no mapping step.",
+  "type": "object",
+  "properties": {
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string"
+          },
+          "work_type": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reported_at": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD"
+          },
+          "product_type": {
+            "type": "string"
+          },
+          "duration_min": {
+            "type": "number"
+          },
+          "earliest_date": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD"
+          },
+          "technician": {
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "other_ref": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "work_type"
+        ],
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "latitude",
+              "longitude"
+            ]
+          },
+          {
+            "required": [
+              "postal_code"
+            ]
+          },
+          {
+            "required": [
+              "area"
+            ]
+          },
+          {
+            "required": [
+              "address"
+            ]
+          }
+        ]
+      }
+    },
+    "technicians": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "string",
+            "description": "One or more skills separated by , ; / or |"
+          },
+          "active": {
+            "type": [
+              "boolean",
+              "string"
+            ],
+            "description": "yes, no, true or false"
+          },
+          "leave_from": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD"
+          },
+          "leave_to": {
+            "type": "string",
+            "format": "date",
+            "description": "YYYY-MM-DD"
+          },
+          "start_area": {
+            "type": "string"
+          },
+          "start_latitude": {
+            "type": "number"
+          },
+          "start_longitude": {
+            "type": "number"
+          },
+          "end_area": {
+            "type": "string"
+          },
+          "end_latitude": {
+            "type": "number"
+          },
+          "end_longitude": {
+            "type": "number"
+          },
+          "shift_start": {
+            "type": "string",
+            "description": "HH:MM"
+          },
+          "shift_hours": {
+            "type": "number"
+          },
+          "break_min": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "skills"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "places": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "postal_code": {
+            "type": "string"
+          },
+          "zone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "area",
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
