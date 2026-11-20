@@ -1,5 +1,10 @@
-import { DemoPage } from './demo/DemoPage'
+import { AppShell } from './screens/AppShell'
+import { WorkspaceProvider } from './workspace/WorkspaceProvider'
 
 export default function App() {
-  return <DemoPage />
+  return (
+    <WorkspaceProvider>
+      <AppShell />
+    </WorkspaceProvider>
+  )
 }
