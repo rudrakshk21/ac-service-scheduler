@@ -1,7 +1,7 @@
 # Data intake and mapping: design
 
 Date: 2026-11-20
-Status: design approved by the project owner on 2026-11-20 (sections 1 to 3); implementation plan not yet written
+Status: implemented on 2026-11-21 (plan: `docs/superpowers/plans/2026-11-20-data-intake.md`); pull request pending the owner's merge
 Part of: AC Service Scheduler, requirements v4.1 (FR-01, FR-22, FR-23, FR-26, FR-27; sections 6.1 to 6.5),
 the second of five pieces (engine, **data intake and mapping**, screens, phone/map/sharing, hardening)
 
@@ -217,3 +217,23 @@ libraries. The screens piece uses the five functions and the three data shapes a
 - Coverage at least 90%; pipeline green on GitHub; one pull request from branch `data-intake`.
 
 Estimate: 10 to 14 hours of build time.
+
+## 16. As built (differences from the design above)
+
+- `.xls` is not read: an old Excel file gets a plain message to save it as `.xlsx` or CSV (FR-01.1 of requirements
+  v4.1 lists `.xls`; the next requirements revision moves it to a later release). The reader is
+  `read-excel-file/universal`, loaded with a dynamic import.
+- Personal fields are `customerName` and `address`; suggestions never map them.
+- Column suggestions also score the last part of a nested JSON name (`location.lat` is scored as `lat`, at 95%).
+  The seed dictionary grew by `ID`, `Created`, `Due`, `Deadline` and a few German, French and Spanish names.
+  Total rows are recognised in English, German, Italian and French (`total`, `gesamt`, `summe`, `totale`, `somme`).
+- `suggestProfile` also returns `personalColumns` and `needsDateOrder`; `applyProfile` returns places made from
+  coordinates in `Imported.places` (the caller adds them with `extendPlaces`).
+- Measured on the five invented conformance sets: column suggestions were right, at 80% confidence or more, for
+  every expected field (100%, requirement: at least 80%).
+- The round trip to a plan holds for ten golden scenarios: baseline, three technicians, inactive technician, leave,
+  holiday, manual pins, due dates (default and strong), product times, and start and end places. Not carried by the
+  open data format: `frozenTech`, a technician's own lunch start, and priority levels with names of their own.
+- The real-data check (`ds1.local.test.ts`) expects the owner's DS-1 files saved as CSV and the profiles written once
+  from the mapping screen; it has not been run yet because the screens piece does not exist.
+- The library is not imported by the app yet, so the first-download size is unchanged until the screens piece uses it.
