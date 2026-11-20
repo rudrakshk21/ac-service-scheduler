@@ -13,8 +13,8 @@ const files = import.meta.glob('../../reference/golden/*.json', { eager: true, i
 const goldens = Object.values(files).sort((a, b) => a.name.localeCompare(b.name))
 
 describe('golden files from the Python reference engine', () => {
-  it('finds all 16 scenarios', () => {
-    expect(goldens.length).toBe(16)
+  it('finds at least the 16 original scenarios', () => {
+    expect(goldens.length).toBeGreaterThanOrEqual(16)
   })
 
   it.each(goldens.map((g) => [g.name, g] as const))('%s gives an identical plan', (_name, g) => {

@@ -17,7 +17,7 @@ export function orderRoute(ctx: Ctx, r: Route): void {
     const full = 1 << n
     const dp = new Float64Array(full * n).fill(Infinity)
     const par = new Int8Array(full * n).fill(-1)
-    for (let j = 0; j < n; j++) dp[(1 << j) * n + j] = tm[0][nodes[j]]
+    for (let j = 0; j < n; j++) dp[(1 << j) * n + j] = tm[r.startNode][nodes[j]]
     for (let m = 1; m < full; m++) {
       for (let j = 0; j < n; j++) {
         if (!((m >> j) & 1)) continue
@@ -37,7 +37,7 @@ export function orderRoute(ctx: Ctx, r: Route): void {
     let best = Infinity
     let bj = 0
     for (let j = 0; j < n; j++) {
-      const v = dp[(full - 1) * n + j] + tm[nodes[j]][0]
+      const v = dp[(full - 1) * n + j] + tm[nodes[j]][r.endNode]
       if (v < best) {
         best = v
         bj = j
@@ -60,14 +60,14 @@ export function orderRoute(ctx: Ctx, r: Route): void {
     while (imp && guard < 200) {
       guard += 1
       imp = false
-      const cur = travelOf(ctx, r.stops)
+      const cur = travelOf(ctx, r.stops, r.startNode, r.endNode)
       for (let i = 0; i < n - 1; i++) {
         if (imp) break
         for (let j = i + 1; j < n; j++) {
           const t = [...r.stops]
           const seg = t.slice(i, j + 1).reverse()
           t.splice(i, seg.length, ...seg)
-          const v = travelOf(ctx, t)
+          const v = travelOf(ctx, t, r.startNode, r.endNode)
           if (v < cur - 1e-6) {
             r.stops = t
             imp = true

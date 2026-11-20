@@ -47,6 +47,74 @@ describe('plan (hand-checked cases; the golden files do the rigorous work)', () 
     expect(r.scheduled.find((s) => s.id === '4')?.day).toBe(START)
   })
 
+  it('plans a high-priority level first and names it in the reason', () => {
+    const levels = [{ name: 'Low', weight: 0 }, { name: 'Emergency', weight: 100000 }]
+    const cases = [aCase('1', 0), aCase('2', 0), aCase('3', 0), aCase('4', 0, { priority: 1 })]
+    const r = plan(testInput({
+      settings: testSettings({ priorityLevels: levels }), places: [here], technicians: [tech('T', [0])], cases,
+    }))
+    const s = r.scheduled.find((x) => x.id === '4')
+    expect(s?.day).toBe(START)
+    expect(s?.why.endsWith('; priority Emergency')).toBe(true)
+    expect(r.scheduled.find((x) => x.id === '1')?.why.includes('priority')).toBe(false)
+  })
+
+  it('flags a visit after its due day and leaves other cases alone', () => {
+    const r = plan(testInput({
+      places: [here], technicians: [tech('T', [0])],
+      cases: ['1', '2', '3', '4'].map((id, i) => aCase(id, 0, i === 3 ? { dueDay: START - 2 } : {})),
+    }))
+    expect(r.scheduled.find((s) => s.id === '4')?.flag).toBe('LATE BY 2 DAYS')
+    expect(r.scheduled.filter((s) => s.flag !== '').length).toBe(1)
+  })
+
+  it('says "1 DAY" in the singular', () => {
+    const r = plan(testInput({
+      places: [here], technicians: [tech('T', [0])], cases: [aCase('1', 0, { dueDay: START - 1 })],
+    }))
+    expect(r.scheduled[0].flag).toBe('LATE BY 1 DAY')
+  })
+
+  it('pulls a case with a near due day ahead of cases that have waited longer', () => {
+    // All at one place, so only the bonuses decide: age 2 days = 8 points, due today = 8 x 5 = 40 points.
+    const waited = (id: string) => aCase(id, 0, { reportedDay: START - 2 })
+    const plain = [waited('1'), waited('2'), waited('3'), aCase('4', 0)]
+    const urgent = [waited('1'), waited('2'), waited('3'), aCase('4', 0, { dueDay: START })]
+    const dayOfFour = (cases: object[]) =>
+      plan(testInput({ places: [here], technicians: [tech('T', [0])], cases: cases as ReturnType<typeof aCase>[] }))
+        .scheduled.find((s) => s.id === '4')?.day
+    expect(dayOfFour(plain)).toBe(START + 1) // the ceiling is 3 a day and the others are older
+    expect(dayOfFour(urgent)).toBe(START) // the due date pulls it into the first day
+  })
+
+  it('adds "due date missed" to a case that never fits', () => {
+    const r = plan(testInput({
+      settings: testSettings({ horizonDays: 1 }), places: [here], technicians: [tech('T', [0])],
+      cases: ['1', '2', '3', '4'].map((id) => aCase(id, 0, { dueDay: START })),
+    }))
+    expect(r.unscheduled[0].reason).toBe('Beyond planning horizon (1 working days) or does not fit in a day; due date missed')
+  })
+
+  it('joins the late flag to an over-capacity flag', () => {
+    // Four 120-minute pinned jobs on one day are over capacity; one of them is also past its due day.
+    const cases = ['1', '2', '3', '4'].map((id, i) =>
+      aCase(id, 0, { pinnedTech: 0, earliestDay: START, ...(i === 0 ? { dueDay: START - 1 } : {}) }))
+    const r = plan(testInput({ places: [here], technicians: [tech('T', [0])], cases }))
+    expect(r.scheduled.find((s) => s.id === '1')?.flag).toBe('OVER CAPACITY; LATE BY 1 DAY')
+    expect(r.scheduled.find((s) => s.id === '2')?.flag).toBe('OVER CAPACITY')
+  })
+
+  it('uses product minutes and a per-case override for visit time', () => {
+    const r = plan(testInput({
+      places: [here], technicians: [tech('T', [0])],
+      productTypes: [{ name: 'Cassette', addMin: 30 }, { name: 'Ducted', factor: 1.5, addMin: 15 }],
+      cases: [aCase('1', 0, { productType: 0 }), aCase('2', 0, { productType: 1 }), aCase('3', 0, { serviceMin: 45 })],
+    }))
+    const route = r.routes.find((x) => x.stops.length === 3)
+    // Installation is 120 min: 120 + 30 = 150; 120 x 1.5 + 15 = 195; the override is 45.
+    expect(route?.serviceMin).toBe(150 + 195 + 45)
+  })
+
   it('places a pinned case on its day with the manual technician', () => {
     const r = plan(testInput({
       places: [here],

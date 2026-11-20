@@ -60,6 +60,46 @@ describe('bestInsert', () => {
   })
 })
 
+describe('start and end places', () => {
+  it('travelOf runs from the start place to the end place', () => {
+    const ctx = ctxFor([0, 0, 0])
+    const tm = ctx.geo.tm
+    expect(travelOf(ctx, [0, 1], 3, 2)).toBe(tm[3][1] + tm[1][2] + tm[2][2])
+    expect(travelOf(ctx, [], 3, 2)).toBe(0)
+  })
+  it('an empty route costs the whole trip start, stop, end', () => {
+    const ctx = ctxFor([0, 0])
+    const r = new Route(1, 2)
+    const { delta, pos } = bestInsert(ctx, r, 0)
+    expect(pos).toBe(0)
+    expect(delta).toBe(ctx.geo.tm[1][1] + ctx.geo.tm[1][2])
+  })
+  it('inserts between stops using the start and end places for the ends', () => {
+    const ctx = ctxFor([0, 0, 0])
+    const r = new Route(3, 3)
+    r.stops = [0]
+    recalc(ctx, r)
+    const tm = ctx.geo.tm
+    const { delta, pos } = bestInsert(ctx, r, 1)
+    const front = tm[3][2] + tm[2][1] - tm[3][1]
+    const back = tm[1][2] + tm[2][3] - tm[1][3]
+    expect(delta).toBe(Math.min(front, back))
+    // A tie goes to the earlier position (strict "less than", as in the Python reference).
+    expect(pos).toBe(front <= back ? 0 : 1)
+  })
+})
+
+describe('per-technician usable minutes', () => {
+  it("fits uses the route's own limit instead of the shared one", () => {
+    const ctx = ctxFor([1])
+    const r = new Route(0, 0, 100)
+    r.service = 30
+    expect(fits(ctx, r, 0, 0)).toBe(false) // 30 + 75 > 100
+    r.service = 20
+    expect(fits(ctx, r, 0, 0)).toBe(true) // 20 + 75 <= 100
+  })
+})
+
 describe('fits', () => {
   it('rejects a case that would pass the usable minutes, accepts one that just fits', () => {
     const ctx = ctxFor([0, 1])

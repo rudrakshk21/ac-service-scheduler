@@ -1,7 +1,7 @@
 # Planning engine: design
 
 Date: 2026-11-19
-Status: step 1 implemented and verified; step 2 plan not yet written
+Status: steps 1 and 2 implemented and verified (step 2: `2026-11-20-engine-step-2-design.md`)
 Part of: AC Service Scheduler, requirements v4.1 (build phase P2, milestone M3)
 
 ## 1. Purpose
@@ -45,13 +45,24 @@ interface PlanInput {
     restWeekdays: number[];           // 0 = Monday ... 6 = Sunday
     holidays: number[];               // day numbers
     startDay: number;
+    // step 2, all optional:
+    priorityLevels?: { name: string; weight: number }[];  // default Normal 0, Escalated 100000
+    dueWeight?: number;               // default 8 points per day of urgency
+    urgencyWindowDays?: number;       // default 5
   };
   workTypes: { name: string; serviceMin: number; dailyCeiling: number; requiredSkill: number }[];
+  productTypes?: { name: string; addMin?: number; factor?: number }[];       // step 2
   technicians: { name: string; skills: number[]; active: boolean;
-                 leaveFrom?: number; leaveTo?: number; startPlace?: number }[];
+                 leaveFrom?: number; leaveTo?: number;
+                 startPlace?: number; endPlace?: number;                       // step 2: default the base
+                 dayStartMin?: number; usableMin?: number;                      // step 2: default the settings
+                 lunchStartMin?: number; breakMin?: number }[];
   places: { name: string; lat: number; lon: number }[];
-  cases: { id: string; workType: number; place: number; escalated: boolean; reportedDay: number;
-           pinnedTech?: number; earliestDay?: number; frozenTech?: number }[];
+  cases: { id: string; workType: number; place: number; reportedDay: number;
+           escalated?: boolean;                                                 // shorthand for the last level
+           pinnedTech?: number; earliestDay?: number; frozenTech?: number;
+           priority?: number; dueDay?: number;                                  // step 2
+           productType?: number; serviceMin?: number }[];                       // step 2
 }
 ```
 
@@ -59,9 +70,11 @@ Output, with the same fields as the Python `Result`, per case: day, technician, 
 (`HH:MM`), travel minutes, kilometres from the previous stop, reason text and flag. Plus the routes per day
 (stop order, travel, on-site time, load) and the unscheduled cases with a reason.
 
-Step 1 keeps the Python behaviour: three work types, `requiredSkill` equal to the work type index, every
-route starting and ending at the base, and `escalated` as the only priority flag. The data shape is already
-general so that step 2 does not change the interface.
+Step 1 kept the Python behaviour: three work types, `requiredSkill` equal to the work type index, every
+route starting and ending at the base, and `escalated` as the only priority flag. Step 2 (done, see
+`2026-11-20-engine-step-2-design.md`) added the optional fields marked above. Output text and flags grow only
+when a feature is used: the flag `LATE BY n DAYS`, the reason suffix `; priority <level>` (only for a case that
+sets `priority`), and `; due date missed` on a case that never fits.
 
 ## 4. Files in `src/engine/`
 

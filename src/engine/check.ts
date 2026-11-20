@@ -53,6 +53,22 @@ export function checkInput(input: PlanInput): void {
   s.restWeekdays.forEach((d, i) => needInt(`settings.restWeekdays[${i}]`, d, 0, 6))
   s.holidays.forEach((d, i) => needInt(`settings.holidays[${i}]`, d, -1_000_000))
 
+  const levels = s.priorityLevels ?? [{ name: 'Normal', weight: 0 }, { name: 'Escalated', weight: 100000 }]
+  if (levels.length === 0) fail('settings.priorityLevels', 'must list at least one level')
+  levels.forEach((l, i) => {
+    needText(`settings.priorityLevels[${i}].name`, l.name)
+    needNum(`settings.priorityLevels[${i}].weight`, l.weight, 0)
+  })
+  if (s.dueWeight !== undefined) needNum('settings.dueWeight', s.dueWeight, 0)
+  if (s.urgencyWindowDays !== undefined) needNum('settings.urgencyWindowDays', s.urgencyWindowDays, 0)
+
+  const products = input.productTypes ?? []
+  products.forEach((p, i) => {
+    needText(`productTypes[${i}].name`, p.name)
+    if (p.addMin !== undefined) needNum(`productTypes[${i}].addMin`, p.addMin)
+    if (p.factor !== undefined) needPositive(`productTypes[${i}].factor`, p.factor)
+  })
+
   if (input.workTypes.length === 0) fail('workTypes', 'must list at least one work type')
   input.workTypes.forEach((w, i) => {
     needText(`workTypes[${i}].name`, w.name)
@@ -74,6 +90,15 @@ export function checkInput(input: PlanInput): void {
     if (t.leaveFrom !== undefined) needInt(`technicians[${i}].leaveFrom`, t.leaveFrom, -1_000_000)
     if (t.leaveTo !== undefined) needInt(`technicians[${i}].leaveTo`, t.leaveTo, -1_000_000)
     if (t.startPlace !== undefined) needInt(`technicians[${i}].startPlace`, t.startPlace, 0, input.places.length - 1)
+    if (t.endPlace !== undefined) needInt(`technicians[${i}].endPlace`, t.endPlace, 0, input.places.length - 1)
+    for (const [k, v] of [
+      ['dayStartMin', t.dayStartMin],
+      ['usableMin', t.usableMin],
+      ['lunchStartMin', t.lunchStartMin],
+      ['breakMin', t.breakMin],
+    ] as const) {
+      if (v !== undefined) needNum(`technicians[${i}].${k}`, v, 0)
+    }
   })
 
   const seen = new Set<string>()
@@ -83,10 +108,24 @@ export function checkInput(input: PlanInput): void {
     seen.add(c.id)
     needInt(`cases[${i}].workType`, c.workType, 0, input.workTypes.length - 1)
     needInt(`cases[${i}].place`, c.place, 0, input.places.length - 1)
-    needBool(`cases[${i}].escalated`, c.escalated)
+    if (c.escalated !== undefined) needBool(`cases[${i}].escalated`, c.escalated)
+    if (c.priority !== undefined) {
+      needInt(`cases[${i}].priority`, c.priority, 0)
+      if (c.priority >= levels.length) {
+        fail(`cases[${i}].priority`, `is ${c.priority} but only ${levels.length} priority levels exist`)
+      }
+    }
     needInt(`cases[${i}].reportedDay`, c.reportedDay, -1_000_000)
     if (c.pinnedTech !== undefined) needInt(`cases[${i}].pinnedTech`, c.pinnedTech, 0, input.technicians.length - 1)
     if (c.frozenTech !== undefined) needInt(`cases[${i}].frozenTech`, c.frozenTech, 0, input.technicians.length - 1)
     if (c.earliestDay !== undefined) needInt(`cases[${i}].earliestDay`, c.earliestDay, -1_000_000)
+    if (c.dueDay !== undefined) needInt(`cases[${i}].dueDay`, c.dueDay, -1_000_000)
+    if (c.serviceMin !== undefined) needNum(`cases[${i}].serviceMin`, c.serviceMin, 0)
+    if (c.productType !== undefined) {
+      needInt(`cases[${i}].productType`, c.productType, 0)
+      if (c.productType >= products.length) {
+        fail(`cases[${i}].productType`, `is ${c.productType} but only ${products.length} product types exist`)
+      }
+    }
   })
 }

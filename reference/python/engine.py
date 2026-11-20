@@ -17,6 +17,10 @@ ONE CHANGE from the project engine (AC_Scheduler_Python/ac_scheduler/engine.py):
 9 decimals by snap(). The maths library differs in the last digit between operating systems, and an exact tie
 between two stop orders was decided by that noise, so the same input gave different plans on Windows and
 Linux. With snap() every machine sees the same numbers. All other code is unchanged.
+
+STEP 2 (generalisation, docs/superpowers/specs/2026-11-20-engine-step-2-design.md): work types and skills as free
+lists, a start and an end place per technician, working hours per technician, priority levels, soft due dates and
+visit time by product. Every new field is optional; for an input that uses none of them the plan is identical.
 """
 from __future__ import annotations
 
@@ -48,6 +52,13 @@ class Cfg:
     sundays: bool = False
     start: dt.date = field(default_factory=dt.date.today)
     holidays: set = field(default_factory=set)
+    cat_names: list = field(default_factory=lambda: list(CAT_NAMES))
+    req_skill: list = field(default_factory=lambda: [0, 1, 2])
+    prio_names: list = field(default_factory=lambda: ["Normal", "Escalated"])
+    prio_w: list = field(default_factory=lambda: [0.0, 100000.0])   # bonus of each priority level
+    due_w: float = 8.0           # bonus points per day of urgency once a due date is near
+    due_window: float = 5.0      # urgency starts this many days before the due date
+    products: list = field(default_factory=list)   # (added minutes, factor) per product type
 
 
 @dataclass
@@ -61,6 +72,10 @@ class CaseIn:
     man_date: dt.date | None = None
     freeze_tech: int = -1
     subject: str = ""
+    prio: int = -1               # priority level index; -1 = the last level when esc, else level 0
+    due: dt.date | None = None   # soft due date: urgency grows as it nears, later visits are flagged late
+    product: int = -1            # product type index, -1 = none
+    svc_override: float | None = None   # own visit minutes; win over the work type and the product
 
 
 @dataclass
@@ -70,18 +85,27 @@ class TechIn:
     active: bool = True
     leave_from: dt.date | None = None
     leave_to: dt.date | None = None
+    start_area: int = -1         # area the day starts at, -1 = the base
+    end_area: int = -1           # area the day ends at, -1 = the base
+    usable_min: float | None = None   # own working hours; None = the shared setting
+    start_min: float | None = None
+    lunch_min: float | None = None
+    break_min: float | None = None
 
 
 class Route:
-    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver")
+    __slots__ = ("stops", "travel", "service", "frac", "pinned", "ver", "s", "e", "usable")
 
-    def __init__(self):
+    def __init__(self, s=0, e=0, usable=None):
         self.stops: list[int] = []
         self.travel = 0.0
         self.service = 0.0
         self.frac = 0.0
         self.pinned = False
         self.ver = 0
+        self.s = s               # node the route starts at (0 = base)
+        self.e = e               # node the route ends at (0 = base)
+        self.usable = usable     # usable minutes of this technician (None = the shared setting)
 
 
 class Result:
@@ -145,20 +169,39 @@ class Engine:
                 ang += 360
             self.area_km.append(km)
             self.zone.append("Central" if km < 4 else octants[int(round(ang / 45.0)) % 8])
+        self.weight = []        # priority bonus of each case
+        for k in cases:
+            level = k.prio if k.prio >= 0 else (len(cfg.prio_w) - 1 if k.esc else 0)
+            self.weight.append(cfg.prio_w[level])
+        self.svc = []           # visit minutes of each case
+        for k in cases:
+            if k.svc_override is not None:
+                m = k.svc_override
+            else:
+                m = cfg.svc_min[k.cat]
+                if k.product >= 0:
+                    add, factor = cfg.products[k.product]
+                    m = m * factor + add
+            self.svc.append(m)
 
     # ---- helpers ----
     def node(self, c):
         return self.cases[c].area + 1
 
-    def travel_of(self, stops):
+    def new_route(self, t):
+        T = self.techs[t]
+        return Route(0 if T.start_area < 0 else T.start_area + 1, 0 if T.end_area < 0 else T.end_area + 1,
+                     T.usable_min)
+
+    def travel_of(self, stops, s=0, e=0):
         if not stops:
             return 0.0
-        t, prev = 0.0, 0
+        t, prev = 0.0, s
         for c in stops:
             nd = self.node(c)
             t += self.tm[prev][nd]
             prev = nd
-        return t + self.tm[prev][0]
+        return t + self.tm[prev][e]
 
     def is_workday(self, d):
         if d.weekday() == 6 and not self.C.sundays:
@@ -174,11 +217,14 @@ class Engine:
         return True
 
     def best_insert(self, r: Route, c):
-        delta, pos, n, cn = float("inf"), 0, len(r.stops), self.node(c)
-        tm = self.tm
+        n, cn, tm = len(r.stops), self.node(c), self.tm
+        if n == 0:
+            # an empty route costs the whole trip (start, stop, end), not only a detour
+            return tm[r.s][cn] + tm[cn][r.e], 0
+        delta, pos = float("inf"), 0
         for p in range(n + 1):
-            prev = 0 if p == 0 else self.node(r.stops[p - 1])
-            nxt = 0 if p == n else self.node(r.stops[p])
+            prev = r.s if p == 0 else self.node(r.stops[p - 1])
+            nxt = r.e if p == n else self.node(r.stops[p])
             d = tm[prev][cn] + tm[cn][nxt] - tm[prev][nxt]
             if d < delta:
                 delta, pos = d, p
@@ -186,7 +232,8 @@ class Engine:
 
     def fits(self, r: Route, c, delta):
         cat = self.cases[c].cat
-        if r.travel + delta + r.service + self.C.svc_min[cat] > self.C.usable_min + 1e-6:
+        usable = self.C.usable_min if r.usable is None else r.usable
+        if r.travel + delta + r.service + self.svc[c] > usable + 1e-6:
             return False
         if r.frac + 1.0 / self.C.target[cat] > 1.0 + 1e-6:
             return False
@@ -194,12 +241,12 @@ class Engine:
 
     def recalc(self, r: Route):
         r.ver += 1
-        r.travel = self.travel_of(r.stops)
+        r.travel = self.travel_of(r.stops, r.s, r.e)
         r.service = 0.0
         r.frac = 0.0
         for c in r.stops:
             cat = self.cases[c].cat
-            r.service += self.C.svc_min[cat]
+            r.service += self.svc[c]
             r.frac += 1.0 / self.C.target[cat]
 
     def order(self, r: Route):
@@ -215,7 +262,7 @@ class Engine:
             dp = [[inf] * n for _ in range(full)]
             par = [[-1] * n for _ in range(full)]
             for j in range(n):
-                dp[1 << j][j] = tm[0][nodes[j]]
+                dp[1 << j][j] = tm[r.s][nodes[j]]
             for m in range(1, full):
                 row = dp[m]
                 for j in range(n):
@@ -232,7 +279,7 @@ class Engine:
                             par[nm][k] = j
             best, bj = inf, 0
             for j in range(n):
-                v = dp[full - 1][j] + tm[nodes[j]][0]
+                v = dp[full - 1][j] + tm[nodes[j]][r.e]
                 if v < best:
                     best, bj = v, j
             seq, mask, cur = [], full - 1, bj
@@ -248,14 +295,14 @@ class Engine:
             while imp and guard < 200:
                 guard += 1
                 imp = False
-                cur = self.travel_of(r.stops)
+                cur = self.travel_of(r.stops, r.s, r.e)
                 for i in range(n - 1):
                     if imp:
                         break
                     for j in range(i + 1, n):
                         t = list(r.stops)
                         t[i:j + 1] = reversed(t[i:j + 1])
-                        v = self.travel_of(t)
+                        v = self.travel_of(t, r.s, r.e)
                         if v < cur - 1e-6:
                             r.stops = t
                             imp = True
@@ -263,7 +310,9 @@ class Engine:
         self.recalc(r)
 
     def can_do(self, t, c):
-        return self.techs[t].skill[self.cases[c].cat]
+        need = self.C.req_skill[self.cases[c].cat]
+        have = self.techs[t].skill
+        return need < len(have) and have[need]
 
     # ---- planning ----
     def plan(self) -> Result:
@@ -288,7 +337,7 @@ class Engine:
                 day += dt.timedelta(days=1)
                 continue
             worked += 1
-            routes: dict[int, Route] = {t: Route() for t in range(len(self.techs)) if self.available(t, day)}
+            routes: dict[int, Route] = {t: self.new_route(t) for t in range(len(self.techs)) if self.available(t, day)}
             pool = [c for c in left if not (self.cases[c].man_date and self.cases[c].man_date > day)]
             for c in list(pool):
                 cs = self.cases[c]
@@ -325,8 +374,10 @@ class Engine:
             day += dt.timedelta(days=1)
         for c in left:
             res.unscheduled.add(c)
-            res.unsched_reason.setdefault(
-                c, "Beyond planning horizon (%d working days) or does not fit in a day" % C.horizon)
+            reason = "Beyond planning horizon (%d working days) or does not fit in a day" % C.horizon
+            if self.cases[c].due is not None:
+                reason += "; due date missed"
+            res.unsched_reason.setdefault(c, reason)
         self.finalise(res)
         return res
 
@@ -338,7 +389,9 @@ class Engine:
             for c in pool:
                 cs = self.cases[c]
                 age = min(90.0, max(0.0, float((day - cs.reported).days)))
-                bonus = age * C.age_w + (100000.0 if cs.esc else 0.0)
+                bonus = age * C.age_w + self.weight[c]
+                if cs.due is not None:
+                    bonus += C.due_w * min(90.0, max(0.0, C.due_window - (cs.due - day).days))
                 for t in eligible[c]:
                     r = routes.get(t)
                     if r is None:
@@ -371,7 +424,7 @@ class Engine:
                     continue
                 for c in r.stops:
                     without = [x for x in r.stops if x != c]
-                    saved = r.travel - self.travel_of(without)
+                    saved = r.travel - self.travel_of(without, r.s, r.e)
                     for t in eligible[c]:
                         if t == k or t not in routes or routes[t].pinned:
                             continue
@@ -395,32 +448,45 @@ class Engine:
         for day in res.days:
             for t, r in res.routes[day].items():
                 self.recalc(r)
-                clock, brk, prev = C.start_min, False, 0
-                if r.travel + r.service > C.usable_min + 1e-6:
+                T = self.techs[t]
+                start_min = C.start_min if T.start_min is None else T.start_min
+                lunch_min = C.lunch_min if T.lunch_min is None else T.lunch_min
+                break_min = C.break_min if T.break_min is None else T.break_min
+                usable = C.usable_min if r.usable is None else r.usable
+                clock, brk, prev = start_min, False, r.s
+                if r.travel + r.service > usable + 1e-6:
                     for c in r.stops:
                         res.flag[c] = "OVER CAPACITY"
                 for i, c in enumerate(r.stops):
-                    nxt = self.node(r.stops[i + 1]) if i + 1 < len(r.stops) else 0
+                    nxt = self.node(r.stops[i + 1]) if i + 1 < len(r.stops) else r.e
                     tmin = self.tm[prev][self.node(c)]
                     clock += tmin
-                    if not brk and clock >= C.lunch_min:
-                        clock += C.break_min
+                    if not brk and clock >= lunch_min:
+                        clock += break_min
                         brk = True
                     res.eta[c] = hm(clock)
                     res.travel_min[c] = tmin
                     res.visit[c] = i + 1
-                    clock += C.svc_min[self.cases[c].cat]
+                    due = self.cases[c].due
+                    if due is not None and day > due:
+                        late_days = (day - due).days
+                        late = "LATE BY %d DAY%s" % (late_days, "" if late_days == 1 else "S")
+                        res.flag[c] = res.flag[c] + "; " + late if c in res.flag else late
+                    clock += self.svc[c]
                     prev = self.node(c)
-                    pn = 0 if i == 0 else self.node(r.stops[i - 1])
+                    pn = r.s if i == 0 else self.node(r.stops[i - 1])
                     detour = self.tm[pn][self.node(c)] + self.tm[self.node(c)][nxt] - self.tm[pn][nxt]
                     if c not in res.why:
-                        res.why[c] = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
-                            self.techs[t].name, CAT_NAMES[self.cases[c].cat],
+                        why = "Skill match (%s approved for %s); %s; route of %d stop%s in %s" % (
+                            self.techs[t].name, C.cat_names[self.cases[c].cat],
                             "no extra travel" if detour < 1 else "adds %d min detour" % int(round(detour)),
                             len(r.stops), "s" if len(r.stops) > 1 else "", self.zone[self.cases[c].area])
+                        if self.cases[c].prio >= 0:
+                            why += "; priority " + C.prio_names[self.cases[c].prio]
+                        res.why[c] = why
         for day in res.days:
             for t, r in res.routes[day].items():
-                prev_area = -1
+                prev_area = r.s - 1
                 for c in r.stops:
                     a = self.cases[c].area
                     if prev_area < 0:

@@ -1,5 +1,22 @@
 import { buildGeo, type Geo } from './geo'
-import type { CaseIn, PlanInput, Place, Settings, Technician, WorkType } from './types'
+import type { CaseIn, PlanInput, Place, PriorityLevel, Settings, Technician, WorkType } from './types'
+
+/** The two levels of step 1: a normal case and an escalated one (a huge bonus, so it is planned first). */
+export const DEFAULT_LEVELS: PriorityLevel[] = [
+  { name: 'Normal', weight: 0 },
+  { name: 'Escalated', weight: 100000 },
+]
+
+/** What is resolved once per technician: where the day starts and ends (nodes of the travel table, 0 = base)
+ *  and the working hours (own value, else the shared setting). */
+export interface TechPlan {
+  startNode: number
+  endNode: number
+  usableMin: number
+  dayStartMin: number
+  lunchStartMin: number
+  breakMin: number
+}
 
 /** The input plus everything computed once per plan. */
 export interface Ctx {
@@ -11,16 +28,51 @@ export interface Ctx {
   geo: Geo
   /** Node of each case in the travel table: its place index + 1 (node 0 is the base). */
   caseNode: number[]
+  /** Per technician, in input order. */
+  techPlan: TechPlan[]
+  levels: PriorityLevel[]
+  /** Priority bonus of each case (the weight of its level). */
+  caseWeight: number[]
+  dueWeight: number
+  dueWindow: number
+  /** Visit minutes of each case. */
+  caseService: number[]
+}
+
+/** Visit minutes of a case: its own override, else the work type's minutes x the product's factor + its added minutes. */
+export function visitMinutes(input: PlanInput, c: CaseIn): number {
+  if (c.serviceMin !== undefined) return c.serviceMin
+  let m = input.workTypes[c.workType].serviceMin
+  if (c.productType !== undefined) {
+    const p = input.productTypes?.[c.productType]
+    if (p !== undefined) m = m * (p.factor ?? 1) + (p.addMin ?? 0)
+  }
+  return m
 }
 
 export function buildContext(input: PlanInput): Ctx {
+  const s = input.settings
+  const levels = s.priorityLevels ?? DEFAULT_LEVELS
   return {
-    s: input.settings,
+    s,
     workTypes: input.workTypes,
     technicians: input.technicians,
     places: input.places,
     cases: input.cases,
     geo: buildGeo(input.settings, input.places),
     caseNode: input.cases.map((c) => c.place + 1),
+    techPlan: input.technicians.map((t) => ({
+      startNode: t.startPlace === undefined ? 0 : t.startPlace + 1,
+      endNode: t.endPlace === undefined ? 0 : t.endPlace + 1,
+      usableMin: t.usableMin ?? s.usableMin,
+      dayStartMin: t.dayStartMin ?? s.dayStartMin,
+      lunchStartMin: t.lunchStartMin ?? s.lunchStartMin,
+      breakMin: t.breakMin ?? s.breakMin,
+    })),
+    levels,
+    caseWeight: input.cases.map((c) => levels[c.priority ?? (c.escalated === true ? levels.length - 1 : 0)].weight),
+    dueWeight: s.dueWeight ?? 8,
+    dueWindow: s.urgencyWindowDays ?? 5,
+    caseService: input.cases.map((c) => visitMinutes(input, c)),
   }
 }

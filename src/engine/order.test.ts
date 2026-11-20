@@ -39,6 +39,19 @@ describe('orderRoute', () => {
     }
   })
 
+  it('finds the shortest order when the start and end places differ (exact search)', () => {
+    for (const seed of [21, 22, 23]) {
+      const ctx = buildContext(generateInput(seed, 7, 3, 6))
+      const stops = ctx.cases.map((_, i) => i)
+      const r = new Route(2, 5)
+      r.stops = [...stops].reverse()
+      recalc(ctx, r)
+      orderRoute(ctx, r)
+      const best = Math.min(...permutations(stops).map((p) => travelOf(ctx, p, 2, 5)))
+      expect(r.travel).toBeCloseTo(best, 9)
+    }
+  })
+
   it('never makes a route of more than 10 stops longer, and loses no stop (2-opt)', () => {
     for (const seed of [11, 12, 13]) {
       const ctx = buildContext(generateInput(seed, 12, 3, 12))

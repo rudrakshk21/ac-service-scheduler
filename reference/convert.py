@@ -38,13 +38,16 @@ def day_date(n):
 
 
 def to_python(inp):
-    """Builds the Python Engine for a PlanInput dict. The reference knows only three work types
-    (required skill = work type), a Sunday rest day and a base start for every route."""
+    """Builds the Python Engine for a PlanInput dict. The reference knows only Sunday as a rest day."""
     s = inp["settings"]
     assert set(s["restWeekdays"]) <= {6}, "the Python reference only knows Sunday as a rest day"
-    assert [w["requiredSkill"] for w in inp["workTypes"]] == [0, 1, 2], "the Python reference has exactly 3 work types"
-    assert all("startPlace" not in t for t in inp["technicians"]), "the Python reference starts every route at the base"
+    levels = s.get("priorityLevels") or [{"name": "Normal", "weight": 0.0}, {"name": "Escalated", "weight": 100000.0}]
+    n_skills = 1 + max([w["requiredSkill"] for w in inp["workTypes"]] + [k for t in inp["technicians"] for k in t["skills"]])
     cfg = engine.Cfg(
+        cat_names=[w["name"] for w in inp["workTypes"]], req_skill=[w["requiredSkill"] for w in inp["workTypes"]],
+        prio_names=[lv["name"] for lv in levels], prio_w=[float(lv["weight"]) for lv in levels],
+        due_w=float(s.get("dueWeight", 8.0)), due_window=float(s.get("urgencyWindowDays", 5.0)),
+        products=[(float(p.get("addMin", 0.0)), float(p.get("factor", 1.0))) for p in inp.get("productTypes", [])],
         store_lat=s["baseLat"], store_lon=s["baseLon"], speed=s["speedKmh"], road_factor=s["roadFactor"],
         hop_min=s["sameAreaHopMin"], usable_min=s["usableMin"], age_w=s["ageWeight"], bal_w=s["balanceWeight"],
         max_km=s["maxKm"], start_min=s["dayStartMin"], lunch_min=s["lunchStartMin"], break_min=s["breakMin"],
@@ -54,7 +57,10 @@ def to_python(inp):
     )
     cases = [
         engine.CaseIn(
-            id=c["id"], cat=c["workType"], area=c["place"], esc=c["escalated"], reported=day_date(c["reportedDay"]),
+            id=c["id"], cat=c["workType"], area=c["place"], esc=c.get("escalated", False),
+            reported=day_date(c["reportedDay"]), prio=c.get("priority", -1),
+            due=day_date(c["dueDay"]) if "dueDay" in c else None,
+            product=c.get("productType", -1), svc_override=c.get("serviceMin"),
             req_tech=c.get("pinnedTech", -1),
             man_date=day_date(c["earliestDay"]) if "earliestDay" in c else None,
             freeze_tech=c.get("frozenTech", -1),
@@ -63,9 +69,12 @@ def to_python(inp):
     ]
     techs = [
         engine.TechIn(
-            name=t["name"], skill=[i in t["skills"] for i in range(3)], active=t["active"],
+            name=t["name"], skill=[i in t["skills"] for i in range(n_skills)], active=t["active"],
             leave_from=day_date(t["leaveFrom"]) if "leaveFrom" in t else None,
             leave_to=day_date(t["leaveTo"]) if "leaveTo" in t else None,
+            start_area=t.get("startPlace", -1), end_area=t.get("endPlace", -1),
+            usable_min=t.get("usableMin"), start_min=t.get("dayStartMin"),
+            lunch_min=t.get("lunchStartMin"), break_min=t.get("breakMin"),
         )
         for t in inp["technicians"]
     ]

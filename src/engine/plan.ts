@@ -33,7 +33,10 @@ function greedy(
     for (const c of pool) {
       const cs = ctx.cases[c]
       const age = Math.min(90.0, Math.max(0.0, day - cs.reportedDay))
-      const bonus = age * ctx.s.ageWeight + (cs.escalated ? 100000.0 : 0.0)
+      let bonus = age * ctx.s.ageWeight + ctx.caseWeight[c]
+      if (cs.dueDay !== undefined) {
+        bonus += ctx.dueWeight * Math.min(90.0, Math.max(0.0, ctx.dueWindow - (cs.dueDay - day)))
+      }
       for (const t of eligible.get(c) ?? []) {
         const r = routes.get(t)
         if (r === undefined) continue
@@ -76,7 +79,7 @@ function relocate(ctx: Ctx, routes: Map<number, Route>, eligible: Map<number, nu
       if (r.pinned) continue
       for (const c of r.stops) {
         const without = r.stops.filter((x) => x !== c)
-        const saved = r.travel - travelOf(ctx, without)
+        const saved = r.travel - travelOf(ctx, without, r.startNode, r.endNode)
         for (const t of eligible.get(c) ?? []) {
           const target = routes.get(t)
           if (t === k || target === undefined || target.pinned) continue
@@ -143,7 +146,10 @@ export function runPlan(ctx: Ctx): RawResult {
     worked += 1
     const routes = new Map<number, Route>()
     for (let t = 0; t < technicians.length; t++) {
-      if (isAvailable(technicians[t], day)) routes.set(t, new Route())
+      if (isAvailable(technicians[t], day)) {
+        const tp = ctx.techPlan[t]
+        routes.set(t, new Route(tp.startNode, tp.endNode, tp.usableMin))
+      }
     }
     const pool = left.filter((c) => {
       const md = cases[c].earliestDay
@@ -189,7 +195,9 @@ export function runPlan(ctx: Ctx): RawResult {
   for (const c of left) {
     res.unscheduled.add(c)
     if (!res.unschedReason.has(c)) {
-      res.unschedReason.set(c, `Beyond planning horizon (${s.horizonDays} working days) or does not fit in a day`)
+      let reason = `Beyond planning horizon (${s.horizonDays} working days) or does not fit in a day`
+      if (cases[c].dueDay !== undefined) reason += '; due date missed'
+      res.unschedReason.set(c, reason)
     }
   }
   finalise(ctx, res)

@@ -1,0 +1,136 @@
+"""Synthetic scenarios for the step 2 features. Everything is invented. Only Rng.random() is used."""
+import copy
+
+from scenarios import START, Rng, base, make_places, settings
+
+WORK_TYPES_5 = [
+    {"name": "Installation", "serviceMin": 120.0, "dailyCeiling": 3.0, "requiredSkill": 0},
+    {"name": "Service", "serviceMin": 75.0, "dailyCeiling": 5.0, "requiredSkill": 1},
+    {"name": "Breakdown", "serviceMin": 75.0, "dailyCeiling": 5.0, "requiredSkill": 2},
+    {"name": "Gas refill", "serviceMin": 60.0, "dailyCeiling": 6.0, "requiredSkill": 2},
+    {"name": "Inspection", "serviceMin": 30.0, "dailyCeiling": 10.0, "requiredSkill": 3},
+]
+
+
+def five_work_types():
+    rng = Rng(21)
+    places = make_places(rng, 12)
+    techs = [{"name": "Technician %02d" % (i + 1), "skills": [i % 4], "active": True} for i in range(10)]
+    techs[4]["skills"] = [0, 3]
+    cases = [{"id": str(200001 + i), "workType": rng.pick([20, 25, 25, 15, 15]), "place": rng.int(0, 11),
+              "escalated": False, "reportedDay": START - rng.int(0, 30)} for i in range(80)]
+    return {"settings": settings(), "workTypes": copy.deepcopy(WORK_TYPES_5), "technicians": techs,
+            "places": places, "cases": cases}
+
+
+def skills_not_position():
+    inp = base(22, 60, 9, 12)
+    inp["workTypes"][0]["requiredSkill"] = 2
+    inp["workTypes"][1]["requiredSkill"] = 0
+    inp["workTypes"][2]["requiredSkill"] = 1
+    inp["technicians"][0]["skills"] = [0, 1]
+    return inp
+
+
+def home_and_depot():
+    inp = base(23, 60, 9, 12)
+    for i in (0, 1, 2, 3):
+        inp["technicians"][i]["startPlace"] = i
+    for i in (2, 3, 4):
+        inp["technicians"][i]["endPlace"] = (i + 5) % 12
+    return inp
+
+
+def home_to_home():
+    inp = base(24, 50, 6, 8)
+    for i, t in enumerate(inp["technicians"]):
+        t["startPlace"] = i
+        t["endPlace"] = i
+    return inp
+
+
+def long_routes_with_ends():
+    inp = base(25, 45, 3, 3)
+    for w in inp["workTypes"]:
+        w["serviceMin"] = 10.0
+        w["dailyCeiling"] = 40.0
+    for t in inp["technicians"]:
+        t["startPlace"] = 0
+        t["endPlace"] = 1
+    return inp
+
+
+def tech_hours():
+    inp = base(26, 60, 9, 12)
+    t = inp["technicians"]
+    t[0]["usableMin"] = 240.0
+    t[1].update({"dayStartMin": 480.0, "lunchStartMin": 720.0, "breakMin": 30.0})
+    t[2].update({"usableMin": 600.0, "breakMin": 0.0})
+    t[3]["dayStartMin"] = 600.0
+    return inp
+
+
+def short_day_overload():
+    inp = base(27, 30, 6, 8)
+    inp["technicians"][0]["usableMin"] = 120.0
+    for i in range(4):
+        inp["cases"][i]["workType"] = 0
+        inp["cases"][i]["pinnedTech"] = 0
+        inp["cases"][i]["earliestDay"] = START
+    return inp
+
+
+LEVELS_4 = [{"name": "Low", "weight": 0.0}, {"name": "Normal", "weight": 0.0},
+            {"name": "High", "weight": 150.0}, {"name": "Emergency", "weight": 100000.0}]
+
+
+def priority_levels():
+    inp = base(28, 80, 9, 12)
+    inp["settings"]["priorityLevels"] = copy.deepcopy(LEVELS_4)
+    for i, c in enumerate(inp["cases"]):
+        c["priority"] = 3 if i % 7 == 0 else 2 if i % 5 == 0 else 0 if i % 4 == 0 else 1
+    return inp
+
+
+def escalated_on_custom_levels():
+    inp = base(29, 60, 9, 12)
+    inp["settings"]["priorityLevels"] = copy.deepcopy(LEVELS_4)
+    for i in (2, 9, 17):
+        inp["cases"][i]["escalated"] = True
+    return inp
+
+
+def _with_due_dates(inp):
+    for i, c in enumerate(inp["cases"]):
+        if i % 11 == 0:
+            c["dueDay"] = START - 3
+        elif i % 3 == 0:
+            c["dueDay"] = START + (i % 6)
+    return inp
+
+
+def due_dates():
+    return _with_due_dates(base(30, 110, 6, 10, horizonDays=2))
+
+
+def due_dates_strong():
+    return _with_due_dates(base(30, 110, 6, 10, horizonDays=2, dueWeight=40.0, urgencyWindowDays=10.0))
+
+
+def product_types():
+    inp = base(31, 60, 9, 12)
+    inp["productTypes"] = [{"name": "Split"}, {"name": "Cassette", "addMin": 30.0},
+                           {"name": "Ducted", "factor": 1.5, "addMin": 15.0}]
+    for i, c in enumerate(inp["cases"]):
+        if i % 2 == 0:
+            c["productType"] = i % 3
+        if i % 13 == 0:
+            c["serviceMin"] = 45.0
+    return inp
+
+
+STEP2 = {f.__name__: f for f in (
+    five_work_types, skills_not_position, home_and_depot, home_to_home, long_routes_with_ends,
+    tech_hours, short_day_overload, priority_levels, escalated_on_custom_levels,
+    due_dates, due_dates_strong, product_types,
+)}
