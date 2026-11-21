@@ -30,13 +30,17 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(answer(request))
 })
 
+// One copy of each file is stored, so the headers a server names in Vary do not matter. Without ignoreVary a script
+// that the page loads with an Origin header (every module script does) would not find the copy stored without one.
+const LOOK = { ignoreSearch: true, ignoreVary: true }
+
 async function answer(request) {
   const cache = await caches.open(CACHE)
-  const stored = await cache.match(request, { ignoreSearch: true })
+  const stored = await cache.match(request, LOOK)
   if (stored !== undefined) return stored
   // A page address the app does not have as a file (a reload on any screen) still opens the app.
   if (request.mode === 'navigate') {
-    const page = await cache.match('/index.html')
+    const page = await cache.match('/index.html', LOOK)
     if (page !== undefined) return page
   }
   return fetch(request)

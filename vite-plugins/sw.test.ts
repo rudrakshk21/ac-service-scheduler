@@ -9,7 +9,7 @@ const FILES = ['/', '/index.html', '/assets/a.js']
 interface Ev {
   waitUntil?: (p: Promise<unknown>) => void
   respondWith?: (p: Promise<Response> | Response) => void
-  request?: { method: string; url: string; mode: string }
+  request?: { method: string; url: string; mode: string; headers?: { origin?: string } }
   data?: unknown
 }
 type Handler = (e: Ev) => void
@@ -27,13 +27,18 @@ function boot() {
       const entries = store.get(name)!
       return {
         async addAll(urls: string[]) {
-          for (const u of urls) entries.set(new URL(u, ORIGIN).href, new Response('cached ' + u))
+          // As a real server may answer: a file that varies by Origin.
+          for (const u of urls) entries.set(new URL(u, ORIGIN).href, new Response('cached ' + u, { headers: { Vary: 'Origin' } }))
         },
-        async match(req: { url: string } | string, opts?: { ignoreSearch?: boolean }) {
+        async match(req: { url: string; headers?: { origin?: string } } | string, opts?: { ignoreSearch?: boolean; ignoreVary?: boolean }) {
           const want = new URL(typeof req === 'string' ? req : req.url, ORIGIN)
+          // The browser compares the headers named by Vary with those of the request the file was stored for (none had an Origin).
+          const origin = typeof req === 'string' ? undefined : req.headers?.origin
           for (const [href, res] of entries) {
             const have = new URL(href)
-            if (have.pathname === want.pathname && (opts?.ignoreSearch === true || have.search === want.search)) return res.clone()
+            if (have.pathname !== want.pathname || (opts?.ignoreSearch !== true && have.search !== want.search)) continue
+            if (opts?.ignoreVary !== true && res.headers.get('vary') === 'Origin' && origin !== undefined) continue
+            return res.clone()
           }
           return undefined
         },
@@ -62,7 +67,7 @@ function boot() {
     await pending
     return answer === undefined ? undefined : await answer
   }
-  const get = (path: string, over: Partial<{ method: string; mode: string }> = {}) => ({ method: 'GET', mode: 'no-cors', url: ORIGIN + path, ...over })
+  const get = (path: string, over: Partial<{ method: string; mode: string; headers: { origin?: string } }> = {}) => ({ method: 'GET', mode: 'no-cors', url: ORIGIN + path, ...over })
   return { run, store, network, skipWaiting, claim, get }
 }
 
@@ -88,6 +93,14 @@ describe('service worker', () => {
     const w = boot()
     await w.run('install')
     const res = await w.run('fetch', { request: w.get('/assets/a.js?v=2') })
+    expect(await res?.text()).toBe('cached /assets/a.js')
+    expect(w.network).not.toHaveBeenCalled()
+  })
+
+  it('answers a script that the page loads with an Origin header (a module script does), although the stored file says Vary: Origin', async () => {
+    const w = boot()
+    await w.run('install')
+    const res = await w.run('fetch', { request: w.get('/assets/a.js', { mode: 'cors', headers: { origin: ORIGIN } }) })
     expect(await res?.text()).toBe('cached /assets/a.js')
     expect(w.network).not.toHaveBeenCalled()
   })
