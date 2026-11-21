@@ -690,6 +690,8 @@
   "setup.err.casesUsePlace.one": "{count} केस इस जगह का इस्तेमाल करता है।",
   "setup.err.casesUsePlace.other": "{count} केस इस जगह का इस्तेमाल करते हैं।",
   "intake.file.empty": "{file} खाली है।",
+  "intake.file.tooLarge": "{file} {size} MB की है। ऐप जितनी बड़ी फ़ाइल पढ़ता है, वह अधिकतम {limit} MB है। केवल ज़रूरी केस निर्यात करें (जैसे खुले केस), या फ़ाइल को बाँट दें।",
+  "intake.file.tooManyRows": "{file} में {count} पंक्तियाँ हैं। ऐप एक फ़ाइल से अधिकतम {limit} पंक्तियाँ पढ़ता है। केवल ज़रूरी केस निर्यात करें (जैसे खुले केस), या फ़ाइल को बाँट दें।",
   "intake.file.xls": "{file} पुरानी Excel (.xls) फ़ाइल है। उसे Excel में खोलकर .xlsx या CSV के रूप में सहेजें, फिर दोबारा आयात करें।",
   "intake.file.notExcel": "{file} Excel (.xlsx) फ़ाइल नहीं है।",
   "intake.file.excelUnreadable": "{file} Excel (.xlsx) फ़ाइल के रूप में पढ़ी नहीं जा सकी; हो सकता है वह खराब हो।",

@@ -2,7 +2,7 @@ import { useRef, useState, type DragEvent } from 'react'
 import { t, type MessageKey } from '../../i18n'
 import { suggestProfile } from '../../intake/map/suggest'
 import type { Kind } from '../../intake/map/model'
-import { readSource } from '../../intake/read'
+import { fileTooLarge, MAX_FILE_BYTES, readSource } from '../../intake/read'
 import type { ReadOptions } from '../../intake/read/table'
 import { profileFor } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
@@ -42,6 +42,11 @@ export function FileStep({ flow, dispatch }: StepProps) {
 
   async function choose(file: File | undefined) {
     if (file === undefined) return
+    // Refuse a file that is too big before it is read into memory at all.
+    if (file.size > MAX_FILE_BYTES) {
+      dispatch({ type: 'error', message: fileTooLarge(file.name, file.size).message })
+      return
+    }
     source.current = { data: new Uint8Array(await file.arrayBuffer()), name: file.name }
     options.current = {}
     await read()

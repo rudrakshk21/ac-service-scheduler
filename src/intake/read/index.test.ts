@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { IntakeError } from '../errors'
 import { makeXlsx } from '../testing/xlsx'
-import { readSource } from './index'
+import { MAX_FILE_BYTES, MAX_ROWS, readSource } from './index'
 
 const utf8 = (s: string) => new TextEncoder().encode(s)
 const latin1 = (s: string) => Uint8Array.from([...s].map((c) => c.charCodeAt(0)))
@@ -13,6 +13,40 @@ function utf16le(s: string): Uint8Array {
 
 const HEADERS = ['Id', 'Area']
 const ROWS = [['1', 'A'], ['2', 'B']]
+
+const csvWithRows = (n: number): Uint8Array => utf8('Id,Area\n' + Array.from({ length: n }, (_, i) => `${i + 1},A`).join('\n') + '\n')
+
+describe('the limits on a file (SEC-4: 20 MB and 50,000 rows)', () => {
+  it('reads a file of exactly the largest number of rows', async () => {
+    const t = await readSource(csvWithRows(MAX_ROWS), 'big.csv')
+    expect(t.rows).toHaveLength(MAX_ROWS)
+  })
+  it('refuses a CSV with one row more, saying how many and what to do', async () => {
+    const error = await readSource(csvWithRows(MAX_ROWS + 1), 'big.csv').catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(IntakeError)
+    expect((error as IntakeError).code).toBe('too_many_rows')
+    expect((error as IntakeError).message).toMatch(/big\.csv/)
+    expect((error as IntakeError).message).toMatch(/50,000/)
+  })
+  it('refuses a JSON file and a spreadsheet with too many rows', async () => {
+    const json = utf8(JSON.stringify(Array.from({ length: MAX_ROWS + 1 }, (_, i) => ({ id: i }))))
+    await expect(readSource(json, 'big.json')).rejects.toMatchObject({ code: 'too_many_rows' })
+    const sheet = await makeXlsx([{ sheet: 'Cases', rows: [['Id', 'Area'], ...Array.from({ length: MAX_ROWS + 1 }, (_, i) => [String(i), 'A'])] }])
+    await expect(readSource(sheet, 'big.xlsx')).rejects.toMatchObject({ code: 'too_many_rows' })
+  }, 60_000)
+  it('refuses a file larger than 20 MB before reading it, naming its size', async () => {
+    const bytes = new Uint8Array(MAX_FILE_BYTES + 1).fill(0x41)
+    const error = await readSource(bytes, 'huge.csv').catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(IntakeError)
+    expect((error as IntakeError).code).toBe('file_too_large')
+    expect((error as IntakeError).message).toMatch(/huge\.csv/)
+    expect((error as IntakeError).message).toMatch(/20 MB/)
+  })
+  it('accepts a file of exactly 20 MB in size', async () => {
+    const bytes = new Uint8Array(MAX_FILE_BYTES).fill(0x41)
+    await expect(readSource(bytes, 'edge.csv')).rejects.not.toMatchObject({ code: 'file_too_large' })
+  })
+})
 
 describe('readSource', () => {
   it('reads UTF-8 CSV with a byte-order mark and a title line', async () => {
