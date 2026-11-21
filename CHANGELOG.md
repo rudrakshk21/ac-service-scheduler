@@ -31,7 +31,12 @@ technician their day.
   layouts, `Intl` dates and numbers.
 - **Safeguards.** A content security policy and other security headers; an error screen that offers a backup instead of
   a blank page; "Skip to content"; a size budget (first download 300 KB), a check for known vulnerabilities, weekly
-  dependency updates and a check that no personal data is committed, all in CI.
+  dependency updates and a check that no personal data, key or token is committed, all in CI.
+- **Limits on files.** A file is refused above 20 MB or 50,000 rows, with a message that says what to do. Files are read
+  and the mapping applied in a worker, so a large file shows "Checking the file…" instead of freezing the screen.
+- **Limits stated.** For a centre larger than 2,000 cases, 100 technicians or 30 days (the size the app was measured at),
+  the Plan screen says so and warns that planning can take much longer, most of all on a phone.
+- **A privacy notice in the app** (Set-up, Your data and files): what is kept, where, for how long and who can see it.
 - **Guides.** `docs/phone-guide.md`, `docs/privacy.md`, `CONTRIBUTING.md`, and a guide to adding a language.
 
 ### Changed
@@ -41,6 +46,8 @@ technician their day.
   further fingerprints agree). Plans nobody is waiting for are stopped, and the Plan screen keeps its last plan, so
   coming back to it is instant when nothing changed.
 - **Delete all my data** also removes the route files opened on the device.
+- Reading a file and applying its mapping moved off the interface thread: on a 50,000-row file the longest block of the
+  screen went from 5.2 s to 0.3 s (measured on a laptop).
 
 ### Fixed
 
@@ -58,3 +65,5 @@ technician their day.
 - Planning has been timed only on a laptop: 5,000 cases and 200 technicians take about 18 s there and 10,000 cases and
   300 technicians about 100 s, so a phone will be slower for the largest centres.
 - No street-map background and no clicking the map to correct a place.
+- A retention period for closed cases (proposed in the requirements) is not built: closed cases stay until deleted.
+- The limit on a file is its size on disk; an .xlsx is a zip, and what it holds when unpacked is not limited.

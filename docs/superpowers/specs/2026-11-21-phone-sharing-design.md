@@ -177,6 +177,147 @@ remain: try the install on the reference phone (PD-9) and on Samsung Internet an
 - **Against AC-30.** A second language and a right-to-left test language exist and the layout holds; "no text stays
   untranslated" is true for the interface but not for the engine's reasons, until the engine gives codes.
 
+## 13. As built in hardening (piece 5)
+
+Branch `hardening`, plan `docs/superpowers/plans/2026-11-21-hardening.md`. No new screens; guards, fixes, measurements and
+documents. Measured on the owner's laptop (Windows, Node 26, Chrome in the app's browser pane) on 2026-11-21 and 22.
+
+### 13.1 What was built
+
+- **Error screen.** A crash shows what happened, a reload button and, when there is data, a backup button, instead of a
+  blank page (`ErrorBoundary`, around the workspace and around the shell).
+- **Security headers** (`public/_headers`, SEC-6). Content security policy: nothing by default; scripts, styles, fonts,
+  images, workers, manifest and requests from the site's own address only; no framing, no changed base address, no form
+  posts. Also nosniff, no referrer, same-origin opener and resource policies, HSTS for a year, and a permissions policy
+  that keeps only location. `npm run serve:dist` serves `dist/` with these headers; the whole app was used under them
+  (import, plan in the worker, map, CSV, Excel, route pack out and in, Hindi, the service worker with its cached files,
+  the manifest) with a violation listener and an empty console. A test (`headers.test.ts`) fails if the policy gains
+  `unsafe-inline`, `unsafe-eval` or another site.
+- **CI guards.** `npm run check:size`: the first download (page, scripts, stylesheets gzipped, plus the fonts they name)
+  at most 300 KB (NFR-3; now 154 KB) and everything the install keeps at most 800 KB (our own guard; now 312 KB).
+  `npm audit --omit=dev` at every pull request and once a week; Dependabot, weekly, minor and patch updates grouped, for
+  npm and GitHub Actions; `npm run check:privacy` (13.5).
+- **Accessibility audit and fixes** (13.2), **speed and limits** (13.3), **file limits and reading in a worker** (13.4),
+  **privacy** (13.5), **documents** (13.6).
+
+### 13.2 Accessibility record (AC-29)
+
+- **Audit.** axe-core 4.14 (rules WCAG 2.0 to 2.2 A and AA, and best practice) on the five tabs; the demo; the empty
+  first-run screens; the four import steps with a file and the result screen; all nine Set-up sections; the Route tab
+  with an opened pack; with a lane's stops open. In English, Hindi and the right-to-left test language; light and dark;
+  at desktop width, 375 px and 320 px. Result: no violation left.
+- **What it found, and the fix.** (1) The day bar of each technician was a button whose visible text (visit numbers, two
+  letters) was not in its accessible name, WCAG 2.5.3, 17 places: the bar is now a picture with a text name and the lane
+  has a real "Show stops" button, whose visible text is in its name (the class `.bar` also clashed with the import
+  screen's progress bars in a global stylesheet; now `.lane-bar`). (2) Map markers: the name now begins with the visible
+  label. (3) Light-mode contrast: the installation block label 4.07:1 and the orange marker 4.19:1, now above 4.5:1.
+  (4) The route sheet's stop number had an `aria-label` on a plain `span`, which many screen readers ignore: now hidden
+  text. (5) No bypass of the six repeated stops before the content (WCAG 2.4.1): a "Skip to content" button first on
+  every page (a button, because the address bar's hash chooses the screen).
+- **Also found by looking, not by axe.** The map label of a technician was the whole name when names differ only by a
+  number ("Technician 01", "Technician 02": 80 px of text in a 30 px marker). Labels are now letters only, at most three,
+  with a spare letter (A, B, C) where names stay alike; a property test checks uniqueness and length for any names.
+- **By hand.** Keyboard walkthrough of the demo (focus order logical; every stop has a 2.4 px focus ring and a target of
+  48 px or more; the skip button is the first stop on the production build, appears on screen, and moves focus into the
+  page). No sideways scrolling on any screen at 320 px. Contrast of text drawn in the SVG map, which axe cannot judge:
+  6.4:1 or better in dark, 4.8:1 or better in light, for all eight technician colours.
+- **Not done.** Edge, Firefox, Safari and Samsung Internet; TalkBack (AC-34); the real phone (AC-32). The browser pane's
+  own device emulation was used, not Playwright.
+
+### 13.3 Speed and limits (NFR-1, NFR-4, NFR-22)
+
+- **A finding, fixed.** The earlier measurement (section 6 of the step 2 design: 6 s) used data where each technician has
+  one skill. With two skills each, the usual case, 2,000 cases and 100 technicians took **42 s** in Node and 27 s in the
+  browser's worker, over the 30 s of NFR-4. 70% of the time was in `greedy` (`src/engine/plan.ts`), which after every stop
+  looked at every case against every technician again, though only one route had changed. It now keeps each case's best
+  offer and what adding a case to a route costs until that route changes, and looks again in full only at the cases that
+  favoured the changed route. The choice is the one a full scan makes, ties included.
+- **Same plans.** The Python reference is not touched. All 28 golden files agree, and 17 fingerprints of made-up centres
+  (`src/engine/fingerprint.test.ts`, taken from the engine before the change, whole numbers and text only so that they
+  are the same on every machine) agree. Breaking the tie rule on purpose made three golden files fail.
+- **Planning time** (`src/screens/plan/planSpeed.measure.test.ts` and `src/engine/speed.measure.test.ts`, opt-in with
+  `VITE_MEASURE_SPEED=1`; ranges are two runs):
+
+  | Cases, technicians, 30 days | Before | After |
+  |---|---|---|
+  | 300, 20 (NFR-1) | not measured | 0.07 s |
+  | 500, 30 | 0.30 s | 0.07 to 0.11 s |
+  | 1,000, 60 | 1.92 s | 0.15 to 0.29 s |
+  | **2,000, 100 (NFR-4)** | **42.1 s** | **0.8 to 1.1 s** |
+  | 2,000, 25 | 6.72 s | 0.40 to 0.45 s |
+  | 5,000, 200 | not measured | 17.9 s |
+  | 10,000, 300 | not measured | 98.6 s |
+
+  With the one-skill generator of step 2: 2,000 cases and 100 technicians 4.0 s to 0.51 s (15 days) and 6.1 s to 0.39 s
+  (30 days).
+- **In the browser** (production build, 2,000 cases, 100 technicians, two skills): the worker took 27 s before and 1.6 s
+  in a visible tab after (3.5 to 4 s in the hidden pane, which the browser slows). Coming back to the Plan tab with
+  nothing changed takes 0.4 s and starts no worker: the screen keeps its last plan (a plan depends on nothing but its
+  input), and a change plans again. A plan that is replaced, or whose screen is left, is stopped instead of running on.
+- **Import.** A first-time 5,000-row file: Columns 47 ms, Words 27 ms, Check 0.7 s (against 5,000 stored cases), the
+  import itself 45 ms.
+- **Limits stated.** The Plan screen shows a note for more than 2,000 cases, 100 working technicians or 30 days, with the
+  numbers and the size measured, and says it can take much longer, most of all on a phone. A phone has not been measured:
+  NFR-1's 10 s and NFR-22's "without the browser closing the page" are open until the reference phone (PD-9) exists.
+  On this evidence a phone only needs to be 140 times slower than the laptop to miss NFR-1.
+
+### 13.4 Files (SEC-4)
+
+- **Limits.** A file over 20 MB is refused before it is read into memory (on the `File`'s size) and again in `readSource`;
+  a CSV, JSON or spreadsheet with more than 50,000 data rows is refused before a table is built. The messages name the file
+  and the number and say what to do. English and Hindi. The size of an unpacked `.xlsx` is not limited.
+- **Off the interface thread.** `readSource` and `applyProfile` run in a worker (`src/worker/intake*`); the page sends the
+  language in use with the work, because the library writes translated messages. On a 50,000-row file the longest block of
+  the screen was one task of 5.2 s (Check step); now it is 333 ms (copying the table to and from the worker), and the step
+  shows "Checking the file…". The Check step shows an alert, instead of crashing, if the worker fails. The spreadsheet
+  reader moved into the worker's own bundle (125 KB raw): first download unchanged at 154 KB, install 312 KB.
+
+### 13.5 Privacy (AC-27, SEC-1, SEC-3, SEC-7, SEC-9, PRV)
+
+- **Network.** The request log of the production build holds only the app's own files. The built files name no other
+  host to fetch from (only XML namespace names and a React error link). The policy enforces the same. To be repeated on the
+  live site after the merge.
+- **Repository.** No real data tracked; `reference-local/` is ignored and holds no tracked file; no phone numbers. Plan
+  documents held the owner's Windows user folder and a university cloud-drive folder: now placeholders (older commits keep
+  them). 97 of the commits carry the owner's real email address as author: an owner decision (13.7).
+- **Guard.** `npm run check:privacy`, and a CI step, fail on a local path, a person's email address, a cloud-drive folder, or
+  a key or token of a common kind. Run over the old documents it finds all five places.
+- **Found while writing the statement:** "Delete all my data" left the route files saved by the Route tab. It now removes
+  them (test first; checked in the production build).
+- **Notice.** What is kept, where, for how long and who can see it, in Set-up and in `docs/privacy.md` (PRV-3).
+
+### 13.6 Documents
+
+`README.md` (it was the Vite template), `docs/phone-guide.md` (DL-13), `docs/privacy.md`, `CONTRIBUTING.md` (including how
+to repeat the audit and the measurements), `CHANGELOG.md`; version 1.0.0 in `package.json`. No release tag: the owner's
+decision.
+
+### 13.7 Requirements, and what is open
+
+| Requirement | State |
+|---|---|
+| NFR-1 plan 300 cases, 20 technicians: 3 s laptop, 10 s phone | Laptop 0.07 s. Phone **not measured**. |
+| NFR-3 first download at most 300 KB | 154 KB, enforced in CI. "Usable within 3 s on 4G" not measured. |
+| NFR-4 2,000 cases, 100 technicians, 30 days in 30 s; state limits | 0.8 to 1.1 s (was 42 s). Limits stated in the Plan screen. |
+| NFR-22 phone: plan DS-1, state the largest size | Statement of the measured size done. Phone **not measured**. |
+| SEC-3 HTTPS, no secret in the repository | HTTPS and HSTS from the host; secrets guard in CI. |
+| SEC-4 file limits, parsed off the thread | 20 MB and 50,000 rows; reading and mapping in a worker. Unpacked `.xlsx` size not limited. |
+| SEC-6 content security policy, no sniffing, no framing | Done, tested. To be read from the live site after the merge. |
+| SEC-8 locked, scanned weekly, updated | Lock file; audit on every pull request and weekly; Dependabot. The 30-day window is a habit, not a check. |
+| PRV-3 privacy notice | In the app and in `docs/privacy.md`. |
+| PRV-4 retention of closed cases (should) | **Not built.** |
+| PRV-2, PRV-5, PRV-7, PRV-9 | Done before; PRV-2 now also removes saved routes; a pack never holds a customer name (stricter than PRV-9). |
+| AC-27 network log only to the app's host | Verified locally; repeat on the live site. |
+| AC-29 audit, keyboard, browsers | Audit clean, keyboard walk done; only Chromium tried. |
+| AC-32 360 px, 48 px, real phone | 375 and 320 px and 48 px done; real phone not. |
+| AC-34 TalkBack | Not done (owner). |
+| DL-12, DL-13 | Contributor guide and phone guide written; DL-13's Android test report waits for the phone. |
+
+Open for the owner: a real Android phone (Chrome, Samsung Internet, Firefox; PD-9, AC-31, AC-34, R-19); a decision on
+the licence and the release tag; whether to publish any sample data (PD-6); a native reader for the Hindi draft;
+engine reason codes (a reference change) to translate the planner's sentences; whether the "Longest trip" setting
+(`maxKm`) is implemented or dropped; PRV-4; and the git author email (13.5).
+
 ## 8. Finish line
 
 - C: the built app opens offline after one visit; installs from Chrome on Android; a new build shows the update banner.

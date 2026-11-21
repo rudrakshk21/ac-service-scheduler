@@ -62,6 +62,13 @@ To remove a saved route, use **Remove** under *Saved on this phone*.
 
 Make a new route file whenever you change anything that affects the plan, and tell the technician to open it.
 
+### Importing
+
+The app reads a file of up to 20 MB and 50,000 rows. A bigger file is refused with a message; export only the cases you
+need (for example the open ones), or split it. While a large file is checked the screen shows *Checking the file…*, and
+stays usable. For a centre larger than 2,000 cases, 100 technicians or 30 days, the Plan screen says that the app was
+measured only up to that size.
+
 ### Updates
 
 When a new version of the app is published, a banner says *A new version of the app is ready* with a **Reload**
