@@ -1,10 +1,13 @@
-import { t } from '../../i18n'
+import { t, tOptional } from '../../i18n'
 import { detectDateOrder, parseDate } from '../read/dates'
 import { detectDecimal } from '../read/numbers'
 import type { Cell, SourceTable } from '../read/table'
 import { PERSONAL_NAMES, SEED_DICTIONARY } from './dictionary'
 import { FIELDS, normaliseName, openName, PERSONAL_FIELDS, type Kind } from './model'
 import { fingerprintOf, type MappingProfile } from './profile'
+
+/** A field written the way a person reads it ("Case identifier"), or by its code when it has no name. */
+const fieldName = (kind: Kind, field: string): string => tOptional(`field.${kind}.${field}`) ?? field
 
 export interface Suggestion {
   field: string
@@ -156,7 +159,7 @@ export function suggestProfile(
         named.add(col)
         cands.push({
           field, col, conf: s,
-          reason: t(s === 1 ? 'intake.suggest.known' : 'intake.suggest.resembles', { header: table.headers[col], field }),
+          reason: t(s === 1 ? 'intake.suggest.known' : 'intake.suggest.resembles', { header: table.headers[col], field: fieldName(kind, field) }),
         })
       }
     }
