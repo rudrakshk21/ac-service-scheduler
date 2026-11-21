@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PlanInput, PlanResult } from '../engine'
-import { planInWorker } from '../worker/client'
+import { startPlan, type PlanJob } from '../worker/client'
 import { movedCases, type Change } from './viewModel'
 
 export interface ChangeNote extends Change {
@@ -33,11 +33,14 @@ export function useDemoPlan(): DemoPlan {
   const current = useRef<Planned | null>(null)
   const ticket = useRef(0)
   const changes = useRef(0)
+  const job = useRef<PlanJob | null>(null)
 
   const replan = useCallback((next: PlanInput, note: { techName: string; switchedOn: boolean } | null) => {
     const mine = ++ticket.current
     setBusy(true)
-    planInWorker(next).then(
+    job.current?.cancel()
+    job.current = startPlan(next)
+    job.current.result.then(
       (result) => {
         if (mine !== ticket.current) return // a newer request replaced this one
         const previous = current.current
@@ -62,6 +65,9 @@ export function useDemoPlan(): DemoPlan {
     })
     return () => {
       live = false
+      ticket.current += 1
+      job.current?.cancel()
+      job.current = null
     }
   }, [replan])
 
