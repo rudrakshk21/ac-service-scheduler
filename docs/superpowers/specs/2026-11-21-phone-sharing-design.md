@@ -70,6 +70,29 @@ Live route with completion updates (release 2, FR-21.3); a tile background with 
 to correct a place (FR-26.3, later); several workspaces (FR-24.5); a real PDF file; a store listing. Owner tasks that
 remain: try the install on the reference phone (PD-9) and on Samsung Internet and Firefox (AC-31, R-19).
 
+## 9. As built in pull request C
+
+- **Worker and plugin as designed.** `vite-plugins/precache.ts` lists the finished build (36 files), hashes them into a
+  version and writes `dist/sw.js` (3.2 KB) from `vite-plugins/sw-template.js`. Both are tested in Node (17 tests; the
+  worker runs against a stand-in for the browser's cache and network). The first download is 70.1 KB compressed.
+- **Two faults found by trying it, fixed with a test first.** Stopping the server and reloading the built app showed the
+  page but no scripts: a module script is requested with an `Origin` header and the server's files say `Vary: Origin`, so
+  the cache did not match its own copy. Matching now ignores `Vary`. The test stand-in now enforces `Vary` so the failure
+  is reproduced. Second, the fallback for an unknown page address uses `/`, not `/index.html`, because a host may
+  redirect `/index.html` and a redirected answer cannot open a page.
+- **Verified on the built app (localhost, Chrome in the app's browser pane):** worker active, all files cached; server
+  stopped and page reloaded: data, all four tabs, fonts, and a technician switch (re-plan in the worker) work with no
+  network; the update banner appeared for the corrected worker and Reload switched to it; manifest and the three icons
+  load with the right sizes and types.
+- **Install and storage.** Set-up has "Install the app" when the browser offers it, and steps for Chrome, Samsung
+  Internet, Firefox and Safari when it does not. After an import the browser is asked to keep the data (Chrome in the
+  test pane declined; that is the browser's decision). The workspace keeps `lastBackupAt`; a notice offers a backup after
+  14 days. "Save a backup" now records the day.
+- **Touch size.** Every control is at least 48 px; the date and time inputs in Set-up were 29 px and were fixed.
+  Checked at 360 px on every tab: no sideways scroll.
+- **Not done here (owner):** install on the reference phone and on Samsung Internet and Firefox (AC-31, R-19); the live
+  site's headers (`_headers`) are checked after the merge.
+
 ## 8. Finish line
 
 - C: the built app opens offline after one visit; installs from Chrome on Android; a new build shows the update banner.

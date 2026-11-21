@@ -109,7 +109,8 @@ describe('service worker', () => {
     const w = boot()
     await w.run('install')
     const res = await w.run('fetch', { request: w.get('/anything/here', { mode: 'navigate' }) })
-    expect(await res?.text()).toBe('cached /index.html')
+    // The start address, not /index.html: a host may redirect /index.html to /, and a redirected answer cannot open a page.
+    expect(await res?.text()).toBe('cached /')
   })
 
   it('asks the network for a file it does not have', async () => {

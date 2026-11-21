@@ -38,9 +38,10 @@ async function answer(request) {
   const cache = await caches.open(CACHE)
   const stored = await cache.match(request, LOOK)
   if (stored !== undefined) return stored
-  // A page address the app does not have as a file (a reload on any screen) still opens the app.
+  // A page address the app does not have as a file (a reload on any screen) still opens the app. The start address
+  // is used, not /index.html: a host may redirect /index.html to /, and a redirected answer cannot open a page.
   if (request.mode === 'navigate') {
-    const page = await cache.match('/index.html', LOOK)
+    const page = await cache.match('/', LOOK)
     if (page !== undefined) return page
   }
   return fetch(request)
