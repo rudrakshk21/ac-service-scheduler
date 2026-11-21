@@ -9,9 +9,9 @@ export default defineConfig({
     include: ['src/**/*.test.ts', 'vite-plugins/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts', 'src/workspace/**/*.ts', 'src/screens/**/*.ts', 'vite-plugins/**/*.ts'],
+      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts', 'src/workspace/**/*.ts', 'src/screens/**/*.ts', 'src/share/**/*.ts', 'vite-plugins/**/*.ts'],
       exclude: [
-        'vite-plugins/**/*.test.ts',
+        'vite-plugins/**/*.test.ts', 'src/share/**/*.test.ts',
         'src/engine/**/*.test.ts', 'src/engine/testing/**',
         'src/intake/**/*.test.ts', 'src/intake/**/testing/**',
         'src/workspace/**/*.test.ts', 'src/screens/**/*.test.ts',
