@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { parseSite, serializeSite } from '../../intake/site/site'
 import { parseWorkspace, serializeWorkspace } from '../../workspace/backup'
+import { promptInstall } from '../../pwa/register'
+import { usePwa } from '../../pwa/usePwa'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
 import { downloadText, readText, stamp } from '../files'
@@ -10,6 +12,7 @@ type Pending = { kind: 'restore'; workspace: Workspace; fileName: string } | { k
 
 export function DataSection() {
   const { workspace, update, status } = useWorkspace()
+  const { canInstall } = usePwa()
   const [message, setMessage] = useState<{ text: string; bad: boolean } | null>(null)
   const [pending, setPending] = useState<Pending>(null)
   const [persisted, setPersisted] = useState<boolean | null>(null)
@@ -83,6 +86,23 @@ export function DataSection() {
           </div>
         </div>
       )}
+
+      <div className="stack-tight">
+        <b>Install on this device</b>
+        <p className="muted small">Installed, the app opens full screen from the home screen and works without a connection.</p>
+        {canInstall && (
+          <div className="row"><button type="button" className="btn btn-primary" onClick={() => void promptInstall()}>Install the app</button></div>
+        )}
+        <details className="setup-details">
+          <summary>If there is no install button</summary>
+          <ul className="small stack-tight">
+            <li>Chrome on Android: open the menu (three dots), then choose Install app or Add to Home screen.</li>
+            <li>Samsung Internet: open the menu, choose Add page to, then Home screen.</li>
+            <li>Firefox on Android: open the menu, then choose Install.</li>
+            <li>Safari on iPhone: tap Share, then Add to Home Screen.</li>
+          </ul>
+        </details>
+      </div>
 
       <div className="stack-tight">
         <b>Storage</b>

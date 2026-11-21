@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useWorkspace } from '../workspace/useWorkspace'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
+import { UpdateBanner } from './UpdateBanner'
 import './shell.css'
 
 const Plan = lazy(() => import('./plan/PlanScreen'))
@@ -46,6 +47,7 @@ export function AppShell() {
           {message}
         </p>
       )}
+      <UpdateBanner />
       <nav className="shell-nav" aria-label="Main">
         <ul>
           {TABS.map((t) => (

@@ -51,3 +51,6 @@
 @media (prefers-reduced-motion: reduce) { .switch .track, .switch .track::after { transition: none; } }
 
 .danger { border-color: var(--bad); color: var(--bad); }
+
+.setup-details summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.setup-details ul { padding-inline-start: 20px; list-style: disc; }
