@@ -1,3 +1,4 @@
+import { formatDate, t, tn, tOptional, type MessageKey } from '../../i18n'
 import { isOpenFormat } from '../../intake/open-format'
 import { FIELDS, MANDATORY, normaliseName, PERSONAL_FIELDS, RECOMMENDED, type Kind, type StatusAction } from '../../intake/map/model'
 import type { MappingProfile } from '../../intake/map/profile'
@@ -10,24 +11,11 @@ export type Step = 'file' | 'columns' | 'values' | 'check' | 'done'
 export type ValueField = 'workType' | 'status' | 'priority' | 'skill'
 export type Level = 'required' | 'recommended' | 'optional'
 
-const LABELS: Record<Kind, Record<string, string>> = {
-  cases: {
-    caseId: 'Case identifier', workType: 'Work type', latitude: 'Latitude', longitude: 'Longitude', postalCode: 'Postal code',
-    area: 'Area or place name', address: 'Address', status: 'Status', reportedAt: 'Reported on', priority: 'Priority',
-    dueAt: 'Due date', productType: 'Product type', durationMin: 'Visit minutes', earliestDate: 'Not before',
-    technician: 'Assigned technician', customerName: 'Customer name', notes: 'Notes', otherRef: 'Other reference',
-  },
-  technicians: {
-    name: 'Name', skills: 'Skills', active: 'Active', leaveFrom: 'Leave from', leaveTo: 'Leave to', startArea: 'Start place',
-    startLatitude: 'Start latitude', startLongitude: 'Start longitude', endArea: 'End place', endLatitude: 'End latitude',
-    endLongitude: 'End longitude', shiftStart: 'Shift start', shiftHours: 'Shift hours', breakMin: 'Break minutes',
-  },
-  places: { area: 'Place name', latitude: 'Latitude', longitude: 'Longitude', postalCode: 'Postal code', zone: 'Zone' },
-}
+/** What a kind of file is called: "Service cases", "Technicians", "Places". */
+export const kindLabel = (kind: Kind): string => t(`kind.${kind}`)
 
-export const KIND_LABELS: Record<Kind, string> = { cases: 'Service cases', technicians: 'Technicians', places: 'Places' }
-
-export const labelOf = (kind: Kind, field: string): string => LABELS[kind][field] ?? field
+/** The plain name of a field of a kind, in the language in use. A field nobody wrote a name for is shown by its code. */
+export const labelOf = (kind: Kind, field: string): string => tOptional(`field.${kind}.${field}`) ?? field
 
 const LOCATION = ['latitude', 'longitude', 'postalCode', 'area', 'address']
 
@@ -61,19 +49,22 @@ export function guessKind(table: SourceTable, site: SiteProfile): Kind {
   return best
 }
 
-const DELIMITER_NAMES: Record<string, string> = { ',': 'comma', ';': 'semicolon', '	': 'tab', '|': 'bar' }
-const ENCODING_NAMES: Record<string, string> = {
-  'utf-8': 'UTF-8', 'utf-16le': 'UTF-16', 'utf-16be': 'UTF-16', 'windows-1252': 'Windows-1252 (Western European)',
+const DELIMITER_KEYS: Record<string, MessageKey> = { ',': 'delim.name.comma', ';': 'delim.name.semicolon', '	': 'delim.name.tab', '|': 'delim.name.bar' }
+const ENCODING_KEYS: Record<string, MessageKey> = {
+  'utf-8': 'enc.utf8', 'utf-16le': 'enc.utf16', 'utf-16be': 'enc.utf16', 'windows-1252': 'enc.windows1252',
 }
 
 /** One plain sentence about what was found in a file: format, encoding, delimiter, header row, row count. */
-export function describeTable(t: SourceTable): string {
-  const rows = `${t.rows.length} ${t.rows.length === 1 ? 'row' : 'rows'}`
-  if (t.format === 'xlsx') return `Excel sheet "${t.sheet}", header on row ${t.headerRow + 1}, ${rows}`
-  if (t.format === 'json') return `JSON, ${rows}`
-  const enc = ENCODING_NAMES[t.detected.encoding] ?? t.detected.encoding
-  const delimiter = t.detected.delimiter === null ? '' : `${DELIMITER_NAMES[t.detected.delimiter] ?? t.detected.delimiter}-separated, `
-  return `${enc}, ${delimiter}header on row ${t.headerRow + 1}, ${rows}`
+export function describeTable(table: SourceTable): string {
+  const rows = tn('import.rows', table.rows.length)
+  const row = table.headerRow + 1
+  if (table.format === 'xlsx') return t('import.describe.xlsx', { sheet: table.sheet, row, rows })
+  if (table.format === 'json') return t('import.describe.json', { rows })
+  const encKey = ENCODING_KEYS[table.detected.encoding]
+  const encoding = encKey === undefined ? table.detected.encoding : t(encKey)
+  const found = table.detected.delimiter
+  const delimiter = found === null ? '' : t('import.describe.delimiter', { name: DELIMITER_KEYS[found] === undefined ? found : t(DELIMITER_KEYS[found]) })
+  return t('import.describe.csv', { encoding, delimiter, row, rows })
 }
 
 /** The two ways a date such as 04/05/2026 can be read, written out so the user can pick one. */
@@ -85,7 +76,7 @@ export function dateReadings(value: string): { dmy: string; mdy: string } | null
   const y = parts[3].length === 2 ? 2000 + Number(parts[3]) : Number(parts[3])
   if (a > 12 || b > 12 || a === 0 || b === 0) return null
   const show = (month: number, day: number): string =>
-    new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, month - 1, day)))
+    formatDate(new Date(Date.UTC(y, month - 1, day)), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
   return { dmy: show(b, a), mdy: show(a, b) }
 }
 
@@ -96,8 +87,8 @@ export function sampleValues(table: SourceTable, header: string, n = 3): string[
   if (col < 0) return []
   const out: string[] = []
   for (const row of table.rows) {
-    const t = text(row[col])
-    if (t !== null && !out.includes(t)) out.push(t)
+    const value = text(row[col])
+    if (value !== null && !out.includes(value)) out.push(value)
     if (out.length >= n) break
   }
   return out
@@ -160,9 +151,9 @@ export function valueRows(table: SourceTable, profile: MappingProfile, site: Sit
   const seen = new Map<string, ValueRow>()
   for (const row of table.rows) {
     for (const col of cols) {
-      const t = text(row[col])
-      if (t === null) continue
-      for (const piece of field === 'skill' ? splitList(t) : [t.trim()]) {
+      const value = text(row[col])
+      if (value === null) continue
+      for (const piece of field === 'skill' ? splitList(value) : [value.trim()]) {
         if (piece === '') continue
         const key = normaliseName(piece)
         const have = seen.get(key)
@@ -186,9 +177,9 @@ function targetOf(profile: MappingProfile, site: SiteProfile, field: ValueField,
 export function valueOptions(site: SiteProfile, field: ValueField): { value: string; label: string }[] {
   if (field === 'status') {
     return [
-      { value: 'schedule', label: 'Plan it' },
-      { value: 'hold', label: 'Hold it' },
-      { value: 'ignore', label: 'Ignore it' },
+      { value: 'schedule', label: t('import.option.plan') },
+      { value: 'hold', label: t('import.option.hold') },
+      { value: 'ignore', label: t('import.option.ignore') },
     ]
   }
   const names = field === 'workType' ? site.workTypes.map((w) => w.name) : field === 'priority' ? site.priorityLevels.map((l) => l.name) : site.skills
@@ -218,24 +209,24 @@ const mapped = (p: MappingProfile, f: string): boolean => (p.columns[f] ?? []).l
 export function canContinue(step: Step, c: FlowContext): { ok: boolean; reason: string } {
   const ok = { ok: true, reason: '' }
   const no = (reason: string) => ({ ok: false, reason })
-  if (step === 'file') return c.table === null ? no('Choose a file first.') : ok
+  if (step === 'file') return c.table === null ? no(t('import.chooseFirst')) : ok
   if (step === 'columns') {
     for (const f of MANDATORY[c.kind]) {
       if (f === 'workType' && c.profile.singleWorkType !== undefined) continue
-      if (!mapped(c.profile, f)) return no(`Choose a column for "${labelOf(c.kind, f)}".`)
+      if (!mapped(c.profile, f)) return no(t('import.need.column', { label: labelOf(c.kind, f) }))
     }
     if (c.kind === 'cases') {
       const coords = mapped(c.profile, 'latitude') && mapped(c.profile, 'longitude')
-      if (mapped(c.profile, 'latitude') !== mapped(c.profile, 'longitude')) return no('Choose both a latitude and a longitude column, or neither.')
+      if (mapped(c.profile, 'latitude') !== mapped(c.profile, 'longitude')) return no(t('import.need.bothCoords'))
       if (!coords && !mapped(c.profile, 'area') && !mapped(c.profile, 'postalCode') && !mapped(c.profile, 'address')) {
-        return no('Choose at least one place column: area, postal code, address, or latitude with longitude.')
+        return no(t('import.need.place'))
       }
     }
     return ok
   }
   if (step === 'values' && c.table !== null && !c.leaveInReview && valueFields(c.kind, c.profile).includes('workType')) {
     const open = valueRows(c.table, c.profile, c.site, 'workType').filter((r) => r.target === null).length
-    if (open > 0) return no(`${open} ${open === 1 ? 'category is' : 'categories are'} not matched to a work type yet.`)
+    if (open > 0) return no(tn('import.need.categories', open))
   }
   return ok
 }

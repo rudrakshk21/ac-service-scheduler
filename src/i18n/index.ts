@@ -24,6 +24,11 @@ export function tn(key: PluralKey, count: number, params?: Params): string {
   return translatePlural([state.messages, english], key, count, intlLocale(state.code), params)
 }
 
+/** Like `t`, for a key that may not exist (the label of a field nobody wrote one for): undefined when no language has it. */
+export function tOptional(key: string, params?: Params): string | undefined {
+  return state.messages[key] !== undefined || english[key] !== undefined ? translate([state.messages, english], key, params) : undefined
+}
+
 export const localeCode = (): string => state.code
 export const isRtl = (): boolean => LOCALES.find((l) => l.code === state.code)?.dir === 'rtl'
 

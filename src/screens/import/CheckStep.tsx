@@ -1,19 +1,11 @@
 import { useMemo, useState } from 'react'
-import { applyProfile, type IssueCode } from '../../intake/map/apply'
+import { formatNumber, t, tn, type MessageKey, type PluralKey } from '../../i18n'
+import { applyProfile } from '../../intake/map/apply'
 import { applyImport, previewImport } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { askToKeepData } from '../files'
 import { labelOf } from './importFlow'
 import type { StepProps } from './StepProps'
-
-const ISSUE_TEXT: Record<IssueCode, string> = {
-  missing_id: 'No identifier',
-  no_location: 'Place not found',
-  unknown_work_type: 'Category not matched',
-  bad_date: 'Unreadable date',
-  duplicate_id: 'Repeated identifier',
-}
-const NOUN = { cases: ['case', 'cases'], technicians: ['technician', 'technicians'], places: ['place', 'places'] } as const
 
 interface CheckProps extends StepProps {
   onDone: (lines: string[]) => void
@@ -28,17 +20,20 @@ export function CheckStep({ flow, dispatch, onDone }: CheckProps) {
   if (imported === null || preview === null || profile === null) return null
 
   const count = kind === 'cases' ? imported.cases.length : kind === 'technicians' ? imported.technicians.length : imported.places.length
-  const [one, many] = NOUN[kind]
-  const noun = count === 1 ? one : many
   const q = imported.quality
   const exceptions = imported.exceptions
+  const n = {
+    new: formatNumber(preview.new),
+    updated: formatNumber(preview.updated),
+    unchanged: formatNumber(preview.unchanged),
+  }
 
-  const detail = kind === 'cases' ? ` (${preview.new} new, ${preview.updated} updated, ${preview.unchanged} unchanged)` : kind === 'technicians' ? ` (${preview.new} new, ${preview.updated} updated)` : ` (${preview.new} new)`
+  const detail = t(`import.detail.${kind}` as MessageKey, n)
   const summary = [
-    `Imported ${count} ${noun}.`,
-    `${preview.new} new, ${preview.updated} updated, ${preview.unchanged} unchanged.`,
-    ...(preview.removed > 0 ? [`${preview.removed} no longer in the file and now closed.`] : []),
-    ...(exceptions.length > 0 ? [`${exceptions.length} ${exceptions.length === 1 ? 'problem' : 'problems'} to look at in the Data tab.`] : []),
+    tn(`import.summary.${kind}` as PluralKey, count),
+    t('import.summary.counts', n),
+    ...(preview.removed > 0 ? [t('import.summary.removed', { count: formatNumber(preview.removed) })] : []),
+    ...(exceptions.length > 0 ? [tn('import.summary.problems', exceptions.length)] : []),
   ]
 
   const run = () => {
@@ -48,32 +43,34 @@ export function CheckStep({ flow, dispatch, onDone }: CheckProps) {
     dispatch({ type: 'imported' })
   }
 
+  const quoted = (values: string[]): string => values.map((v) => `“${v}”`).join(', ')
+
   return (
     <div className="stack">
-      <h2 className="step-heading" tabIndex={-1} data-step-heading>Check and import</h2>
+      <h2 className="step-heading" tabIndex={-1} data-step-heading>{t('import.check.heading')}</h2>
 
-      <div className="facts" role="group" aria-label="What was read">
-        <div className="fact"><b>{q.rowsRead}</b>rows read</div>
-        <div className="fact"><b>{count}</b>{many} to import</div>
-        {kind === 'cases' && <div className="fact"><b>{preview.new}</b>new</div>}
-        {kind === 'cases' && <div className="fact"><b>{preview.updated}</b>updated</div>}
-        {kind === 'cases' && <div className="fact"><b>{preview.unchanged}</b>unchanged</div>}
-        {preview.removed > 0 && <div className="fact"><b>{preview.removed}</b>no longer in the file</div>}
-        {q.duplicates > 0 && <div className="fact"><b>{q.duplicates}</b>repeated</div>}
-        {q.totalRowsSkipped > 0 && <div className="fact"><b>{q.totalRowsSkipped}</b>total rows skipped</div>}
-        {q.blankRowsSkipped > 0 && <div className="fact"><b>{q.blankRowsSkipped}</b>blank rows skipped</div>}
+      <div className="facts" role="group" aria-label={t('import.check.read.aria')}>
+        <div className="fact"><b>{formatNumber(q.rowsRead)}</b>{t('import.fact.rows')}</div>
+        <div className="fact"><b>{formatNumber(count)}</b>{t(`import.fact.toImport.${kind}` as MessageKey)}</div>
+        {kind === 'cases' && <div className="fact"><b>{n.new}</b>{t('import.fact.new')}</div>}
+        {kind === 'cases' && <div className="fact"><b>{n.updated}</b>{t('import.fact.updated')}</div>}
+        {kind === 'cases' && <div className="fact"><b>{n.unchanged}</b>{t('import.fact.unchanged')}</div>}
+        {preview.removed > 0 && <div className="fact"><b>{formatNumber(preview.removed)}</b>{t('import.fact.removed')}</div>}
+        {q.duplicates > 0 && <div className="fact"><b>{formatNumber(q.duplicates)}</b>{t('import.fact.repeated')}</div>}
+        {q.totalRowsSkipped > 0 && <div className="fact"><b>{formatNumber(q.totalRowsSkipped)}</b>{t('import.fact.totalSkipped')}</div>}
+        {q.blankRowsSkipped > 0 && <div className="fact"><b>{formatNumber(q.blankRowsSkipped)}</b>{t('import.fact.blankSkipped')}</div>}
       </div>
 
-      <section className="stack-tight" aria-label="How complete the data is">
-        <h3 className="group-title">How complete the data is</h3>
+      <section className="stack-tight" aria-label={t('import.check.complete')}>
+        <h3 className="group-title">{t('import.check.complete')}</h3>
         <div className="bars">
           {Object.entries(q.filled).map(([field, share]) => {
             const pct = Math.round(share * 100)
             return (
               <div key={field} className="bar">
                 <span>{labelOf(kind, field)}</span>
-                <span className="track" role="img" aria-label={`${labelOf(kind, field)}: ${pct} percent filled`}><span className="fill" style={{ width: `${pct}%` }} /></span>
-                <span className="pct">{pct}%</span>
+                <span className="track" role="img" aria-label={t('import.check.filled.aria', { field: labelOf(kind, field), pct: formatNumber(pct) })}><span className="fill" style={{ width: `${pct}%` }} /></span>
+                <span className="pct">{formatNumber(pct)}%</span>
               </div>
             )
           })}
@@ -81,30 +78,30 @@ export function CheckStep({ flow, dispatch, onDone }: CheckProps) {
       </section>
 
       {(q.badDates.length > 0 || q.unknownValues.length > 0 || q.unresolvedPlaces > 0) && (
-        <section className="stack-tight" aria-label="Things to look at">
-          <h3 className="group-title">Things to look at</h3>
+        <section className="stack-tight" aria-label={t('import.check.look')}>
+          <h3 className="group-title">{t('import.check.look')}</h3>
           <ul className="issues">
-            {q.badDates.map((b) => <li key={b.field}>{b.count} {labelOf(kind, b.field).toLowerCase()} {b.count === 1 ? 'value is' : 'values are'} not a date, for example {b.examples.map((e) => `“${e}”`).join(', ')}.</li>)}
-            {q.unknownValues.map((u) => <li key={u.field}>Words not matched: {u.values.slice(0, 8).map((v) => `“${v}”`).join(', ')}{u.values.length > 8 ? ` and ${u.values.length - 8} more` : ''}.</li>)}
-            {q.unresolvedPlaces > 0 && <li>{q.unresolvedPlaces} {q.unresolvedPlaces === 1 ? 'place was' : 'places were'} not found. Those cases are imported and wait in the problem list until the place is added.</li>}
+            {q.badDates.map((b) => <li key={b.field}>{tn('import.check.badDates', b.count, { field: labelOf(kind, b.field).toLocaleLowerCase(), examples: quoted(b.examples) })}</li>)}
+            {q.unknownValues.map((u) => <li key={u.field}>{t('import.check.unknown', { values: quoted(u.values.slice(0, 8)), more: u.values.length > 8 ? t('import.check.unknown.more', { count: formatNumber(u.values.length - 8) }) : '' })}</li>)}
+            {q.unresolvedPlaces > 0 && <li>{tn('import.check.places', q.unresolvedPlaces)}</li>}
           </ul>
         </section>
       )}
 
       {exceptions.length > 0 && (
         <details className="options">
-          <summary>{exceptions.length} {exceptions.length === 1 ? 'problem' : 'problems'}, first {Math.min(20, exceptions.length)}</summary>
+          <summary>{tn('import.check.problems', exceptions.length, { first: formatNumber(Math.min(20, exceptions.length)) })}</summary>
           <ul className="issues">
-            {exceptions.slice(0, 20).map((e, i) => <li key={i}><b>{e.caseId}</b>: {ISSUE_TEXT[e.issue]}. {e.detail}</li>)}
+            {exceptions.slice(0, 20).map((e, i) => <li key={i}><b>{e.caseId}</b>: {t('import.check.issueLine', { issue: t(`import.issue.${e.issue}` as MessageKey), detail: e.detail })}</li>)}
           </ul>
         </details>
       )}
 
       {count === 0 ? (
-        <p className="alert" role="alert">Nothing can be imported with this matching. Go back and check the columns.</p>
+        <p className="alert" role="alert">{t('import.check.nothing')}</p>
       ) : (
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={run}>Import {count} {noun}{detail}</button>
+          <button type="button" className="btn btn-primary" onClick={run}>{tn(`import.run.${kind}` as PluralKey, count, { detail })}</button>
         </div>
       )}
     </div>

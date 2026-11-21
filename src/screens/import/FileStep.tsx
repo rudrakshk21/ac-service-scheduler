@@ -1,18 +1,19 @@
 import { useRef, useState, type DragEvent } from 'react'
+import { t, type MessageKey } from '../../i18n'
 import { suggestProfile } from '../../intake/map/suggest'
 import type { Kind } from '../../intake/map/model'
 import { readSource } from '../../intake/read'
 import type { ReadOptions } from '../../intake/read/table'
 import { profileFor } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
-import { describeTable, guessKind, KIND_LABELS } from './importFlow'
+import { describeTable, guessKind, kindLabel } from './importFlow'
 import type { StepProps } from './StepProps'
 
-const ENCODINGS: [string, string][] = [
-  ['utf-8', 'UTF-8'], ['windows-1252', 'Windows-1252 (Western European)'], ['windows-1251', 'Windows-1251 (Cyrillic)'],
-  ['windows-1256', 'Windows-1256 (Arabic)'], ['utf-16le', 'UTF-16'], ['shift_jis', 'Shift JIS (Japanese)'], ['gbk', 'GBK (Chinese)'],
+const ENCODINGS: [string, MessageKey][] = [
+  ['utf-8', 'enc.utf8'], ['windows-1252', 'enc.windows1252'], ['windows-1251', 'enc.windows1251'],
+  ['windows-1256', 'enc.windows1256'], ['utf-16le', 'enc.utf16'], ['shift_jis', 'enc.shiftJis'], ['gbk', 'enc.gbk'],
 ]
-const DELIMITERS: [string, string][] = [[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab'], ['|', 'Bar']]
+const DELIMITERS: [string, MessageKey][] = [[',', 'delim.comma'], [';', 'delim.semicolon'], ['\t', 'delim.tab'], ['|', 'delim.bar']]
 const KINDS: Kind[] = ['cases', 'technicians', 'places']
 
 export function FileStep({ flow, dispatch }: StepProps) {
@@ -28,10 +29,10 @@ export function FileStep({ flow, dispatch }: StepProps) {
     if (s === null) return
     setBusy(true)
     try {
-      const t = await readSource(s.data, s.name, options.current)
-      const k = kind ?? guessKind(t, workspace.site)
-      const result = suggestProfile(t, k, workspace.site, s.name)
-      dispatch({ type: 'file', table: t, fileName: s.name, kind: k, result, known: profileFor(workspace, k, result.profile.fingerprint) ?? null })
+      const parsed = await readSource(s.data, s.name, options.current)
+      const k = kind ?? guessKind(parsed, workspace.site)
+      const result = suggestProfile(parsed, k, workspace.site, s.name)
+      dispatch({ type: 'file', table: parsed, fileName: s.name, kind: k, result, known: profileFor(workspace, k, result.profile.fingerprint) ?? null })
     } catch (e) {
       dispatch({ type: 'error', message: e instanceof Error ? e.message : String(e) })
     } finally {
@@ -67,16 +68,16 @@ export function FileStep({ flow, dispatch }: StepProps) {
 
   return (
     <div className="stack">
-      <h2 className="step-heading" tabIndex={-1} data-step-heading>Choose a file</h2>
-      <p className="muted">A CSV, Excel (.xlsx) or JSON export from your system. The file stays in this browser.</p>
+      <h2 className="step-heading" tabIndex={-1} data-step-heading>{t('import.file.heading')}</h2>
+      <p className="muted">{t('import.file.help')}</p>
       <label
         className={over ? 'drop over' : 'drop'}
         onDragOver={(e) => { e.preventDefault(); setOver(true) }}
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
       >
-        <strong>{table === null ? 'Choose a file or drop it here' : 'Choose a different file'}</strong>
-        <span className="muted small">{busy ? 'Reading…' : table === null ? '.csv, .txt, .xlsx or .json' : flow.fileName}</span>
+        <strong>{table === null ? t('import.file.choose') : t('import.file.different')}</strong>
+        <span className="muted small">{busy ? t('import.file.reading') : table === null ? t('import.file.types') : flow.fileName}</span>
         <input type="file" accept=".csv,.tsv,.txt,.xlsx,.json" onChange={(e) => void choose(e.target.files?.[0])} />
       </label>
 
@@ -86,24 +87,24 @@ export function FileStep({ flow, dispatch }: StepProps) {
             <b>{flow.fileName}</b>
             <span>{describeTable(table)}</span>
             {flow.knownProfile && (
-              <span className="badge badge-ok">You have imported a file with these columns before. The saved matching will be used.</span>
+              <span className="badge badge-ok">{t('import.file.known')}</span>
             )}
             {!table.detected.encodingConfident && (
-              <span className="muted small">The text encoding was guessed. If letters look wrong below, choose another one under "Not reading right?".</span>
+              <span className="muted small">{t('import.file.encodingGuess')}</span>
             )}
           </div>
 
           <fieldset className="kinds">
-            <legend>What is in this file?</legend>
+            <legend>{t('import.file.what')}</legend>
             {KINDS.map((k) => (
               <label key={k}>
                 <input type="radio" name="kind" checked={flow.kind === k} onChange={() => setKind(k)} />
-                <span>{KIND_LABELS[k]}</span>
+                <span>{kindLabel(k)}</span>
               </label>
             ))}
           </fieldset>
 
-          <div className="scroll-x" role="region" aria-label="First rows of the file" tabIndex={0}>
+          <div className="scroll-x" role="region" aria-label={t('import.file.firstRows')} tabIndex={0}>
             <table className="preview">
               <thead>
                 <tr>{table.headers.map((h) => <th key={h}>{h}</th>)}</tr>
@@ -117,35 +118,35 @@ export function FileStep({ flow, dispatch }: StepProps) {
           </div>
 
           <details className="options" open={unsure}>
-            <summary>Not reading right?</summary>
+            <summary>{t('import.file.options')}</summary>
             <div className="grid">
               {table.format === 'csv' && (
                 <>
                   <label className="field">
-                    <span className="label">Text encoding</span>
+                    <span className="label">{t('import.file.encoding')}</span>
                     <select value={table.detected.encoding} onChange={(e) => setOption({ encoding: e.target.value })}>
                       {ENCODINGS.some(([v]) => v === table.detected.encoding) ? null : <option value={table.detected.encoding}>{table.detected.encoding}</option>}
-                      {ENCODINGS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      {ENCODINGS.map(([v, key]) => <option key={v} value={v}>{t(key)}</option>)}
                     </select>
                   </label>
                   <label className="field">
-                    <span className="label">Columns are separated by</span>
+                    <span className="label">{t('import.file.delimiter')}</span>
                     <select value={table.detected.delimiter ?? ','} onChange={(e) => setOption({ delimiter: e.target.value })}>
-                      {DELIMITERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      {DELIMITERS.map(([v, key]) => <option key={v} value={v}>{t(key)}</option>)}
                     </select>
                   </label>
                 </>
               )}
               {table.sheets.length > 1 && (
                 <label className="field">
-                  <span className="label">Sheet</span>
+                  <span className="label">{t('import.file.sheet')}</span>
                   <select value={table.sheet} onChange={(e) => setOption({ sheet: e.target.value })}>
                     {table.sheets.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </label>
               )}
               <label className="field">
-                <span className="label">The column names are on row</span>
+                <span className="label">{t('import.file.headerRow')}</span>
                 <input
                   type="number" min={1} defaultValue={table.headerRow + 1} key={`${flow.fileName}-${table.headerRow}`}
                   onBlur={(e) => { const n = Number(e.target.value); if (Number.isInteger(n) && n >= 1 && n - 1 !== table.headerRow) setOption({ headerRow: n - 1 }) }}
