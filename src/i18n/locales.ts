@@ -1,3 +1,5 @@
+import languages from './languages.json'
+
 export interface LocaleInfo {
   /** Short code: `en`, `hi`. */
   code: string
@@ -10,10 +12,13 @@ export interface LocaleInfo {
   draft?: boolean
 }
 
-/** Every language the app knows. To add one: put its messages file next to `en.json`, add a line here and in `messagesFor`. */
+/**
+ * Every language the app knows. The real ones are listed in `languages.json`, a data file: to add a language, put its
+ * messages file (`xx.json`) next to `en.json` and add its line to `languages.json`. The two test languages are made
+ * from the English messages and live here.
+ */
 export const LOCALES: readonly LocaleInfo[] = [
-  { code: 'en', name: 'English', dir: 'ltr' },
-  { code: 'hi', name: 'हिन्दी', dir: 'ltr', draft: true },
+  ...(languages as LocaleInfo[]),
   { code: 'xa', name: 'Test: long and accented', dir: 'ltr', test: true },
   { code: 'xb', name: 'Test: right to left', dir: 'rtl', test: true },
 ]

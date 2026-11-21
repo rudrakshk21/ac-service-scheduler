@@ -54,12 +54,15 @@ export function formatDate(date: Date, options: Intl.DateTimeFormatOptions): str
   return new Intl.DateTimeFormat(intlLocale(state.code), options).format(date)
 }
 
+/** The message files next to this one, found by name: a new language needs no line of code. Loaded only when chosen. */
+const files = import.meta.glob<{ default: Messages }>('./*.json')
+
 /** The messages of a language. Only English is in the first download; the others load when chosen. */
 async function messagesFor(code: string): Promise<Messages> {
   if (code === 'xa') return pseudoMessages(english, 'accent')
   if (code === 'xb') return pseudoMessages(english, 'rtl')
-  if (code === 'hi') return (await import('./hi.json')).default
-  return english
+  const load = code === 'en' ? undefined : files[`./${code}.json`]
+  return load === undefined ? english : (await load()).default
 }
 
 function readStored(): string | null {

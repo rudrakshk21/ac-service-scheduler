@@ -1,11 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { placeholders } from './core'
 import en from './en.json'
-import hi from './hi.json'
 import { LOCALES } from './locales'
 
 const english = en as Record<string, string>
-const languages: Record<string, Record<string, string>> = { hi }
+// Every messages file next to en.json, found by name, so a new language is checked without editing this test.
+const found = import.meta.glob<Record<string, string>>('./*.json', { eager: true, import: 'default' })
+const languages: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.entries(found)
+    .map(([path, messages]) => [path.replace(/^\.\/|\.json$/g, ''), messages] as const)
+    .filter(([code]) => code !== 'en' && code !== 'languages'),
+)
 
 describe('every language has what English has', () => {
   for (const [code, messages] of Object.entries(languages)) {

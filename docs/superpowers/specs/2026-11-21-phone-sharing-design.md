@@ -142,6 +142,41 @@ remain: try the install on the reference phone (PD-9) and on Samsung Internet an
   details, drag and keyboard pan, reset. A hidden browser pane does not run frame callbacks, which showed that sizes must
   not depend on `ResizeObserver` alone; the width is now measured at once.
 
+## 12. As built in pull request F
+
+- **Mechanism.** `src/i18n/`: `t(key, values)` and `tn(key, count, values)` look a key up in the chosen language and fall
+  back to English; keys are typed from `en.json`, so a misspelt key is a compile error. Messages fill `{name}`
+  placeholders; plural forms come from `Intl.PluralRules` (`key.one`, `key.other`, and for Arabic-like languages `zero`,
+  `two`, `few`, `many`). Dates, times, numbers and "a, b or c" lists are written by `Intl` in the language in use.
+- **Choosing.** The address (`?lang=hi`), a saved choice, the browser's language, English, in that order. A select in the
+  header changes it, sets `lang` and `dir` on the page, saves the choice and starts the screens again. The choice is a
+  per-device preference kept in `localStorage`, so a technician's phone needs no workspace.
+- **What moved.** 742 messages cover the shell, the Plan tab and board, the demo, the Data tab, the four import steps,
+  every Set-up section and refusal, the Route tab, the route sheet, the map, the share panel, the table names and headers
+  of an export, the messages about route files, and the messages of the intake library (file errors, column-match reasons,
+  problem details, site and mapping file checks) and the workspace. English output is word for word what it was.
+- **Languages.** English, and a Hindi draft with every key (written by the assistant; `"draft": true` in the list until a
+  native speaker reads it). Two test languages are made from the English text: `xa` (accented, a third longer) and `xb` (a
+  right-to-left script). Every letter in them is replaced, so text that never went through `t()` is visible.
+- **Adding a language needs no code.** `xx.json` next to `en.json` and one line in `languages.json`; the file is found by
+  name and loaded only when chosen (Hindi is a separate chunk of 13.6 KB compressed). A test lists any key that a language
+  lacks or has extra, any placeholder it drops, and any empty message. Contributor guide: `src/i18n/README.md` (DL-12).
+- **Right to left.** Physical `left`/`right` CSS became logical properties; grid and flex mirror by themselves; the board's
+  timeline and the switch thumb mirror; the map and its labels stay as drawn.
+- **Verified at 360 px** in English, Hindi, `xa` and `xb`: no sideways scroll on any tab, every control at least 48 px
+  (checked in `xa` and Hindi); in `xb` the tab bar, the day picker, the timeline and the lanes run right to left. A scan of
+  the accented language over every tab found no interface text outside the files; what remained in English is the user's own
+  data (names, case numbers, work-type names), date formats, and the language chooser's own names.
+- **First download** is now about 89 KB compressed (it was about 76): the English messages are in it.
+- **Not translated, and why.** The planner's reasons for each choice ("Skill match (...); adds 6 min detour; route of 4 stops
+  in South-East") and its rejection of invalid input come from the engine as finished English sentences, and the golden files
+  fix them. Translating them needs the engine to give codes and values instead (a change to the reference engine, which needs
+  the owner's approval first). The starter work types, skills and priority levels ("Installation", "Normal") are the site's
+  data and are created in English. The reasons stored in the change log ("import", "missing from import") are stored values.
+  The "suggested action" strings of the intake library are not shown anywhere.
+- **Against AC-30.** A second language and a right-to-left test language exist and the layout holds; "no text stays
+  untranslated" is true for the interface but not for the engine's reasons, until the engine gives codes.
+
 ## 8. Finish line
 
 - C: the built app opens offline after one visit; installs from Chrome on Android; a new build shows the update banner.
