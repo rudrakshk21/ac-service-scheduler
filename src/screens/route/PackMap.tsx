@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { t } from '../../i18n'
 import { packLayers } from '../../map/layers'
 import type { RoutePack } from '../../share/routePack'
 
@@ -8,7 +9,7 @@ const MapCanvas = lazy(() => import('../../map/MapCanvas'))
 export function PackMap({ pack }: { pack: RoutePack }) {
   const data = useMemo(() => packLayers(pack), [pack])
   return (
-    <Suspense fallback={<p className="muted">Loading the map…</p>}>
+    <Suspense fallback={<p className="muted">{t('map.loading')}</p>}>
       <MapCanvas key={`${pack.technician}|${pack.date}`} data={data} title={`${pack.technician}, ${pack.date}`} />
     </Suspense>
   )

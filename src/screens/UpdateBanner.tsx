@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import { applyUpdate } from '../pwa/register'
 import { usePwa } from '../pwa/usePwa'
 
@@ -7,8 +8,8 @@ export function UpdateBanner() {
   if (!updateReady) return null
   return (
     <p className="banner row" role="status">
-      <span>A new version of the app is ready.</span>
-      <button type="button" className="btn" onClick={applyUpdate}>Reload</button>
+      <span>{t('update.ready')}</span>
+      <button type="button" className="btn" onClick={applyUpdate}>{t('update.reload')}</button>
     </p>
   )
 }

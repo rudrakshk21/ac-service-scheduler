@@ -37,6 +37,7 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 describe('buildTables', () => {
   it('gives the five tables in a fixed order', () => {
     expect(tablesFor(ready()).tables.map((t) => t.name)).toEqual(['Schedule', 'Day routes', 'Not planned', 'Summary', 'Change log'])
+    expect(tablesFor(ready()).tables.map((t) => t.id)).toEqual(['schedule', 'dayRoutes', 'notPlanned', 'summary', 'changeLog'])
   })
 
   it('writes one schedule row per planned case, with names instead of numbers, sorted by day, technician and visit', () => {

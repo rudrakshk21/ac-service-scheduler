@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatNumber, t } from '../../i18n'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { DateField, NumberField, Refusal, SelectField, TimeField } from './fields'
 import * as act from './setupActions'
@@ -15,49 +16,49 @@ export function TechniciansSection() {
 
   return (
     <section className="card stack" aria-labelledby="set-techs">
-      <h2 id="set-techs" className="step-heading">Technicians ({technicians.length})</h2>
-      <p className="muted small">Who does the visits. Leave a field empty to use the centre's own value. You can also import a file of technicians.</p>
-      {technicians.length === 0 && <p className="muted">No technicians yet. Import a file or add one below.</p>}
+      <h2 id="set-techs" className="step-heading">{t('setup.techs.title', { n: formatNumber(technicians.length) })}</h2>
+      <p className="muted small">{t('setup.techs.help')}</p>
+      {technicians.length === 0 && <p className="muted">{t('setup.techs.none')}</p>}
       <ul className="stack">
-        {technicians.map((t) => {
-          const edit = (patch: Parameters<typeof act.updateTechnician>[2]) => run((x) => act.updateTechnician(x, t.name, patch))
+        {technicians.map((tech) => {
+          const edit = (patch: Parameters<typeof act.updateTechnician>[2]) => run((x) => act.updateTechnician(x, tech.name, patch))
           return (
-            <li key={t.name} className="card stack-tight">
+            <li key={tech.name} className="card stack-tight">
               <div className="fieldrow-head">
-                <b>{t.name}</b>
+                <b>{tech.name}</b>
                 <label className="switch">
-                  <input type="checkbox" role="switch" checked={t.active} aria-label={`${t.name} active`} onChange={() => update((x) => act.toggleTechnician(x, t.name))} />
+                  <input type="checkbox" role="switch" checked={tech.active} aria-label={t('board.switchAria', { name: tech.name })} onChange={() => update((x) => act.toggleTechnician(x, tech.name))} />
                   <span className="track" aria-hidden="true" />
-                  <span className="switch-text">{t.active ? 'Active' : 'Switched off'}</span>
+                  <span className="switch-text">{tech.active ? t('data.active') : t('data.off')}</span>
                 </label>
               </div>
               <fieldset className="kinds">
-                <legend>Skills</legend>
+                <legend>{t('setup.techs.skills')}</legend>
                 <div className="days-off">
                   {skills.map((k) => (
                     <label key={k}>
-                      <input type="checkbox" checked={t.skills.includes(k)} onChange={(e) => edit({ skills: e.target.checked ? [...t.skills, k] : t.skills.filter((x) => x !== k) })} />
+                      <input type="checkbox" checked={tech.skills.includes(k)} onChange={(e) => edit({ skills: e.target.checked ? [...tech.skills, k] : tech.skills.filter((x) => x !== k) })} />
                       <span>{k}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
               <div className="grid2">
-                <DateField label="On leave from" value={t.leaveFrom} onCommit={(v) => edit({ leaveFrom: v })} />
-                <DateField label="On leave until" value={t.leaveTo} onCommit={(v) => edit({ leaveTo: v })} />
-                <SelectField label="Starts the day at" value={t.startPlace ?? ''} options={placeNames} blank="The base" onChange={(v) => edit({ startPlace: v === '' ? undefined : v })} />
-                <SelectField label="Ends the day at" value={t.endPlace ?? ''} options={placeNames} blank="The base" onChange={(v) => edit({ endPlace: v === '' ? undefined : v })} />
-                <TimeField label="Day starts at" minutes={t.shiftStart} allowEmpty onCommit={(v) => edit({ shiftStart: v })} help="Empty: the centre's time." />
-                <NumberField label="Hours on shift" value={t.shiftHours ?? 0} onCommit={(v) => edit({ shiftHours: v === 0 ? undefined : v })} help="0: the centre's hours." />
+                <DateField label={t('setup.techs.leaveFrom')} value={tech.leaveFrom} onCommit={(v) => edit({ leaveFrom: v })} />
+                <DateField label={t('setup.techs.leaveUntil')} value={tech.leaveTo} onCommit={(v) => edit({ leaveTo: v })} />
+                <SelectField label={t('setup.techs.startsAt')} value={tech.startPlace ?? ''} options={placeNames} blank={t('setup.techs.base')} onChange={(v) => edit({ startPlace: v === '' ? undefined : v })} />
+                <SelectField label={t('setup.techs.endsAt')} value={tech.endPlace ?? ''} options={placeNames} blank={t('setup.techs.base')} onChange={(v) => edit({ endPlace: v === '' ? undefined : v })} />
+                <TimeField label={t('setup.techs.dayStart')} minutes={tech.shiftStart} allowEmpty onCommit={(v) => edit({ shiftStart: v })} help={t('setup.techs.dayStartHelp')} />
+                <NumberField label={t('setup.techs.hours')} value={tech.shiftHours ?? 0} onCommit={(v) => edit({ shiftHours: v === 0 ? undefined : v })} help={t('setup.techs.hoursHelp')} />
               </div>
               <div className="row">
-                {confirm === t.name ? (
+                {confirm === tech.name ? (
                   <>
-                    <button type="button" className="btn btn-primary" onClick={() => { update((x) => act.removeTechnician(x, t.name)); setConfirm(null) }}>Yes, remove {t.name}</button>
-                    <button type="button" className="btn" onClick={() => setConfirm(null)}>Keep</button>
+                    <button type="button" className="btn btn-primary" onClick={() => { update((x) => act.removeTechnician(x, tech.name)); setConfirm(null) }}>{t('setup.techs.removeYes', { name: tech.name })}</button>
+                    <button type="button" className="btn" onClick={() => setConfirm(null)}>{t('setup.techs.keep')}</button>
                   </>
                 ) : (
-                  <button type="button" className="btn" onClick={() => setConfirm(t.name)}>Remove {t.name}</button>
+                  <button type="button" className="btn" onClick={() => setConfirm(tech.name)}>{t('setup.removeName', { name: tech.name })}</button>
                 )}
               </div>
             </li>
@@ -66,9 +67,9 @@ export function TechniciansSection() {
       </ul>
 
       <div className="card stack-tight">
-        <label className="field"><span className="label">New technician</span><input type="text" value={draft.name} onChange={(e) => { clear(); setDraft({ ...draft, name: e.target.value }) }} /></label>
+        <label className="field"><span className="label">{t('setup.techs.new')}</span><input type="text" value={draft.name} onChange={(e) => { clear(); setDraft({ ...draft, name: e.target.value }) }} /></label>
         <fieldset className="kinds">
-          <legend>Skills</legend>
+          <legend>{t('setup.techs.skills')}</legend>
           <div className="days-off">
             {skills.map((k) => (
               <label key={k}>
@@ -79,7 +80,7 @@ export function TechniciansSection() {
           </div>
         </fieldset>
         <div className="row">
-          <button type="button" className="btn btn-primary" onClick={() => { run((x) => act.addTechnician(x, draft)); if (draft.name.trim() !== '') setDraft({ name: '', skills: [] }) }}>Add technician</button>
+          <button type="button" className="btn btn-primary" onClick={() => { run((x) => act.addTechnician(x, draft)); if (draft.name.trim() !== '') setDraft({ name: '', skills: [] }) }}>{t('setup.techs.add')}</button>
         </div>
       </div>
       <Refusal error={error} />

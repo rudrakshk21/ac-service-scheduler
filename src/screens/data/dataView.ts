@@ -1,3 +1,4 @@
+import { t, type MessageKey } from '../../i18n'
 import type { StoredCase, StoredState } from '../../intake/import/merge'
 import type { ImportedTechnician } from '../../intake/map/apply'
 import { normaliseName } from '../../intake/map/model'
@@ -5,11 +6,7 @@ import type { WorkType } from '../../engine/types'
 
 export const STATE_ORDER: StoredState[] = ['active', 'hold', 'review', 'ignored', 'done', 'closed']
 
-const LABELS: Record<StoredState, string> = {
-  active: 'Ready to plan', hold: 'On hold', review: 'Needs review', ignored: 'Ignored', done: 'Done', closed: 'Closed',
-}
-
-export const stateLabel = (s: StoredState): string => LABELS[s]
+export const stateLabel = (s: StoredState): string => t(`state.${s}` as MessageKey)
 
 export function countsByState(cases: StoredCase[]): Record<StoredState, number> {
   const out: Record<StoredState, number> = { active: 0, hold: 0, review: 0, ignored: 0, done: 0, closed: 0 }
@@ -38,10 +35,10 @@ export interface QueueItem {
 export function exceptionQueue(cases: StoredCase[]): QueueItem[] {
   const out: QueueItem[] = []
   for (const c of cases) {
-    if (c.state === 'review') out.push({ caseId: c.caseId, issue: 'review', detail: `The category “${c.workType ?? 'empty'}” is not matched to a work type.` })
+    if (c.state === 'review') out.push({ caseId: c.caseId, issue: 'review', detail: t('data.detail.categoryUnmatched', { name: c.workType ?? t('data.detail.emptyWord') }) })
     if (c.place === undefined && c.state !== 'closed' && c.state !== 'ignored' && c.state !== 'done') {
       const given = [c.area, c.postalCode, c.address].filter((x) => x !== undefined).join(' / ')
-      out.push({ caseId: c.caseId, issue: 'no_location', detail: given === '' ? 'The file gave no place.' : `The place (${given}) is not in your place table.` })
+      out.push({ caseId: c.caseId, issue: 'no_location', detail: given === '' ? t('data.detail.noPlace') : t('data.detail.placeUnknown', { given }) })
     }
   }
   return out
@@ -60,10 +57,15 @@ export interface TechnicianRow {
 }
 
 export function techniciansView(list: ImportedTechnician[]): TechnicianRow[] {
-  return list.map((t) => ({
-    name: t.name,
-    skills: t.skills.length === 0 ? 'No skills matched' : t.skills.join(', '),
-    status: t.active ? 'Active' : 'Switched off',
-    leave: t.leaveFrom === undefined ? '' : t.leaveTo === undefined || t.leaveTo === t.leaveFrom ? `Leave ${t.leaveFrom}` : `Leave ${t.leaveFrom} to ${t.leaveTo}`,
+  return list.map((tech) => ({
+    name: tech.name,
+    skills: tech.skills.length === 0 ? t('data.skillsNone') : tech.skills.join(', '),
+    status: tech.active ? t('data.active') : t('data.off'),
+    leave:
+      tech.leaveFrom === undefined
+        ? ''
+        : tech.leaveTo === undefined || tech.leaveTo === tech.leaveFrom
+          ? t('data.leave', { from: tech.leaveFrom })
+          : t('data.leaveRange', { from: tech.leaveFrom, to: tech.leaveTo }),
   }))
 }

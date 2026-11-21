@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { IntakeError } from '../errors'
 
 export type Cell = string | number | boolean | Date | null
@@ -77,7 +78,7 @@ function uniqueHeaders(raw: Cell[]): string[] {
 /** Builds the table: finds the header row, makes headers unique, drops blank rows, pads or trims ragged rows. */
 export function buildTable(rows: Cell[][], meta: TableMeta, options: ReadOptions = {}): SourceTable {
   if (rows.every((r) => r.every((c) => isEmpty(c)))) {
-    throw new IntakeError('empty_file', `${meta.fileName} has no data: every cell is empty.`)
+    throw new IntakeError('empty_file', t('intake.file.allEmpty', { file: meta.fileName }))
   }
   const headerRow = options.headerRow ?? findHeaderRow(rows)
   const headers = uniqueHeaders(rows[headerRow] ?? [])
@@ -103,7 +104,7 @@ export function buildTable(rows: Cell[][], meta: TableMeta, options: ReadOptions
     data.push(fixed)
   }
   if (data.length === 0) {
-    throw new IntakeError('empty_file', `${meta.fileName} has a header row but no data rows below it.`)
+    throw new IntakeError('empty_file', t('intake.file.noRows', { file: meta.fileName }))
   }
   return {
     format: meta.format,

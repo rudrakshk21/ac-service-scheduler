@@ -1,15 +1,12 @@
 import { useMemo, useState } from 'react'
+import { formatNumber, t, tn } from '../i18n'
 import { Board } from './Board'
-import { useDemoPlan, type ChangeNote } from './useDemoPlan'
+import { changeText } from './changeText'
+import { useDemoPlan } from './useDemoPlan'
 import { daysWithVisits, summarise } from './viewModel'
 import './demo.css'
 
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
-
-function changeText(c: ChangeNote): string {
-  const moved = c.moved === 0 ? 'No case moved.' : `${plural(c.moved, 'case', 'cases')} moved.`
-  return `${c.techName} switched ${c.switchedOn ? 'on' : 'off'}. ${moved}`
-}
+const hours = (n: number): string => formatNumber(n, { minimumFractionDigits: 0, maximumFractionDigits: 1 })
 
 export function DemoPage() {
   const { input, result, change, busy, error, toggleTechnician } = useDemoPlan()
@@ -22,30 +19,35 @@ export function DemoPage() {
     <div className="page">
       <header className="top">
         <div>
-          <h1>AC Service Scheduler</h1>
+          <h1>{t('app.name')}</h1>
           {summary !== null ? (
             <p className="lede">
-              {plural(summary.scheduled, 'case', 'cases')} scheduled over {plural(summary.days, 'working day', 'working days')}
-              {summary.unscheduled > 0 && `, ${summary.unscheduled} not scheduled`}. {summary.techniciansUsed} of{' '}
-              {summary.techniciansTotal} technicians work. {summary.travelHours} hours of driving, {summary.onSiteHours} hours on
-              site.
+              {t('demo.lede', {
+                cases: tn('plan.cases', summary.scheduled),
+                days: tn('plan.workingDays', summary.days),
+                left: summary.unscheduled > 0 ? t('demo.left', { count: formatNumber(summary.unscheduled) }) : '',
+                used: formatNumber(summary.techniciansUsed),
+                total: formatNumber(summary.techniciansTotal),
+                drive: hours(summary.travelHours),
+                onsite: hours(summary.onSiteHours),
+              })}
             </p>
           ) : (
-            <p className="lede">{error === null ? 'Planning the demo cases…' : ''}</p>
+            <p className="lede">{error === null ? t('demo.planning') : ''}</p>
           )}
         </div>
-        <p className="note">Demo with invented data. Nothing here is real.</p>
+        <p className="note">{t('demo.note')}</p>
       </header>
 
       {error !== null && (
         <p className="error" role="alert">
-          The plan could not be made. {error}
+          {t('plan.error', { error })}
         </p>
       )}
 
       {input !== null && result !== null && day !== undefined && (
         <>
-          <div className="days" role="group" aria-label="Choose a day">
+          <div className="days" role="group" aria-label={t('plan.chooseDay')}>
             {days.map((d) => (
               <button
                 key={d.day}
@@ -56,12 +58,12 @@ export function DemoPage() {
               >
                 <span className="day-name">{d.weekday}</span>
                 <span className="day-date">{d.date}</span>
-                <span className="day-count">{plural(d.visits, 'visit', 'visits')}</span>
+                <span className="day-count">{tn('plan.visits', d.visits)}</span>
               </button>
             ))}
           </div>
 
-          <ul className="legend" aria-label="Colours">
+          <ul className="legend" aria-label={t('plan.colours')}>
             {input.workTypes.map((w, i) => (
               <li key={w.name}>
                 <span className={`swatch w${i % 6}`} aria-hidden="true" />
@@ -70,16 +72,16 @@ export function DemoPage() {
             ))}
             <li>
               <span className="swatch travel" aria-hidden="true" />
-              Driving
+              {t('plan.driving')}
             </li>
             <li>
               <span className="swatch break" aria-hidden="true" />
-              Break
+              {t('plan.break')}
             </li>
           </ul>
 
           <p className="change" role="status" aria-live="polite">
-            {change !== null ? changeText(change) : 'Switch a technician off to see the plan change.'}
+            {change !== null ? changeText(change) : t('plan.switchHint')}
           </p>
 
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={toggleTechnician} />

@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { IntakeError } from '../errors'
 import { detectDelimiter, parseCsv } from './csv'
 import { decodeBytes } from './encoding'
@@ -14,7 +15,7 @@ const isZip = (b: Uint8Array): boolean => b.length >= 2 && b[0] === 0x50 && b[1]
  * Throws an `IntakeError` with a plain message when the file cannot be used.
  */
 export async function readSource(bytes: Uint8Array, fileName: string, options: ReadOptions = {}): Promise<SourceTable> {
-  if (bytes.length === 0) throw new IntakeError('empty_file', `${fileName} is empty.`)
+  if (bytes.length === 0) throw new IntakeError('empty_file', t('intake.file.empty', { file: fileName }))
   const lower = fileName.toLowerCase()
   if (isOleFile(bytes)) throw new IntakeError('unsupported_format', xlsMessage(fileName))
 
@@ -46,11 +47,7 @@ export async function readSource(bytes: Uint8Array, fileName: string, options: R
   const found = options.delimiter === undefined ? detectDelimiter(decoded.text) : { delimiter: options.delimiter, confident: true }
   const rows = parseCsv(decoded.text, found.delimiter)
   if (options.delimiter === undefined && rows.every((r) => r.length <= 1) && !found.confident) {
-    throw new IntakeError(
-      'not_a_data_file',
-      `${fileName} does not look like a table: no comma, semicolon, tab or | separates columns. ` +
-        'If it has a single column, choose the delimiter yourself.',
-    )
+    throw new IntakeError('not_a_data_file', t('intake.file.notTable', { file: fileName }))
   }
   return buildTable(
     rows,

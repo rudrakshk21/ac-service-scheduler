@@ -21,7 +21,7 @@ describe('neutralise (SEC-5)', () => {
 })
 
 describe('toCsv', () => {
-  const table = (rows: (string | number)[][]) => ({ name: 't', headers: ['A', 'B'], rows })
+  const table = (rows: (string | number)[][]) => ({ id: 'schedule' as const, name: 't', headers: ['A', 'B'], rows })
 
   it('starts with a byte-order mark so Excel reads it as UTF-8, and ends each line with CRLF', () => {
     const text = toCsv(table([['x', 1]]))
@@ -38,7 +38,7 @@ describe('toCsv', () => {
     expect(toCsv(table([[' a', 'b ']])).slice(1)).toBe('A,B\r\n" a","b "\r\n')
   })
   it('neutralises formulas in text cells and in the header, never in numbers', () => {
-    const text = toCsv({ name: 't', headers: ['=A', 'B'], rows: [['=1+1', -3], ['@x', 2]] }).slice(1)
+    const text = toCsv({ id: 'schedule', name: 't', headers: ['=A', 'B'], rows: [['=1+1', -3], ['@x', 2]] }).slice(1)
     expect(text).toBe("'=A,B\r\n'=1+1,-3\r\n'@x,2\r\n")
   })
   it('writes numbers plainly, with a point for decimals', () => {

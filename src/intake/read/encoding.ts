@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { IntakeError } from '../errors'
 
 export interface Decoded {
@@ -22,7 +23,7 @@ export function decodeBytes(bytes: Uint8Array, requested?: string): Decoded {
     try {
       return { text: decodeWith(bytes, requested), encoding: requested.toLowerCase(), confident: true }
     } catch {
-      throw new IntakeError('unreadable', `The text encoding "${requested}" is not known. Choose another one.`)
+      throw new IntakeError('unreadable', t('intake.file.badEncoding', { encoding: requested }))
     }
   }
   if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {

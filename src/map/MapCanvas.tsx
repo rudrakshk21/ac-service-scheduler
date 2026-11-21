@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { formatNumber, t, tn } from '../i18n'
 import type { MapData, MapLayer, MapStop } from './layers'
 import { fitProjection, fullView, MAX_ZOOM, panView, scaleBar, zoomOf, zoomView, type View } from './project'
 import './map.css'
@@ -8,7 +9,8 @@ const H = 480
 const PAD = 44
 const CANVAS = { w: W, h: H }
 
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
+/** The length of the scale bar written in the language in use: kilometres, or metres when it is under one. */
+const scaleLabel = (km: number): string => (km >= 1 ? t('unit.km', { n: formatNumber(km) }) : t('unit.m', { n: formatNumber(Math.round(km * 1000)) }))
 
 /**
  * The width in pixels an element is drawn at, and the callback ref to put on it. It is measured as soon as the element
@@ -74,7 +76,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
     e.preventDefault()
   }
 
-  if (data.layers.length === 0) return <p className="muted">There are no routes to show on a map.</p>
+  if (data.layers.length === 0) return <p className="muted">{t('map.none')}</p>
 
   const bar = scaleBar(projection.kmPerPx, view.w / 5)
   const pickedLayer = picked === null ? undefined : data.layers.find((l) => l.key === picked.key)
@@ -92,7 +94,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
         role="button"
         tabIndex={0}
         aria-pressed={on}
-        aria-label={`${layer.name}, stop ${s.visit}: case ${s.caseId} at ${s.arrival}, ${s.place}`}
+        aria-label={t('map.stop.aria', { name: layer.name, visit: s.visit, case: s.caseId, time: s.arrival, place: s.place })}
         onClick={choose}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose() } }}
       >
@@ -111,7 +113,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
         className={zoom > 1 ? 'map-svg zoomed' : 'map-svg'}
         viewBox={`${view.x.toFixed(1)} ${view.y.toFixed(1)} ${view.w.toFixed(1)} ${view.h.toFixed(1)}`}
         role="group"
-        aria-label={`Map of ${title}`}
+        aria-label={t('map.aria', { title })}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={() => { drag.current = null }}
@@ -135,9 +137,9 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
         })}
 
         {data.base !== null && (
-          <g className="map-base" transform={`translate(${at(data.base).x.toFixed(1)} ${at(data.base).y.toFixed(1)})`} role="img" aria-label="The base of the centre">
+          <g className="map-base" transform={`translate(${at(data.base).x.toFixed(1)} ${at(data.base).y.toFixed(1)})`} role="img" aria-label={t('map.base.aria')}>
             <rect className="shape" x={-px(9)} y={-px(9)} width={px(18)} height={px(18)} transform="rotate(45)" />
-            <text y={px(28)} fontSize={px(12)}>Base</text>
+            <text y={px(28)} fontSize={px(12)}>{t('map.base')}</text>
           </g>
         )}
 
@@ -145,29 +147,29 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
 
         <g className="map-scale" aria-hidden="true">
           <line x1={view.x + view.w * 0.04} x2={view.x + view.w * 0.04 + bar.px} y1={view.y + view.h * 0.95} y2={view.y + view.h * 0.95} strokeWidth={px(2.5)} />
-          <text x={view.x + view.w * 0.04 + bar.px / 2} y={view.y + view.h * 0.95 - px(6)} fontSize={px(12)}>{bar.label}</text>
+          <text x={view.x + view.w * 0.04 + bar.px / 2} y={view.y + view.h * 0.95 - px(6)} fontSize={px(12)}>{scaleLabel(bar.km)}</text>
         </g>
       </svg>
 
-      <div className="map-tools no-print" role="group" aria-label="Zoom the map">
-        <button type="button" className="btn" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => zoomBy(1.5)}>+</button>
-        <button type="button" className="btn" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => zoomBy(1 / 1.5)}>−</button>
-        <button type="button" className="btn" disabled={zoom <= 1} onClick={() => setView(fullView(W, H))}>Whole map</button>
+      <div className="map-tools no-print" role="group" aria-label={t('map.zoom.group')}>
+        <button type="button" className="btn" aria-label={t('map.zoomIn')} disabled={zoom >= MAX_ZOOM} onClick={() => zoomBy(1.5)}>+</button>
+        <button type="button" className="btn" aria-label={t('map.zoomOut')} disabled={zoom <= 1} onClick={() => zoomBy(1 / 1.5)}>−</button>
+        <button type="button" className="btn" disabled={zoom <= 1} onClick={() => setView(fullView(W, H))}>{t('map.whole')}</button>
       </div>
 
-      <ul className="map-legend" aria-label="Who is who on the map">
+      <ul className="map-legend" aria-label={t('map.legend.aria')}>
         {data.layers.map((l) => (
           <li key={l.key} className={`map-c${l.colour}`}>
             <span className="map-swatch" aria-hidden="true">{l.label}</span>
-            <span>{l.name}, {plural(l.stops.length, 'stop', 'stops')}</span>
+            <span>{tn('map.legend.item', l.stops.length, { name: l.name })}</span>
           </li>
         ))}
       </ul>
 
       <p className="muted small" role="status" aria-live="polite">
         {pickedLayer !== undefined && pickedStop !== undefined
-          ? `${pickedLayer.name}, stop ${pickedStop.visit}: case ${pickedStop.caseId}, arrival ${pickedStop.arrival}, ${pickedStop.place}.`
-          : 'Tap a stop to see its details. Distances are drawn true to scale; there is no street map.'}
+          ? t('map.detail', { name: pickedLayer.name, visit: pickedStop.visit, case: pickedStop.caseId, time: pickedStop.arrival, place: pickedStop.place })
+          : t('map.hint')}
       </p>
     </div>
   )

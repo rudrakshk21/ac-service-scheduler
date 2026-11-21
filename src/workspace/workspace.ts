@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 import type { ChangeLogEntry, ImportPreview, StoredCase } from '../intake/import/merge'
 import type { ImportedTechnician } from '../intake/map/apply'
 import type { Kind } from '../intake/map/model'
@@ -49,11 +50,11 @@ export function emptyWorkspace(): Workspace {
  * with a plain message. Lists that an older save did not have are filled in.
  */
 export function readWorkspace(raw: unknown): Workspace {
-  const damaged = new WorkspaceError('The saved data is damaged, so it was not opened and has not been changed.')
+  const damaged = new WorkspaceError(t('workspace.err.damaged'))
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw damaged
   const version = (raw as { workspaceVersion?: unknown }).workspaceVersion
   if (typeof version === 'number' && version > 1) {
-    throw new WorkspaceError('The saved data was made by a newer version of the app, so it was not opened and has not been changed.')
+    throw new WorkspaceError(t('workspace.err.newer'))
   }
   if (version !== 1) throw damaged
   return { ...emptyWorkspace(), ...(raw as Partial<Workspace>) }

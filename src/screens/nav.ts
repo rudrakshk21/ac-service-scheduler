@@ -1,11 +1,13 @@
+import type { MessageKey } from '../i18n'
+
 export type Tab = 'plan' | 'data' | 'import' | 'setup' | 'route'
 
-export const TABS: { id: Tab; label: string }[] = [
-  { id: 'plan', label: 'Plan' },
-  { id: 'data', label: 'Data' },
-  { id: 'import', label: 'Import' },
-  { id: 'setup', label: 'Set-up' },
-  { id: 'route', label: 'Route' },
+export const TABS: { id: Tab; labelKey: MessageKey }[] = [
+  { id: 'plan', labelKey: 'nav.plan' },
+  { id: 'data', labelKey: 'nav.data' },
+  { id: 'import', labelKey: 'nav.import' },
+  { id: 'setup', labelKey: 'nav.setup' },
+  { id: 'route', labelKey: 'nav.route' },
 ]
 
 /** The tab named by the URL hash (`#/data`). Anything else gives the plan. */

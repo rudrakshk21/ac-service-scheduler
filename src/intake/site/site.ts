@@ -1,4 +1,5 @@
 import type { PriorityLevel, Settings, WorkType } from '../../engine/types'
+import { t } from '../../i18n'
 import { normaliseName } from '../map/model'
 import { checker, parseJson } from '../validate'
 
@@ -39,12 +40,11 @@ export function serializeSite(s: SiteProfile): string {
 
 /** Reads a site profile file. Throws an `IntakeError` (`bad_site`) that names the field when it is invalid. */
 export function parseSite(text: string): SiteProfile {
-  const c = checker('bad_site', 'Site profile')
-  const o = c.record(parseJson(text, 'bad_site', 'Site profile'), 'file')
+  const prefix = t('intake.prefix.site')
+  const c = checker('bad_site', prefix)
+  const o = c.record(parseJson(text, 'bad_site', prefix), 'file')
   if (o.siteVersion !== 1) {
-    c.fail('siteVersion', typeof o.siteVersion === 'number' && o.siteVersion > 1
-      ? 'is newer than this app understands (it reads version 1)'
-      : 'must be 1')
+    c.fail('siteVersion', typeof o.siteVersion === 'number' && o.siteVersion > 1 ? t('intake.v.newer') : t('intake.v.mustBeOne'))
   }
   const s = c.record(o.settings, 'settings')
   const settings: SiteSettings = {
@@ -63,17 +63,17 @@ export function parseSite(text: string): SiteProfile {
     horizonDays: c.int(s.horizonDays, 'settings.horizonDays', 0),
     restWeekdays: c.list(s.restWeekdays, 'settings.restWeekdays').map((d, i) => c.int(d, `settings.restWeekdays[${i}]`, 0, 6)),
   }
-  if (settings.speedKmh <= 0) c.fail('settings.speedKmh', 'must be greater than 0')
-  if (settings.roadFactor <= 0) c.fail('settings.roadFactor', 'must be greater than 0')
+  if (settings.speedKmh <= 0) c.fail('settings.speedKmh', t('intake.v.aboveZero'))
+  if (settings.roadFactor <= 0) c.fail('settings.roadFactor', t('intake.v.aboveZero'))
   if (s.dueWeight !== undefined) settings.dueWeight = c.num(s.dueWeight, 'settings.dueWeight', 0)
   if (s.urgencyWindowDays !== undefined) settings.urgencyWindowDays = c.num(s.urgencyWindowDays, 'settings.urgencyWindowDays', 0)
 
   const skills = c.list(o.skills, 'skills').map((k, i) => c.text(k, `skills[${i}]`))
-  if (skills.length === 0) c.fail('skills', 'must list at least one skill')
+  if (skills.length === 0) c.fail('skills', t('intake.v.oneSkill'))
   const workTypes = c.list(o.workTypes, 'workTypes').map((w, i): WorkType => {
     const r = c.record(w, `workTypes[${i}]`)
     const ceiling = c.num(r.dailyCeiling, `workTypes[${i}].dailyCeiling`)
-    if (ceiling <= 0) c.fail(`workTypes[${i}].dailyCeiling`, 'must be greater than 0')
+    if (ceiling <= 0) c.fail(`workTypes[${i}].dailyCeiling`, t('intake.v.aboveZero'))
     return {
       name: c.text(r.name, `workTypes[${i}].name`),
       serviceMin: c.num(r.serviceMin, `workTypes[${i}].serviceMin`, 0),
@@ -81,18 +81,18 @@ export function parseSite(text: string): SiteProfile {
       requiredSkill: c.int(r.requiredSkill, `workTypes[${i}].requiredSkill`, 0, skills.length - 1),
     }
   })
-  if (workTypes.length === 0) c.fail('workTypes', 'must list at least one work type')
+  if (workTypes.length === 0) c.fail('workTypes', t('intake.v.oneWorkType'))
   const priorityLevels = c.list(o.priorityLevels, 'priorityLevels').map((l, i): PriorityLevel => {
     const r = c.record(l, `priorityLevels[${i}]`)
     return { name: c.text(r.name, `priorityLevels[${i}].name`), weight: c.num(r.weight, `priorityLevels[${i}].weight`, 0) }
   })
-  if (priorityLevels.length === 0) c.fail('priorityLevels', 'must list at least one level')
+  if (priorityLevels.length === 0) c.fail('priorityLevels', t('intake.v.oneLevel'))
 
   const names = new Set<string>()
   const places = c.list(o.places, 'places').map((p, i): SitePlace => {
     const r = c.record(p, `places[${i}]`)
     const name = c.text(r.name, `places[${i}].name`)
-    if (names.has(normaliseName(name))) c.fail(`places[${i}].name`, `"${name}" is used twice`)
+    if (names.has(normaliseName(name))) c.fail(`places[${i}].name`, t('intake.v.usedTwice', { name }))
     names.add(normaliseName(name))
     const place: SitePlace = {
       name,
@@ -108,7 +108,7 @@ export function parseSite(text: string): SiteProfile {
   const aliases: Record<string, string> = {}
   for (const [k, v] of Object.entries(c.record(o.aliases, 'aliases'))) {
     const target = c.text(v, `aliases["${k}"]`)
-    if (!names.has(normaliseName(target))) c.fail(`aliases["${k}"]`, `points to "${target}", which is not in the place table`)
+    if (!names.has(normaliseName(target))) c.fail(`aliases["${k}"]`, t('intake.v.aliasTarget', { target }))
     aliases[k] = target
   }
   const columnNames: Record<string, string[]> = {}

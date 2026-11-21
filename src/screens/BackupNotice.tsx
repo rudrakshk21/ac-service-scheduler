@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { t, tn } from '../i18n'
 import { backupDue } from '../workspace/backup'
 import { useWorkspace } from '../workspace/useWorkspace'
 import { saveBackupFile } from './files'
@@ -12,9 +13,9 @@ export function BackupNotice() {
   if (!due || hidden) return null
   return (
     <p className="banner row" role="status">
-      <span>You have not saved a backup for {days} days. Your data lives only in this browser.</span>
-      <button type="button" className="btn" onClick={() => saveBackupFile(workspace, update)}>Save a backup</button>
-      <button type="button" className="btn" onClick={() => setHidden(true)}>Later</button>
+      <span>{tn('backup.notice', days)}</span>
+      <button type="button" className="btn" onClick={() => saveBackupFile(workspace, update)}>{t('backup.save')}</button>
+      <button type="button" className="btn" onClick={() => setHidden(true)}>{t('backup.later')}</button>
     </p>
   )
 }

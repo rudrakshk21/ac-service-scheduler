@@ -1,5 +1,7 @@
 import type { PlanInput, PlanResult } from '../engine'
 import { visitMinutes } from '../engine/context'
+import { localeCode } from '../i18n'
+import { intlLocale } from '../i18n/locales'
 
 /** Everything the demo page shows is computed here, from the engine's input and result, as plain data. */
 
@@ -142,11 +144,9 @@ export function dayAxis(input: PlanInput, lanes: Lane[]): Axis {
   return { startMin, endMin, ticks }
 }
 
-const dayFormat = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
-
-/** "Tue" and "13 Oct" for a day number (days since 1970-01-01). */
+/** "Tue" and "13 Oct" for a day number (days since 1970-01-01), in the language in use. */
 export function dayLabel(day: number): { weekday: string; date: string } {
-  const parts = dayFormat.formatToParts(new Date(day * 86_400_000))
+  const parts = new Intl.DateTimeFormat(intlLocale(localeCode()), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).formatToParts(new Date(day * 86_400_000))
   const get = (type: string): string => parts.find((p) => p.type === type)?.value ?? ''
   return { weekday: get('weekday'), date: `${get('day')} ${get('month')}` }
 }

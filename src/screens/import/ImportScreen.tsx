@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
+import { formatNumber, t } from '../../i18n'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { CheckStep } from './CheckStep'
 import { ColumnsStep } from './ColumnsStep'
@@ -7,12 +8,12 @@ import { canContinue, flowReducer, initialFlow, type Step } from './importFlow'
 import { ValuesStep } from './ValuesStep'
 import './import.css'
 
-const STEPS: { id: Exclude<Step, 'done'>; label: string }[] = [
-  { id: 'file', label: 'File' },
-  { id: 'columns', label: 'Columns' },
-  { id: 'values', label: 'Words' },
-  { id: 'check', label: 'Check' },
-]
+const STEPS = [
+  { id: 'file', label: 'import.step.file' },
+  { id: 'columns', label: 'import.step.columns' },
+  { id: 'values', label: 'import.step.values' },
+  { id: 'check', label: 'import.step.check' },
+] as const satisfies readonly { id: Exclude<Step, 'done'>; label: string }[]
 
 export default function ImportScreen() {
   const { workspace } = useWorkspace()
@@ -32,20 +33,20 @@ export default function ImportScreen() {
   const here = flow.step === 'done' ? STEPS.length : STEPS.findIndex((s) => s.id === flow.step)
   const verdict =
     flow.profile === null
-      ? { ok: false, reason: 'Choose a file first.' }
+      ? { ok: false, reason: t('import.chooseFirst') }
       : canContinue(flow.step === 'done' ? 'check' : flow.step, { kind: flow.kind, profile: flow.profile, table: flow.table, site: workspace.site, leaveInReview: flow.leaveInReview })
 
   return (
     <section className="screen">
-      <h1 className="screen-title" tabIndex={-1}>Import</h1>
-      <p className="screen-lede">Bring in service cases, technicians or places from a file. You match its columns once and the app remembers.</p>
+      <h1 className="screen-title" tabIndex={-1}>{t('import.title')}</h1>
+      <p className="screen-lede">{t('import.lede')}</p>
 
-      <ol className="steps" aria-label="Steps">
+      <ol className="steps" aria-label={t('import.steps.aria')}>
         {STEPS.map((s, i) => (
           <li key={s.id} aria-current={i === here ? 'step' : undefined} className={i < here ? 'done' : undefined}>
-            <span className="n" aria-hidden="true">{i < here ? '✓' : i + 1}</span>
-            <span className="lbl" aria-hidden="true">{s.label}</span>
-            <span className="visually-hidden">{`${s.label}${i < here ? ' (done)' : i === here ? ' (current step)' : ''}`}</span>
+            <span className="n" aria-hidden="true">{i < here ? '✓' : formatNumber(i + 1)}</span>
+            <span className="lbl" aria-hidden="true">{t(s.label)}</span>
+            <span className="visually-hidden">{i < here ? t('import.step.done', { label: t(s.label) }) : i === here ? t('import.step.current', { label: t(s.label) }) : t(s.label)}</span>
           </li>
         ))}
       </ol>
@@ -59,11 +60,11 @@ export default function ImportScreen() {
         {flow.step === 'check' && <CheckStep flow={flow} dispatch={dispatch} onDone={setDoneLines} />}
         {flow.step === 'done' && (
           <div className="done-box" role="status">
-            <h2 className="step-heading" tabIndex={-1} data-step-heading>Imported</h2>
+            <h2 className="step-heading" tabIndex={-1} data-step-heading>{t('import.imported')}</h2>
             {doneLines.map((l) => <p key={l}>{l}</p>)}
             <div className="row">
-              <a className="btn btn-primary" href="#/data">See the data</a>
-              <button type="button" className="btn" onClick={() => dispatch({ type: 'reset' })}>Import another file</button>
+              <a className="btn btn-primary" href="#/data">{t('import.seeData')}</a>
+              <button type="button" className="btn" onClick={() => dispatch({ type: 'reset' })}>{t('import.another')}</button>
             </div>
           </div>
         )}
@@ -71,9 +72,9 @@ export default function ImportScreen() {
         {flow.step !== 'done' && (
           <div className="step-nav">
             {flow.step !== 'check' && !verdict.ok && <p className="why" role="status">{verdict.reason}</p>}
-            {flow.step !== 'file' && <button type="button" className="btn" onClick={() => dispatch({ type: 'back' })}>Back</button>}
+            {flow.step !== 'file' && <button type="button" className="btn" onClick={() => dispatch({ type: 'back' })}>{t('import.back')}</button>}
             {flow.step !== 'check' && (
-              <button type="button" className="btn btn-primary" disabled={!verdict.ok} onClick={() => dispatch({ type: 'next' })}>Continue</button>
+              <button type="button" className="btn btn-primary" disabled={!verdict.ok} onClick={() => dispatch({ type: 'next' })}>{t('import.continue')}</button>
             )}
           </div>
         )}

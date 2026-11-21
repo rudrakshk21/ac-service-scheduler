@@ -41,7 +41,21 @@
 }
 
 .shell-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 16px 6px;
+}
+
+.lang-select select {
+  min-height: 48px;
+  max-width: 12rem;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .brand {
@@ -53,7 +67,7 @@
 .banner {
   margin: 8px 16px 0;
   padding: 10px 14px;
-  border-left: 4px solid var(--warn);
+  border-inline-start: 4px solid var(--warn);
   background: var(--surface);
 }
 
@@ -194,10 +208,10 @@
 
 .alert {
   padding: 12px 16px;
-  border-left: 4px solid var(--bad);
+  border-inline-start: 4px solid var(--bad);
   background: var(--surface);
 }
-.alert-note { border-left-color: var(--accent); }
+.alert-note { border-inline-start-color: var(--accent); }
 
 .badge {
   display: inline-flex;

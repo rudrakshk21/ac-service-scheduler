@@ -42,8 +42,8 @@ export function fitProjection(points: LatLon[], width: number, height: number, p
   }
 }
 
-/** The longest round length (1, 2 or 5 times a power of ten) that fits in `maxPx`, for the scale bar. */
-export function scaleBar(kmPerPx: number, maxPx: number): { km: number; px: number; label: string } {
+/** The longest round length (1, 2 or 5 times a power of ten) that fits in `maxPx`, for the scale bar. The caller writes its label. */
+export function scaleBar(kmPerPx: number, maxPx: number): { km: number; px: number } {
   let best = 0
   for (let power = -3; power <= 5; power++) {
     for (const m of [1, 2, 5]) {
@@ -52,7 +52,7 @@ export function scaleBar(kmPerPx: number, maxPx: number): { km: number; px: numb
     }
   }
   const km = best === 0 ? 0.001 : best
-  return { km, px: km / kmPerPx, label: km >= 1 ? `${km} km` : `${Math.round(km * 1000)} m` }
+  return { km, px: km / kmPerPx }
 }
 
 /** The part of the frame that is shown: a rectangle in frame units, used as the SVG view box. */

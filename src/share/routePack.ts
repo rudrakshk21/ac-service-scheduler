@@ -1,5 +1,6 @@
 import { dayNumber } from '../engine/calendar'
 import type { PlanInput, PlanResult } from '../engine'
+import { t, type MessageKey } from '../i18n'
 import { isoOf } from './dates'
 
 /**
@@ -83,19 +84,21 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 const isText = (v: unknown): v is string => typeof v === 'string' && v.trim() !== ''
 const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
 
+/** An error that names the stop and says what is wrong with it. */
+const badStop = (n: number, problem: MessageKey): PackError => new PackError(t('pack.err.stop', { n, problem: t(problem) }))
+
 function readStop(raw: unknown, n: number): PackStop {
-  const at = `Stop ${n}: `
-  if (typeof raw !== 'object' || raw === null) throw new PackError(`${at}this is not a stop.`)
+  if (typeof raw !== 'object' || raw === null) throw badStop(n, 'pack.err.stopNotStop')
   const s = raw as Record<string, unknown>
-  if (!isNumber(s.visit) || !Number.isInteger(s.visit) || s.visit < 1) throw new PackError(`${at}the visit number must be a whole number, 1 or more.`)
-  if (!isText(s.caseId)) throw new PackError(`${at}the case number is missing.`)
-  if (typeof s.workType !== 'string') throw new PackError(`${at}the work type is missing.`)
-  if (typeof s.place !== 'string') throw new PackError(`${at}the place is missing.`)
-  if (!isNumber(s.lat) || s.lat < -90 || s.lat > 90) throw new PackError(`${at}the latitude must be between -90 and 90.`)
-  if (!isNumber(s.lon) || s.lon < -180 || s.lon > 180) throw new PackError(`${at}the longitude must be between -180 and 180.`)
-  if (typeof s.arrival !== 'string' || !/^\d{2}:\d{2}$/.test(s.arrival)) throw new PackError(`${at}the arrival time is not written like 09:30.`)
-  if (!isNumber(s.kilometres) || s.kilometres < 0) throw new PackError(`${at}the distance must be a number of kilometres, 0 or more.`)
-  if (!isNumber(s.drivingMinutes) || s.drivingMinutes < 0) throw new PackError(`${at}the driving time must be a number of minutes, 0 or more.`)
+  if (!isNumber(s.visit) || !Number.isInteger(s.visit) || s.visit < 1) throw badStop(n, 'pack.err.stopVisit')
+  if (!isText(s.caseId)) throw badStop(n, 'pack.err.stopCase')
+  if (typeof s.workType !== 'string') throw badStop(n, 'pack.err.stopWorkType')
+  if (typeof s.place !== 'string') throw badStop(n, 'pack.err.stopPlace')
+  if (!isNumber(s.lat) || s.lat < -90 || s.lat > 90) throw badStop(n, 'pack.err.stopLat')
+  if (!isNumber(s.lon) || s.lon < -180 || s.lon > 180) throw badStop(n, 'pack.err.stopLon')
+  if (typeof s.arrival !== 'string' || !/^\d{2}:\d{2}$/.test(s.arrival)) throw badStop(n, 'pack.err.stopArrival')
+  if (!isNumber(s.kilometres) || s.kilometres < 0) throw badStop(n, 'pack.err.stopKm')
+  if (!isNumber(s.drivingMinutes) || s.drivingMinutes < 0) throw badStop(n, 'pack.err.stopMin')
   return {
     visit: s.visit, caseId: s.caseId, workType: s.workType, place: s.place, lat: s.lat, lon: s.lon,
     arrival: s.arrival, kilometres: s.kilometres, drivingMinutes: s.drivingMinutes,
@@ -108,19 +111,19 @@ export function parsePack(text: string): RoutePack {
   try {
     raw = JSON.parse(text)
   } catch {
-    throw new PackError('This file is not a route pack.')
+    throw new PackError(t('pack.err.notPack'))
   }
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || !('packVersion' in raw)) throw new PackError('This file is not a route pack.')
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw) || !('packVersion' in raw)) throw new PackError(t('pack.err.notPack'))
   const p = raw as Record<string, unknown>
-  if (p.packVersion !== 1) throw new PackError('This route pack was made by a different version of the app.')
-  if (!isText(p.technician)) throw new PackError('The technician’s name is missing.')
-  if (typeof p.site !== 'string') throw new PackError('The name of the centre is missing.')
-  if (typeof p.date !== 'string' || !ISO_DATE.test(p.date)) throw new PackError('The date is not written as year-month-day.')
-  if (typeof p.validFor !== 'string' || !ISO_DATE.test(p.validFor)) throw new PackError('The valid-for date is not written as year-month-day.')
-  if (typeof p.createdAt !== 'string' || Number.isNaN(Date.parse(p.createdAt))) throw new PackError('The time the pack was made is not readable.')
-  if (!Array.isArray(p.stops) || p.stops.length === 0) throw new PackError('This route pack has no stops.')
+  if (p.packVersion !== 1) throw new PackError(t('pack.err.version'))
+  if (!isText(p.technician)) throw new PackError(t('pack.err.technician'))
+  if (typeof p.site !== 'string') throw new PackError(t('pack.err.site'))
+  if (typeof p.date !== 'string' || !ISO_DATE.test(p.date)) throw new PackError(t('pack.err.date'))
+  if (typeof p.validFor !== 'string' || !ISO_DATE.test(p.validFor)) throw new PackError(t('pack.err.validFor'))
+  if (typeof p.createdAt !== 'string' || Number.isNaN(Date.parse(p.createdAt))) throw new PackError(t('pack.err.createdAt'))
+  if (!Array.isArray(p.stops) || p.stops.length === 0) throw new PackError(t('pack.err.noStops'))
   const stops = p.stops.map((s, i) => readStop(s, i + 1))
-  if (new Set(stops.map((s) => s.visit)).size !== stops.length) throw new PackError('Two stops have the same visit number.')
+  if (new Set(stops.map((s) => s.visit)).size !== stops.length) throw new PackError(t('pack.err.duplicate'))
   return { packVersion: 1, site: p.site, technician: p.technician, date: p.date, createdAt: p.createdAt, validFor: p.validFor, stops }
 }
 

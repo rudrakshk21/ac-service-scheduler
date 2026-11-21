@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { IntakeError } from '../errors'
 import type { Cell } from './table'
 
@@ -40,16 +41,13 @@ export function jsonToRows(text: string, fileName: string): Cell[][] {
   try {
     data = JSON.parse(text)
   } catch {
-    throw new IntakeError('not_a_data_file', `${fileName} is not valid JSON.`)
+    throw new IntakeError('not_a_data_file', t('intake.file.notJson', { file: fileName }))
   }
   const list = findList(data)
   if (list === null) {
-    throw new IntakeError(
-      'not_a_data_file',
-      `${fileName} has no list of records. Expected a list of objects, or an object that holds one.`,
-    )
+    throw new IntakeError('not_a_data_file', t('intake.file.noRecords', { file: fileName }))
   }
-  if (list.length === 0) throw new IntakeError('empty_file', `${fileName} holds an empty list.`)
+  if (list.length === 0) throw new IntakeError('empty_file', t('intake.file.emptyList', { file: fileName }))
   const flat = list.map(flatten)
   const headers: string[] = []
   for (const f of flat) for (const k of f.keys()) if (!headers.includes(k)) headers.push(k)

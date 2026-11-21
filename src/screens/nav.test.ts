@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { t } from '../i18n'
 import { hashFor, TABS, tabFromHash } from './nav'
 
 describe('tabs and the URL hash', () => {
@@ -15,6 +16,6 @@ describe('tabs and the URL hash', () => {
     for (const h of ['', '#', '#/', '#/nope', '#/DATA', 'data']) expect(tabFromHash(h)).toBe('plan')
   })
   it('lists five tabs with plain labels', () => {
-    expect(TABS.map((t) => t.label)).toEqual(['Plan', 'Data', 'Import', 'Set-up', 'Route'])
+    expect(TABS.map((tab) => t(tab.labelKey))).toEqual(['Plan', 'Data', 'Import', 'Set-up', 'Route'])
   })
 })

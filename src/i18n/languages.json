@@ -1,0 +1,4 @@
+[
+  { "code": "en", "name": "English", "dir": "ltr" },
+  { "code": "hi", "name": "हिन्दी", "dir": "ltr", "draft": true }
+]
