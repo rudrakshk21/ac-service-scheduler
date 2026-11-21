@@ -1,5 +1,6 @@
 import type { RoutePack } from '../../share/routePack'
 import { longDate, madeText } from './format'
+import { PackMap } from './PackMap'
 import { RouteList } from './RouteList'
 import './route.css'
 
@@ -14,6 +15,7 @@ export function RouteSheet({ pack, onClose }: { pack: RoutePack; onClose: () => 
           {pack.site}. Made {madeText(pack.createdAt)} for this day only. If the plan has changed since, ask for a new sheet.
         </p>
       </header>
+      <PackMap pack={pack} />
       <RouteList pack={pack} />
       <div className="row no-print">
         <button type="button" className="btn btn-primary" onClick={() => window.print()}>Print</button>

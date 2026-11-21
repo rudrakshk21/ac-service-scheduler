@@ -5,6 +5,7 @@ import { daysWithVisits, summarise } from '../../demo/viewModel'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { setBase, toggleTechnician } from '../setup/setupActions'
 import { baseAdvice, nothingPlannedHint, prepare } from './planData'
+import { DayMap } from './DayMap'
 import { ShareBar } from './ShareBar'
 import { usePlan, type SwitchNote } from './usePlan'
 import '../../demo/demo.css'
@@ -136,6 +137,8 @@ export default function PlanScreen() {
           </p>
 
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={onToggle} />
+
+          <DayMap input={input} result={result} day={day} />
 
           <ShareBar workspace={workspace} input={input} caseIds={prepared.caseIds} planStart={prepared.planStart} result={result} day={day} busy={busy} />
         </>

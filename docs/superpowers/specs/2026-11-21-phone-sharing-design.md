@@ -118,6 +118,30 @@ remain: try the install on the reference phone (PD-9) and on Samsung Internet an
   Set-up; places made from coordinates read as `12.93000,77.66000`. Opening a pack straight from a messaging app (a
   share target in the manifest), the open data format export (FR-27.3) and the route sheet map (part E) are later.
 
+## 11. As built in pull request E
+
+- **Where and what.** `src/map/project.ts` (projection, scale bar, zoom and pan: pure, tested), `layers.ts` (the routes
+  to draw from a plan or a route pack, and short different labels: pure, tested; 29 tests), `MapCanvas.tsx` (SVG),
+  `map.css`. The map is its own lazy chunk (2.5 KB compressed); the first download stays at 70.25 KB.
+- **Drawing.** North up, distances true in both directions (a degree of longitude is shortened by the cosine of the
+  middle latitude), a scale bar with a round length. The base is a diamond; each stop is a marker labelled with the
+  technician's letter and the visit number ("A1", "B3"), so a route is never told apart by colour alone; a solid line
+  joins the stops and dashed legs run from the start place (or the base) and back. Eight technician colours, separate
+  from the work-type colours of the board, with light and dark values.
+- **Using it.** Zoom buttons (to 8x) or `+`, `-`, `0` and the arrow keys when the map has focus; drag to pan once zoomed
+  (at the whole map a drag still scrolls the page); tap or press Enter on a stop to see its case, time and place.
+- **Phone size.** Sizes are set in screen pixels from the measured width, not in drawing units: at 360 px wide a marker is
+  30 px across with a 48 px tap area, and the sizes do not change when zoomed. The width is read when the map appears
+  and kept up to date with a `ResizeObserver`.
+- **Placed in three places.** Under the board on the Plan tab; on the Route tab from the pack's coordinates (the pack
+  has no base, so only the stops and their line, offline); on the printed route sheet (zoom buttons are not printed).
+- **Not built.** A street-map background (R-9 says the tile address is a site setting; none is built in and no provider is
+  used); clicking the map to correct a place (FR-26.3). A dense cluster can hide the "Base" label behind a marker; the
+  label has a halo and zooming separates them.
+- **Verified.** In the browser at 360 px: 9 markers for 9 visits, no overlap, no sideways scroll, zoom limits, tap
+  details, drag and keyboard pan, reset. A hidden browser pane does not run frame callbacks, which showed that sizes must
+  not depend on `ResizeObserver` alone; the width is now measured at once.
+
 ## 8. Finish line
 
 - C: the built app opens offline after one visit; installs from Chrome on Android; a new build shows the update banner.
