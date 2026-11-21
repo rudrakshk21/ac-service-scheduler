@@ -141,6 +141,16 @@ NFR-4 asks for 2,000 cases, 100 technicians and a 30-day horizon within 30 secon
 The measured 4 to 6 seconds leave a margin of about five. No optimisation is needed now. A phone is slower than a
 laptop; the reference phone (PD-9) has not been chosen, so a phone measurement is still open.
 
+**Corrected on 2026-11-22 (hardening).** The generator above gives each technician one skill. A centre where each
+technician can do two of the three work types (the usual case) has about twice as many technicians eligible for each
+case, and the same size then took **42 s** in Node (27 s in the browser's worker), over the 30 s of NFR-4. The cost
+was in `greedy` (70% of the time): after every stop it looked at every case against every technician again, though
+only the one route that got the stop had changed. It now keeps each case's best offer and looks again only where the
+changed route matters, and keeps what adding a case to a route costs until that route changes. The choice is the
+same as a full scan would make, so no plan changed: all 28 golden files from the Python reference (the reference
+itself is not touched) and 17 plan fingerprints of made-up centres (`src/engine/fingerprint.test.ts`, taken before
+the change) are identical. The speed table is in section 13 of the phone and sharing design.
+
 ## 7. Delivery
 
 Branch `engine-step-2`, commits per slice. Two pull requests:
