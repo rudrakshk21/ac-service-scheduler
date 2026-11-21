@@ -426,6 +426,7 @@
   "import.need.place": "कम से कम एक जगह का कॉलम चुनें: इलाका, पिन कोड, पता, या अक्षांश के साथ देशांतर।",
   "import.need.categories.one": "{count} श्रेणी अभी किसी काम के प्रकार से नहीं मिलाई गई है।",
   "import.need.categories.other": "{count} श्रेणियाँ अभी किसी काम के प्रकार से नहीं मिलाई गई हैं।",
+  "import.check.working": "फ़ाइल जाँची जा रही है…",
   "import.check.heading": "जाँचें और आयात करें",
   "import.check.read.aria": "क्या पढ़ा गया",
   "import.fact.rows": "पंक्तियाँ पढ़ी गईं",

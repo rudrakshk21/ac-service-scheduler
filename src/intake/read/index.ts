@@ -14,6 +14,9 @@ const isZip = (b: Uint8Array): boolean => b.length >= 2 && b[0] === 0x50 && b[1]
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 export const MAX_ROWS = 50_000
 
+/** Whether a file of this many bytes is over the limit. */
+export const isTooLarge = (bytes: number): boolean => bytes > MAX_FILE_BYTES
+
 /** The refusal of a file over `MAX_FILE_BYTES`. Used by `readSource`, and by the screen before it reads the file into memory. */
 export function fileTooLarge(fileName: string, bytes: number): IntakeError {
   const size = formatNumber(bytes / (1024 * 1024), { maximumFractionDigits: 1 })
@@ -35,7 +38,7 @@ function limitRows(rows: unknown[], fileName: string): void {
  */
 export async function readSource(bytes: Uint8Array, fileName: string, options: ReadOptions = {}): Promise<SourceTable> {
   if (bytes.length === 0) throw new IntakeError('empty_file', t('intake.file.empty', { file: fileName }))
-  if (bytes.length > MAX_FILE_BYTES) throw fileTooLarge(fileName, bytes.length)
+  if (isTooLarge(bytes.length)) throw fileTooLarge(fileName, bytes.length)
   const lower = fileName.toLowerCase()
   if (isOleFile(bytes)) throw new IntakeError('unsupported_format', xlsMessage(fileName))
 

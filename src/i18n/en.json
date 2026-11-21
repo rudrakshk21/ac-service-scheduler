@@ -423,6 +423,7 @@
   "import.need.place": "Choose at least one place column: area, postal code, address, or latitude with longitude.",
   "import.need.categories.one": "{count} category is not matched to a work type yet.",
   "import.need.categories.other": "{count} categories are not matched to a work type yet.",
+  "import.check.working": "Checking the file…",
   "import.check.heading": "Check and import",
   "import.check.read.aria": "What was read",
   "import.fact.rows": "rows read",

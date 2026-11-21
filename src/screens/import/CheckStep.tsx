@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatNumber, t, tn, type MessageKey, type PluralKey } from '../../i18n'
-import { applyProfile } from '../../intake/map/apply'
+import type { Imported } from '../../intake/map/apply'
+import { IntakeCancelled, startApply } from '../../worker/intakeClient'
 import { applyImport, previewImport } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { askToKeepData } from '../files'
@@ -11,13 +12,41 @@ interface CheckProps extends StepProps {
   onDone: (lines: string[]) => void
 }
 
+/** What applying the mapping gave, for the inputs it was worked out for. */
+interface Applied {
+  for: object
+  imported: Imported | null
+  error: string | null
+}
+
 export function CheckStep({ flow, dispatch, onDone }: CheckProps) {
   const { workspace, update } = useWorkspace()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   const { table, profile, kind } = flow
-  const imported = useMemo(() => (table !== null && profile !== null ? applyProfile(table, profile, workspace.site, today) : null), [table, profile, workspace.site, today])
+  const site = workspace.site
+  // The mapping is applied to every row in a worker (SEC-4), so a large file never freezes the screen.
+  const inputs = useMemo(() => ({ table, profile, site, today }), [table, profile, site, today])
+  const [applied, setApplied] = useState<Applied | null>(null)
+  useEffect(() => {
+    if (table === null || profile === null) return
+    let live = true
+    const job = startApply(table, profile, site, today)
+    job.result.then(
+      (imported) => { if (live) setApplied({ for: inputs, imported, error: null }) },
+      (e: unknown) => { if (live && !(e instanceof IntakeCancelled)) setApplied({ for: inputs, imported: null, error: e instanceof Error ? e.message : String(e) }) },
+    )
+    return () => {
+      live = false
+      job.cancel()
+    }
+  }, [inputs, table, profile, site, today])
+  const settled = applied !== null && applied.for === inputs ? applied : null
+  const imported = settled?.imported ?? null
   const preview = useMemo(() => (imported !== null && profile !== null ? previewImport(workspace, imported, profile, today) : null), [workspace, imported, profile, today])
-  if (imported === null || preview === null || profile === null) return null
+  if (table === null || profile === null) return null
+  if (settled === null) return <p className="muted" role="status">{t('import.check.working')}</p>
+  if (settled.error !== null) return <p className="alert" role="alert">{settled.error}</p>
+  if (imported === null || preview === null) return null
 
   const count = kind === 'cases' ? imported.cases.length : kind === 'technicians' ? imported.technicians.length : imported.places.length
   const q = imported.quality

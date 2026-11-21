@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { IntakeError } from '../errors'
 import { makeXlsx } from '../testing/xlsx'
-import { MAX_FILE_BYTES, MAX_ROWS, readSource } from './index'
+import { isTooLarge, MAX_FILE_BYTES, MAX_ROWS, readSource } from './index'
 
 const utf8 = (s: string) => new TextEncoder().encode(s)
 const latin1 = (s: string) => Uint8Array.from([...s].map((c) => c.charCodeAt(0)))
@@ -42,9 +42,11 @@ describe('the limits on a file (SEC-4: 20 MB and 50,000 rows)', () => {
     expect((error as IntakeError).message).toMatch(/huge\.csv/)
     expect((error as IntakeError).message).toMatch(/20 MB/)
   })
-  it('accepts a file of exactly 20 MB in size', async () => {
-    const bytes = new Uint8Array(MAX_FILE_BYTES).fill(0x41)
-    await expect(readSource(bytes, 'edge.csv')).rejects.not.toMatchObject({ code: 'file_too_large' })
+  it('draws the line at exactly 20 MB: that size is allowed, one byte more is not', () => {
+    expect(MAX_FILE_BYTES).toBe(20 * 1024 * 1024)
+    expect(isTooLarge(MAX_FILE_BYTES)).toBe(false)
+    expect(isTooLarge(MAX_FILE_BYTES + 1)).toBe(true)
+    expect(isTooLarge(1)).toBe(false)
   })
 })
 
