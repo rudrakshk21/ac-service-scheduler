@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { plan } from '../../engine/index'
 import type { StoredCase } from '../../intake/import/merge'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
-import { baseAdvice, nothingPlannedHint, prepare, startDate } from './planData'
+import type { PlanInput } from '../../engine/types'
+import { generateInput } from '../../engine/testing/generate'
+import { baseAdvice, nothingPlannedHint, prepare, sizeNotice, startDate, TESTED_SIZE } from './planData'
 
 describe('startDate', () => {
   it('is today when today is a working day', () => {
@@ -138,5 +140,32 @@ describe('nothingPlannedHint', () => {
   })
   it('otherwise sends the reader to the reasons', () => {
     expect(nothingPlannedHint(inputFor(ready()))).toBe('Nothing could be planned. The reasons are listed below.')
+  })
+})
+
+describe('sizeNotice (NFR-4: the app states its limits for a larger data set)', () => {
+  const sized = (cases: number, technicians: number, horizonDays = 30): PlanInput => {
+    const input = generateInput(5, 10, technicians, cases)
+    input.technicians.forEach((t) => { t.active = true })
+    input.settings.horizonDays = horizonDays
+    return input
+  }
+
+  it('says nothing up to the size the app was tested with: 2,000 cases, 100 technicians, 30 days', () => {
+    expect(sizeNotice(sized(2000, 100, 30))).toBeNull()
+    expect(sizeNotice(sized(10, 3))).toBeNull()
+  })
+  it('gives the numbers when there are more cases, more technicians or a longer horizon', () => {
+    expect(sizeNotice(sized(2001, 100))).toEqual({ cases: 2001, technicians: 100, days: 30 })
+    expect(sizeNotice(sized(2000, 101))).toEqual({ cases: 2000, technicians: 101, days: 30 })
+    expect(sizeNotice(sized(2000, 100, 31))).toEqual({ cases: 2000, technicians: 100, days: 31 })
+  })
+  it('counts only the technicians who are working', () => {
+    const input = sized(100, 120)
+    input.technicians.slice(0, 30).forEach((t) => { t.active = false })
+    expect(sizeNotice(input)).toBeNull() // 90 active
+  })
+  it('publishes the tested size, so the message and the measurements say the same', () => {
+    expect(TESTED_SIZE).toEqual({ cases: 2000, technicians: 100, days: 30 })
   })
 })

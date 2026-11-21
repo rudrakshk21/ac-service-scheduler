@@ -64,6 +64,15 @@ export function nothingPlannedHint(input: PlanInput): string {
   return t('plan.hint.generic')
 }
 
+/** The largest centre the app has been measured with (NFR-4): beyond it, the app says so instead of promising a time. */
+export const TESTED_SIZE = { cases: 2000, technicians: 100, days: 30 } as const
+
+/** The numbers of a centre larger than `TESTED_SIZE` in any way (technicians counted when working), or null when it is not. */
+export function sizeNotice(input: PlanInput): { cases: number; technicians: number; days: number } | null {
+  const size = { cases: input.cases.length, technicians: input.technicians.filter((x) => x.active).length, days: input.settings.horizonDays }
+  return size.cases > TESTED_SIZE.cases || size.technicians > TESTED_SIZE.technicians || size.days > TESTED_SIZE.days ? size : null
+}
+
 /** What the plan tab needs: the engine's input and which cases are left out, or one plain reason why it cannot plan yet. */
 export function prepare(w: Workspace, today: string): Prepared {
   if (w.technicians.length === 0) {

@@ -5,7 +5,7 @@ import { daysWithVisits, summarise } from '../../demo/viewModel'
 import { formatNumber, t, tn } from '../../i18n'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { setBase, toggleTechnician } from '../setup/setupActions'
-import { baseAdvice, nothingPlannedHint, prepare } from './planData'
+import { baseAdvice, nothingPlannedHint, prepare, sizeNotice, TESTED_SIZE } from './planData'
 import { DayMap } from './DayMap'
 import { ShareBar } from './ShareBar'
 import { usePlan, type SwitchNote } from './usePlan'
@@ -23,6 +23,7 @@ export default function PlanScreen() {
   const note = useRef<SwitchNote | null>(null)
   const prepared = useMemo(() => prepare(workspace, today), [workspace, today])
   const advice = useMemo(() => baseAdvice(workspace), [workspace])
+  const large = useMemo(() => (prepared.ok ? sizeNotice(prepared.input) : null), [prepared])
   const { input, result, busy, error, change } = usePlan(prepared.ok ? prepared.input : null, note)
   const days = useMemo(() => (result === null ? [] : daysWithVisits(result)), [result])
   const summary = useMemo(() => (input !== null && result !== null ? summarise(input, result) : null), [input, result])
@@ -97,6 +98,15 @@ export default function PlanScreen() {
       </header>
 
       {error !== null && <p className="error" role="alert">{t('plan.error', { error })}</p>}
+
+      {large !== null && (
+        <p className="alert alert-note" role="status">
+          {t('plan.large', {
+            cases: formatNumber(large.cases), technicians: formatNumber(large.technicians), days: formatNumber(large.days),
+            testedCases: formatNumber(TESTED_SIZE.cases), testedTechnicians: formatNumber(TESTED_SIZE.technicians), testedDays: formatNumber(TESTED_SIZE.days),
+          })}
+        </p>
+      )}
 
       {advice !== null && (
         <div className="alert alert-note" role="status">

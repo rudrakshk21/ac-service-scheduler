@@ -17,6 +17,16 @@ Everything below is on the device and browser you use, and nowhere else.
 
 The app sets no cookies.
 
+## For how long, and who can see it
+
+- **For how long:** until you delete it with *Delete all my data*, or the browser clears it. The app has no expiry of its
+  own: closed cases stay until you delete them. (A retention period for closed cases, which the requirements propose, is
+  not built yet.)
+- **Who can see it:** whoever can open this browser on this device. No one else: not the project, not the host, not the
+  other devices of your technicians. Each technician's phone holds only the route files that technician opened.
+
+The same four facts (what, where, how long, who) are in the app, in *Set-up*, *Your data and files*.
+
 ## What is sent
 
 **Nothing from the app.** After its files have loaded, the app makes no network requests. This is checked, not only

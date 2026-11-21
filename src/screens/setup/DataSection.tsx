@@ -65,6 +65,7 @@ export function DataSection() {
     <section className="card stack" aria-labelledby="set-data">
       <h2 id="set-data" className="step-heading">{t('setup.data.title')}</h2>
       <p className="muted small">{t('setup.data.where', { size: sizeOf(workspace.cases.length, workspace.technicians.length, workspace.site.places.length) })}</p>
+      <p className="muted small">{t('setup.data.privacy')}</p>
 
       <div className="stack-tight">
         <b>{t('setup.data.site.title')}</b>

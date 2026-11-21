@@ -50,7 +50,7 @@ function centre(nCases: number, nTechs: number, nPlaces: number, horizonDays: nu
 
 describe.skipIf(import.meta.env.VITE_MEASURE_SPEED !== '1')('the Plan screen at the target size (NFR-4)', () => {
   // [cases, technicians, places, horizon in working days]
-  const sizes = [[500, 30, 40, 30], [1000, 60, 50, 30], [2000, 100, 60, 30], [2000, 25, 60, 30], [5000, 200, 80, 30], [10000, 300, 100, 30]] as const
+  const sizes = [[300, 20, 30, 30], [500, 30, 40, 30],[1000, 60, 50, 30], [2000, 100, 60, 30], [2000, 25, 60, 30], [5000, 200, 80, 30], [10000, 300, 100, 30]] as const
   for (const [nCases, nTechs, nPlaces, horizon] of sizes) {
     it(`measures ${nCases} cases, ${nTechs} technicians, ${nPlaces} places, horizon ${horizon}`, () => {
       const w = centre(nCases, nTechs, nPlaces, horizon)
