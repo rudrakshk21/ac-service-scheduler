@@ -44,6 +44,10 @@ export function AppShell() {
 
   return (
     <div className="shell">
+      {/* A button, not a link to #main: the address bar's # part is how the screens are chosen. */}
+      <button type="button" className="btn btn-primary skip-link" onClick={() => main.current?.focus()}>
+        {t('nav.skip')}
+      </button>
       <header className="shell-top">
         <span className="brand">{t('app.name')}</span>
         <LanguageSelect />
