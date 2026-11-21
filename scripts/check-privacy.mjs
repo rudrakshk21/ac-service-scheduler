@@ -6,7 +6,8 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { privacyFindings } from '../vite-plugins/privacy.ts'
 
-const SKIP = /(?:\.(?:png|jpe?g|gif|ico|woff2?|webp|zip)|package-lock\.json)$/i
+// Not text, or the check's own rules and tests, which have to hold examples of what it looks for.
+const SKIP = /(?:\.(?:png|jpe?g|gif|ico|woff2?|webp|zip)|package-lock\.json|^vite-plugins\/privacy(?:\.test)?\.ts)$/i
 
 const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter((f) => f !== '' && !SKIP.test(f))
 let count = 0
