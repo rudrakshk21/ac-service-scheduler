@@ -16,7 +16,7 @@
 - Real data never in the repo. Phone first (no sideways scroll at 375 px, 44 px targets, visible focus), light and dark, plain sentence-case labels, no all-caps eyebrows.
 - Every edit is one call to `update(w => action(w, ...))`; an action that returns an error changes nothing and the screen shows the message next to the control (`role="alert"`).
 - Names are compared with `normaliseName` (case, accents, spacing ignored). A rename cascades to everything that stores the old name (cases, technicians, saved mappings, aliases).
-- Full local check after every task: `cd /c/Users/lenovo/Projects/ac-service-scheduler && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`.
+- Full local check after every task: `cd <repo> && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`.
 - Browser checks use the dev server (`preview_start` name `dev`), 375 px and desktop, driven through the real controls. The screenshot tool can time out; use DOM measurements then.
 - Before using Write on a path, check it does not exist.
 

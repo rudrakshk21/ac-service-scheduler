@@ -22,7 +22,7 @@
 - Engine statement and line coverage of at least 90 percent (NFR-13).
 - TypeScript config in force: `types: ["vite/client"]` (no Node globals in `src`), `noUnusedLocals`, `noUnusedParameters`, `erasableSyntaxOnly` (no enums, no namespaces, no parameter properties), `verbatimModuleSyntax` (use `import type` for types).
 - Commit messages follow Conventional Commits and end with the trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Commit locally. Do not push until the project owner says so.
-- Run commands from the repository root `C:\Users\lenovo\Projects\ac-service-scheduler`. Use forward slashes in paths passed to npm.
+- Run commands from the repository root `<repo>`. Use forward slashes in paths passed to npm.
 
 ## File Structure
 
@@ -1354,7 +1354,7 @@ git commit -m "feat(engine): add route operations and exact stop ordering" -m "C
 Run:
 ```bash
 mkdir -p reference/python reference/golden
-cp "C:/Users/lenovo/OneDrive - iitkgp.ac.in/Desktop/HW/AC_Scheduler_Python/ac_scheduler/engine.py" reference/python/engine.py
+cp "<original-python-project>/ac_scheduler/engine.py" reference/python/engine.py
 ```
 Expected: `reference/python/engine.py` exists and has 422 lines.
 Check it imports only the standard library: `py -c "import ast,sys; t=ast.parse(open('reference/python/engine.py',encoding='utf-8').read()); print([n.names[0].name if isinstance(n, ast.Import) else n.module for n in ast.walk(t) if isinstance(n,(ast.Import,ast.ImportFrom))])"`
@@ -2742,7 +2742,7 @@ Expected: the file is reported as skipped (0 passed, tests skipped), not as pass
 
 Run:
 ```bash
-py reference/export_ds1_local.py --project "C:/Users/lenovo/OneDrive - iitkgp.ac.in/Desktop/HW/AC_Scheduler_Python" --inputs "C:/Users/lenovo/OneDrive - iitkgp.ac.in/Desktop/HW/AC_Scheduler_Python/inputs"
+py reference/export_ds1_local.py --project "<original-python-project>" --inputs "<original-python-project>/inputs"
 ```
 Expected output (the baseline numbers are from the validated run):
 ```

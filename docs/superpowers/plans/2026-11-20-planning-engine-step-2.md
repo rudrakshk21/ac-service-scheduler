@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Repo `C:\Users\lenovo\Projects\ac-service-scheduler`. Branch `engine-step-2` (never `main`). Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+- Repo `<repo>`. Branch `engine-step-2` (never `main`). Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 - The 16 legacy golden files in `reference/golden/` must stay byte-for-byte unchanged. `reference/golden/LEGACY.sha256` enforces it. If a legacy file would change, stop: the slice is wrong.
 - Every new input field is optional with a default that reproduces step 1. Output shape does not grow for old inputs.
 - The engine never sorts; input order is tie-break order. Loop order, strict `<` comparisons and arithmetic order must match between Python and TypeScript. Travel times stay rounded with `snap` / `snapMinutes`.
@@ -21,7 +21,7 @@
 - From PowerShell pass paths to npm/npx with forward slashes. In Bash use `py` for Python.
 - Dates are whole day numbers since 1970-01-01. Minutes and kilometres as in the existing types.
 - Full local check command (run after every task; all must pass):
-  `cd /c/Users/lenovo/Projects/ac-service-scheduler && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`
+  `cd <repo> && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`
 
 ## File Structure
 
@@ -53,7 +53,7 @@
 
 - [ ] **Step 1: Create the manifest from the current files (one time, never regenerated)**
 
-Run (Bash): `cd /c/Users/lenovo/Projects/ac-service-scheduler/reference/golden && for f in *.json; do printf '%s  %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$f"; done > LEGACY.sha256 && wc -l LEGACY.sha256`
+Run (Bash): `cd <repo>/reference/golden && for f in *.json; do printf '%s  %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$f"; done > LEGACY.sha256 && wc -l LEGACY.sha256`
 Expected: `16 LEGACY.sha256`.
 
 - [ ] **Step 2: Add the test to `reference/test_reference.py`**
