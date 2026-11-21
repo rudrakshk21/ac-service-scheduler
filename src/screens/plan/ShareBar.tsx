@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { PlanInput, PlanResult } from '../../engine'
 import { dayLabel } from '../../demo/viewModel'
+import { t, tn } from '../../i18n'
 import { toCsv } from '../../share/csv'
 import { buildPack, packFileName, routesOfDay, serialisePack, type RoutePack } from '../../share/routePack'
 import { shareOrDownload, type ShareOutcome } from '../../share/shareFile'
@@ -10,8 +11,8 @@ import { RouteSheet } from '../route/RouteSheet'
 import '../route/route.css'
 
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
-const slug = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+/** File name stems: fixed, in English letters, so a file name does not depend on the language. */
+const FILE_STEM = { schedule: 'schedule', dayRoutes: 'day-routes', notPlanned: 'not-planned', summary: 'summary', changeLog: 'change-log' } as const
 
 interface Props {
   workspace: Workspace
@@ -35,62 +36,62 @@ export function ShareBar({ workspace, input, caseIds, planStart, result, day, bu
   const label = dayLabel(day)
 
   const report = (outcome: ShareOutcome, what: string): void => {
-    setStatus(outcome === 'shared' ? `Shared ${what}.` : outcome === 'downloaded' ? `Saved ${what} in your downloads.` : '')
+    setStatus(outcome === 'shared' ? t('share.shared', { what }) : outcome === 'downloaded' ? t('share.saved', { what }) : '')
   }
   const sendExcel = async (): Promise<void> => {
     try {
       const { toXlsx } = await import('../../share/xlsx')
-      report(await shareOrDownload(`plan-${today}.xlsx`, await toXlsx(tables), XLSX_TYPE), 'the Excel file')
+      report(await shareOrDownload(`plan-${today}.xlsx`, await toXlsx(tables), XLSX_TYPE), t('share.what.excel'))
     } catch (e) {
-      setStatus(`The Excel file could not be made. ${e instanceof Error ? e.message : ''}`.trim())
+      setStatus(t('share.excel.failed', { detail: e instanceof Error ? e.message : '' }).trim())
     }
   }
-  const sendCsv = async (name: string): Promise<void> => {
-    const table = tables.find((t) => t.name === name)
-    if (table !== undefined) report(await shareOrDownload(`${slug(name)}-${today}.csv`, toCsv(table), 'text/csv'), `${name} as CSV`)
+  const sendCsv = async (id: (typeof tables)[number]['id']): Promise<void> => {
+    const table = tables.find((x) => x.id === id)
+    if (table !== undefined) report(await shareOrDownload(`${FILE_STEM[id]}-${today}.csv`, toCsv(table), 'text/csv'), t('share.what.csv', { table: table.name }))
   }
   const packFor = (tech: number): RoutePack => buildPack(workspace.site.name, input, result, tech, day, new Date().toISOString())
   const sendPack = async (tech: number): Promise<void> => {
     const pack = packFor(tech)
-    report(await shareOrDownload(packFileName(pack), serialisePack(pack), 'application/json'), `the route pack of ${pack.technician}`)
+    report(await shareOrDownload(packFileName(pack), serialisePack(pack), 'application/json'), t('share.what.pack', { name: pack.technician }))
   }
 
   return (
-    <section className="share-panel stack-tight" aria-label="Share and export">
-      <h2 className="step-heading">Share and export</h2>
+    <section className="share-panel stack-tight" aria-label={t('share.title')}>
+      <h2 className="step-heading">{t('share.title')}</h2>
 
       <div className="stack-tight">
-        <b>Routes of {label.weekday} {label.date}</b>
+        <b>{t('share.routesOf', { day: `${label.weekday} ${label.date}` })}</b>
         {routes.length === 0 ? (
-          <p className="muted">Nobody has a visit on this day.</p>
+          <p className="muted">{t('share.nobody')}</p>
         ) : (
           <ul className="stack-tight" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {routes.map((r) => (
               <li key={r.tech} className="share-row">
-                <span><b>{r.name}</b> <span className="muted">{plural(r.visits, 'visit', 'visits')}</span></span>
+                <span><b>{r.name}</b> <span className="muted">{tn('share.visits', r.visits)}</span></span>
                 <span className="row">
-                  <button type="button" className="btn" disabled={busy} onClick={() => setSheet(packFor(r.tech))}>Route sheet</button>
-                  <button type="button" className="btn" disabled={busy} onClick={() => void sendPack(r.tech)}>Share route pack</button>
+                  <button type="button" className="btn" disabled={busy} onClick={() => setSheet(packFor(r.tech))}>{t('share.sheet')}</button>
+                  <button type="button" className="btn" disabled={busy} onClick={() => void sendPack(r.tech)}>{t('share.pack')}</button>
                 </span>
               </li>
             ))}
           </ul>
         )}
-        <p className="muted small">A route pack is a small file the technician opens in this app on their phone, with no connection. It holds case numbers, places, times and distances, no customer details.</p>
+        <p className="muted small">{t('share.packNote')}</p>
       </div>
 
       {sheet !== null && <RouteSheet pack={sheet} onClose={() => setSheet(null)} />}
 
       <div className="stack-tight no-print">
-        <b>The whole plan</b>
+        <b>{t('share.whole')}</b>
         <div className="row">
-          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void sendExcel()}>Excel file, all tables</button>
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void sendExcel()}>{t('share.excel')}</button>
         </div>
         <details className="share-csv">
-          <summary>CSV files, one table at a time</summary>
+          <summary>{t('share.csv')}</summary>
           <div className="row" style={{ paddingBottom: 8 }}>
-            {tables.map((t) => (
-              <button key={t.name} type="button" className="btn" disabled={busy} onClick={() => void sendCsv(t.name)}>{t.name}</button>
+            {tables.map((x) => (
+              <button key={x.id} type="button" className="btn" disabled={busy} onClick={() => void sendCsv(x.id)}>{x.name}</button>
             ))}
           </div>
         </details>

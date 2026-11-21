@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { t, tn } from '../../i18n'
 import { PackError, parsePack, staleness, type RoutePack } from '../../share/routePack'
 import { memoryStore, openIndexedStore, type KeyValueStore } from '../../workspace/db'
 import { readText } from '../files'
@@ -9,7 +10,6 @@ import { RouteList } from './RouteList'
 import './route.css'
 
 const keyOf = (p: Pick<RoutePack, 'technician' | 'date'>): string => `${p.technician}|${p.date}`
-const daysText = (n: number): string => (n === 1 ? 'yesterday' : `${n} days ago`)
 
 /** What a technician sees: a route file from the planner, opened read-only, kept on the phone, usable with no connection. */
 export default function RouteScreen() {
@@ -32,7 +32,7 @@ export default function RouteScreen() {
       () => {
         if (!live) return
         setStore(memoryStore())
-        setStorageNote('This browser is not keeping files for the app, so the route stays only while this page is open.')
+        setStorageNote(t('route.storage.none'))
       },
     )
     return () => { live = false }
@@ -42,7 +42,7 @@ export default function RouteScreen() {
 
   const keep = (next: RoutePack[]): void => {
     setPacks(next)
-    if (store !== null) void savePacks(store, next).catch(() => setStorageNote('The route could not be saved on this phone. It stays only while this page is open.'))
+    if (store !== null) void savePacks(store, next).catch(() => setStorageNote(t('route.storage.saveFailed')))
   }
 
   async function open(file: File | undefined): Promise<void> {
@@ -53,7 +53,7 @@ export default function RouteScreen() {
       setChosen(keyOf(opened))
       keep(addPack(packs, opened))
     } catch (e) {
-      setError(e instanceof PackError ? e.message : 'The file could not be read.')
+      setError(e instanceof PackError ? e.message : t('route.error.read'))
     }
   }
 
@@ -62,13 +62,13 @@ export default function RouteScreen() {
   return (
     <section className="screen stack">
       <div>
-        <h1 className="screen-title" tabIndex={-1}>Route</h1>
-        <p className="screen-lede">The route of one technician for one day, from a file made by the planner. It works without a connection.</p>
+        <h1 className="screen-title" tabIndex={-1}>{t('route.title')}</h1>
+        <p className="screen-lede">{t('route.lede')}</p>
       </div>
 
       <div className="row">
         <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
-          Open a route file
+          {t('route.open')}
           <input type="file" accept=".json,application/json" className="visually-hidden" onChange={(e) => { void open(e.target.files?.[0]); e.target.value = '' }} />
         </label>
       </div>
@@ -78,18 +78,18 @@ export default function RouteScreen() {
 
       {pack === undefined ? (
         <div className="empty">
-          <h2>No route yet</h2>
-          <p>Your coordinator sends you a route file for the day. Open it here. After that it stays on this phone and opens without a connection.</p>
+          <h2>{t('route.empty.title')}</h2>
+          <p>{t('route.empty.text')}</p>
         </div>
       ) : (
         <>
           <header>
             <h2 className="sheet-title">{pack.technician}</h2>
             <p className="sheet-date">{longDate(pack.date)}</p>
-            <p className="muted small">{pack.site}. Made {madeText(pack.createdAt)}. If the plan has changed since, ask for a new file.</p>
+            <p className="muted small">{t('route.made', { site: pack.site, when: madeText(pack.createdAt) })}</p>
           </header>
           {late.past && (
-            <p className="alert" role="alert">This route was for {longDate(pack.validFor)}, {daysText(late.daysAgo)}. Ask for a new file if you need a later day.</p>
+            <p className="alert" role="alert">{t('route.late', { date: longDate(pack.validFor), ago: tn('route.ago', late.daysAgo) })}</p>
           )}
           <PackMap pack={pack} />
           <RouteList pack={pack} />
@@ -97,8 +97,8 @@ export default function RouteScreen() {
       )}
 
       {packs.length > 1 && (
-        <section className="stack-tight" aria-label="Saved routes">
-          <h2 className="step-heading">Saved on this phone</h2>
+        <section className="stack-tight" aria-label={t('route.saved.aria')}>
+          <h2 className="step-heading">{t('route.saved.title')}</h2>
           <ul className="stack-tight" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {packs.map((p) => {
               const key = keyOf(p)
@@ -110,11 +110,11 @@ export default function RouteScreen() {
                   </button>
                   {removing === key ? (
                     <span className="row">
-                      <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, p.technician, p.date)); setRemoving(null) }}>Yes, remove</button>
-                      <button type="button" className="btn" onClick={() => setRemoving(null)}>Keep</button>
+                      <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, p.technician, p.date)); setRemoving(null) }}>{t('route.removeYes')}</button>
+                      <button type="button" className="btn" onClick={() => setRemoving(null)}>{t('route.keep')}</button>
                     </span>
                   ) : (
-                    <button type="button" className="btn danger" onClick={() => setRemoving(key)}>Remove</button>
+                    <button type="button" className="btn danger" onClick={() => setRemoving(key)}>{t('route.remove')}</button>
                   )}
                 </li>
               )
@@ -127,11 +127,11 @@ export default function RouteScreen() {
         <p className="row">
           {removing === keyOf(pack) ? (
             <>
-              <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, pack.technician, pack.date)); setRemoving(null) }}>Yes, remove this route</button>
-              <button type="button" className="btn" onClick={() => setRemoving(null)}>Keep</button>
+              <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, pack.technician, pack.date)); setRemoving(null) }}>{t('route.removeThisYes')}</button>
+              <button type="button" className="btn" onClick={() => setRemoving(null)}>{t('route.keep')}</button>
             </>
           ) : (
-            <button type="button" className="btn danger" onClick={() => setRemoving(keyOf(pack))}>Remove this route</button>
+            <button type="button" className="btn danger" onClick={() => setRemoving(keyOf(pack))}>{t('route.removeThis')}</button>
           )}
         </p>
       )}

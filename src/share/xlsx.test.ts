@@ -8,9 +8,9 @@ async function sheetsOf(blob: Blob): Promise<{ sheet: string; data: unknown[][] 
 }
 
 const tables: Table[] = [
-  { name: 'Schedule', headers: ['Case', 'Visit', 'Reason'], rows: [['A-1', 1, 'First'], ['=1+1', 2, 'Second'], ['@x', 3, '']] },
-  { name: 'Day routes', headers: ['Date', 'Stops in order'], rows: [['2026-10-13', 'A-1 > B-2']] },
-  { name: 'Empty', headers: ['One', 'Two'], rows: [] },
+  { id: 'schedule', name: 'Schedule', headers: ['Case', 'Visit', 'Reason'], rows: [['A-1', 1, 'First'], ['=1+1', 2, 'Second'], ['@x', 3, '']] },
+  { id: 'dayRoutes', name: 'Day routes', headers: ['Date', 'Stops in order'], rows: [['2026-10-13', 'A-1 > B-2']] },
+  { id: 'summary', name: 'Empty', headers: ['One', 'Two'], rows: [] },
 ]
 
 describe('toXlsx', () => {

@@ -71,14 +71,14 @@ describe('fitProjection', () => {
 })
 
 describe('scaleBar', () => {
-  it('picks the longest round length that fits, and says it in plain units', () => {
-    expect(scaleBar(0.05, 120)).toEqual({ km: 5, px: expect.closeTo(100, 6), label: '5 km' })
-    expect(scaleBar(0.1, 120)).toEqual({ km: 10, px: expect.closeTo(100, 6), label: '10 km' })
-    expect(scaleBar(0.3, 150)).toEqual({ km: 20, px: expect.closeTo(66.667, 2), label: '20 km' })
+  it('picks the longest round length that fits', () => {
+    expect(scaleBar(0.05, 120)).toEqual({ km: 5, px: expect.closeTo(100, 6) })
+    expect(scaleBar(0.1, 120)).toEqual({ km: 10, px: expect.closeTo(100, 6) })
+    expect(scaleBar(0.3, 150)).toEqual({ km: 20, px: expect.closeTo(66.667, 2) })
   })
-  it('uses metres below one kilometre', () => {
-    expect(scaleBar(0.002, 120)).toMatchObject({ km: 0.2, label: '200 m' })
-    expect(scaleBar(0.0005, 120)).toMatchObject({ km: 0.05, label: '50 m' })
+  it('goes below one kilometre when the map is close in', () => {
+    expect(scaleBar(0.002, 120)).toMatchObject({ km: 0.2 })
+    expect(scaleBar(0.0005, 120)).toMatchObject({ km: 0.05 })
   })
   it('never gives a bar longer than the room it was offered', () => {
     for (const k of [0.001, 0.013, 0.2, 1, 7.5, 40]) expect(scaleBar(k, 100).px).toBeLessThanOrEqual(100)

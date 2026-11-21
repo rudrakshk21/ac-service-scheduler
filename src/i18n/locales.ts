@@ -39,7 +39,11 @@ export function pickLocale(options: { url?: string | null; stored?: string | nul
   return 'en'
 }
 
-/** The locale handed to `Intl` for numbers, dates and plurals. The test languages use English formats. */
+/**
+ * The locale handed to `Intl` for numbers, dates and plurals. English is written day first (`en-GB`), as the app always
+ * has; the test languages use English formats.
+ */
 export function intlLocale(code: string): string {
-  return LOCALES.find((l) => l.code === code)?.test === true ? 'en' : code
+  if (code === 'en' || LOCALES.find((l) => l.code === code)?.test === true) return 'en-GB'
+  return code
 }

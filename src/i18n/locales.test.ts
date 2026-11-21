@@ -49,8 +49,8 @@ describe('pickLocale', () => {
 describe('intlLocale', () => {
   it('gives the real languages their own formats and the test ones English formats', () => {
     expect(intlLocale('hi')).toBe('hi')
-    expect(intlLocale('en')).toBe('en')
-    expect(intlLocale('xa')).toBe('en')
-    expect(intlLocale('xb')).toBe('en')
+    expect(intlLocale('en')).toBe('en-GB')
+    expect(intlLocale('xa')).toBe('en-GB')
+    expect(intlLocale('xb')).toBe('en-GB')
   })
 })
