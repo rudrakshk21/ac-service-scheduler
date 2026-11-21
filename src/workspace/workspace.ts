@@ -27,6 +27,8 @@ export interface Workspace {
   imports: ImportRecord[]
   /** Days nobody works, `YYYY-MM-DD`, sorted. */
   holidays: string[]
+  /** The day the person last saved a backup file, `YYYY-MM-DD`. Absent: never. */
+  lastBackupAt?: string
 }
 
 export class WorkspaceError extends Error {

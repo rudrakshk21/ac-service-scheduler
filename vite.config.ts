@@ -1,15 +1,17 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
+import { precache } from './vite-plugins/precache.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), precache()],
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'vite-plugins/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts', 'src/workspace/**/*.ts', 'src/screens/**/*.ts'],
+      include: ['src/engine/**/*.ts', 'src/intake/**/*.ts', 'src/workspace/**/*.ts', 'src/screens/**/*.ts', 'vite-plugins/**/*.ts'],
       exclude: [
+        'vite-plugins/**/*.test.ts',
         'src/engine/**/*.test.ts', 'src/engine/testing/**',
         'src/intake/**/*.test.ts', 'src/intake/**/testing/**',
         'src/workspace/**/*.test.ts', 'src/screens/**/*.test.ts',
