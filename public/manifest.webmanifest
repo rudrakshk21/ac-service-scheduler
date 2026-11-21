@@ -1,0 +1,17 @@
+{
+  "name": "AC Service Scheduler",
+  "short_name": "AC Planner",
+  "description": "Plans which technician visits which AC service call, on which day, and in what order. Works without a connection.",
+  "start_url": "/#/plan",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e9eff1",
+  "theme_color": "#14232b",
+  "lang": "en",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
