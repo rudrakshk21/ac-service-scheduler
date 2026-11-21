@@ -1,4 +1,5 @@
 import { dayNumber, weekday } from '../../engine/calendar'
+import { haversineKm } from '../../engine/geo'
 import type { PlanInput } from '../../engine/types'
 import { toPlanInput } from '../../intake/import/plan-input'
 import type { Workspace } from '../../workspace/workspace'
@@ -21,6 +22,47 @@ export type Prepared =
   | { ok: false; title: string; text: string; action: { label: string; href: string } }
 
 const blocked = (title: string, text: string, label: string, href: string): Prepared => ({ ok: false, title, text, action: { label, href } })
+
+export interface BaseAdvice {
+  /** The middle of the places the ready cases are in, 4 decimals. */
+  lat: number
+  lon: number
+  /** Straight-line distance from the current base to the nearest of those places. */
+  nearestKm: number
+}
+
+const round4 = (n: number): number => Math.round(n * 10_000) / 10_000
+
+/**
+ * A new centre starts with a placeholder base far from anywhere. When no ready case is within a day's round trip of the
+ * base, the plan is empty for a reason the engine can only call "does not fit in a day": suggest the middle of the cases.
+ * Not offered when every active technician has a start and end place of their own (the base does not matter then).
+ */
+export function baseAdvice(w: Workspace): BaseAdvice | null {
+  const used = new Set(w.cases.filter((c) => c.state === 'active' && c.place !== undefined).map((c) => c.place))
+  const spots = w.site.places.filter((p) => used.has(p.name))
+  if (spots.length === 0) return null
+  const active = w.technicians.filter((t) => t.active)
+  if (active.length > 0 && active.every((t) => t.startPlace !== undefined && t.endPlace !== undefined)) return null
+  const s = w.site.settings
+  const nearestKm = Math.min(...spots.map((p) => haversineKm(s.baseLat, s.baseLon, p.latitude, p.longitude)))
+  const oneWayMin = ((nearestKm * s.roadFactor) / s.speedKmh) * 60
+  if (oneWayMin * 2 <= s.usableMin) return null
+  return {
+    lat: round4(spots.reduce((sum, p) => sum + p.latitude, 0) / spots.length),
+    lon: round4(spots.reduce((sum, p) => sum + p.longitude, 0) / spots.length),
+    nearestKm: Math.round(nearestKm),
+  }
+}
+
+/** One sentence for the top of the plan when not a single case could be planned. */
+export function nothingPlannedHint(input: PlanInput): string {
+  const active = input.technicians.filter((t) => t.active)
+  if (active.length > 0 && active.every((t) => t.skills.length === 0)) {
+    return 'None of the active technicians has a skill matched, so nobody can take these cases. Give them skills in Set-up, or match the skill words when you import the technicians again.'
+  }
+  return 'Nothing could be planned. The reasons are listed below.'
+}
 
 /** What the plan tab needs: the engine's input and which cases are left out, or one plain reason why it cannot plan yet. */
 export function prepare(w: Workspace, today: string): Prepared {

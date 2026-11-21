@@ -3,8 +3,8 @@ import type { ChangeNote } from '../../demo/useDemoPlan'
 import { Board } from '../../demo/Board'
 import { daysWithVisits, summarise } from '../../demo/viewModel'
 import { useWorkspace } from '../../workspace/useWorkspace'
-import { toggleTechnician } from '../setup/setupActions'
-import { prepare } from './planData'
+import { setBase, toggleTechnician } from '../setup/setupActions'
+import { baseAdvice, nothingPlannedHint, prepare } from './planData'
 import { usePlan, type SwitchNote } from './usePlan'
 import '../../demo/demo.css'
 
@@ -24,6 +24,7 @@ export default function PlanScreen() {
   const [picked, setPicked] = useState<number | null>(null)
   const note = useRef<SwitchNote | null>(null)
   const prepared = useMemo(() => prepare(workspace, today), [workspace, today])
+  const advice = useMemo(() => baseAdvice(workspace), [workspace])
   const { input, result, busy, error, change } = usePlan(prepared.ok ? prepared.input : null, note)
   const days = useMemo(() => (result === null ? [] : daysWithVisits(result)), [result])
   const summary = useMemo(() => (input !== null && result !== null ? summarise(input, result) : null), [input, result])
@@ -56,6 +57,13 @@ export default function PlanScreen() {
     )
   }
 
+  const putBaseInMiddle = () => {
+    if (advice === null) return
+    update((w) => {
+      const outcome = setBase(w, advice.lat, advice.lon)
+      return outcome.ok ? outcome.workspace : w
+    })
+  }
   const onToggle = (i: number) => {
     const name = prepared.input.technicians[i].name
     const tech = workspace.technicians.find((t) => t.name === name)
@@ -84,6 +92,23 @@ export default function PlanScreen() {
 
       {error !== null && <p className="error" role="alert">The plan could not be made. {error}</p>}
 
+      {advice !== null && (
+        <div className="alert alert-note" role="status">
+          <p>
+            The base location of your centre is {advice.nearestKm} km from the nearest case, so no visit fits in a day.
+            Put the base in the middle of your cases, or set it yourself in Set-up.
+          </p>
+          <div className="row" style={{ marginTop: 8 }}>
+            <button type="button" className="btn btn-primary" onClick={putBaseInMiddle}>Put the base in the middle of my cases</button>
+            <a className="btn" href="#/setup">Open set-up</a>
+          </div>
+        </div>
+      )}
+
+      {advice === null && summary !== null && summary.scheduled === 0 && (
+        <p className="alert alert-note" role="status">{nothingPlannedHint(prepared.input)} <a href="#/setup">Open set-up</a></p>
+      )}
+
       {input !== null && result !== null && day !== undefined && (
         <>
           <div className="days" role="group" aria-label="Choose a day">
@@ -109,17 +134,17 @@ export default function PlanScreen() {
           </p>
 
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={onToggle} />
-
-          {result.unscheduled.length > 0 && (
-            <section className="stack-tight" aria-label="Cases not planned" style={{ marginTop: 24 }}>
-              <h2 className="step-heading">Not planned ({result.unscheduled.length})</h2>
-              <ul className="issues">
-                {result.unscheduled.slice(0, 20).map((u) => <li key={u.id}><b>{u.id}</b>: {u.reason}</li>)}
-              </ul>
-              {result.unscheduled.length > 20 && <p className="muted small">And {result.unscheduled.length - 20} more.</p>}
-            </section>
-          )}
         </>
+      )}
+
+      {result !== null && result.unscheduled.length > 0 && (
+        <section className="stack-tight" aria-label="Cases not planned" style={{ marginTop: 24 }}>
+          <h2 className="step-heading">Not planned ({result.unscheduled.length})</h2>
+          <ul className="issues">
+            {result.unscheduled.slice(0, 20).map((u) => <li key={u.id}><b>{u.id}</b>: {u.reason}</li>)}
+          </ul>
+          {result.unscheduled.length > 20 && <p className="muted small">And {result.unscheduled.length - 20} more.</p>}
+        </section>
       )}
 
       {leftOut > 0 && (

@@ -151,6 +151,12 @@ Estimate: 14 to 20 hours of build time in total.
 - **Found on the way.** The demo's lane view ignored per-technician shift start and hours; it now follows them, so the
   board matches the engine. At 375 px the demo's day strip stretched the page: grid items in `.stack` now have
   `min-width: 0` and `.page` has `width: 100%`.
+- **Found on the live site after the merge, fixed in a follow-up.** A first-time user who imports technicians whose
+  skill words are left unmatched, and cases far from the placeholder base (20, 30), saw "0 cases planned" and no
+  reason, because the "Not planned" list only showed when some day had visits. The list now always shows; a hint names
+  technicians without skills; and when no ready case is within a day's round trip of the base the tab offers "Put the
+  base in the middle of my cases" (`baseAdvice`, one click, undoable in Set-up). The "Longest trip (km)" rule is
+  validated but not used by the engine or the Python reference, so Set-up now says so.
 - **Differences from section 6.** A separate "import a places file" was not built: places arrive from coordinates
   during import and travel inside the site file. The browser-only glue (`files.ts`, `usePlan.ts`, `useAction.ts`,
   `useWorkspace.ts`) is excluded from the Node coverage figure by name and checked in the browser instead.

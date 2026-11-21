@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { plan } from '../../engine/index'
 import type { StoredCase } from '../../intake/import/merge'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
-import { prepare, startDate } from './planData'
+import { baseAdvice, nothingPlannedHint, prepare, startDate } from './planData'
 
 describe('startDate', () => {
   it('is today when today is a working day', () => {
@@ -77,5 +77,66 @@ describe('prepare: when it can', () => {
     if (!p.ok) throw new Error(p.text)
     expect(p.planStart).toBe('2026-10-19')
     expect(p.input.settings.holidays).toHaveLength(1)
+  })
+})
+
+describe('baseAdvice', () => {
+  /** Cases far from the starting base (20, 30), as when a centre in another country imports its first files. */
+  function faraway(): Workspace {
+    const w = ready()
+    return {
+      ...w,
+      site: { ...w.site, places: [{ name: 'North', latitude: 12.9, longitude: 77.5 }, { name: 'South', latitude: 13.1, longitude: 77.7 }] },
+    }
+  }
+  it('says nothing when a case is within a day of the base', () => {
+    expect(baseAdvice(ready())).toBeNull()
+  })
+  it('suggests the middle of the cases when none can be reached from the base in a day, and how far away it is', () => {
+    const a = baseAdvice(faraway())
+    expect(a).toEqual({ lat: 13, lon: 77.6, nearestKm: Math.round(a?.nearestKm ?? 0) })
+    expect(a?.nearestKm).toBeGreaterThan(5000)
+  })
+  it('looks only at cases that are ready to plan', () => {
+    const w = faraway()
+    expect(baseAdvice({ ...w, cases: [stored('1', { place: 'North', state: 'hold' })] })).toBeNull()
+  })
+  it('uses only the places the ready cases are in', () => {
+    const w = faraway()
+    const a = baseAdvice({ ...w, cases: [stored('1', { place: 'North' })] })
+    expect(a).toMatchObject({ lat: 12.9, lon: 77.5 })
+  })
+  it('says nothing when every active technician starts and ends the day at a place of their own', () => {
+    const w = faraway()
+    const own = w.technicians.map((t) => ({ ...t, startPlace: 'North', endPlace: 'North' }))
+    expect(baseAdvice({ ...w, technicians: own })).toBeNull()
+    expect(baseAdvice({ ...w, technicians: [{ ...own[0], endPlace: undefined }, own[1]] })).not.toBeNull()
+  })
+  it('says nothing when there is no case with a place', () => {
+    expect(baseAdvice({ ...faraway(), cases: [stored('1', { place: undefined })] })).toBeNull()
+  })
+})
+
+describe('nothingPlannedHint', () => {
+  const inputFor = (w: Workspace) => {
+    const p = prepare(w, TODAY)
+    if (!p.ok) throw new Error(p.text)
+    return p.input
+  }
+  it('points at missing skills when no active technician has any, which is why nothing is planned', () => {
+    const input = inputFor({ ...ready(), technicians: ready().technicians.map((t) => ({ ...t, skills: [] })) })
+    const result = plan(input)
+    expect(result.scheduled).toHaveLength(0)
+    expect(result.unscheduled[0].reason).toBe('No active technician has this skill')
+    expect(nothingPlannedHint(input)).toBe(
+      'None of the active technicians has a skill matched, so nobody can take these cases. Give them skills in Set-up, or match the skill words when you import the technicians again.',
+    )
+  })
+  it('ignores switched-off technicians when looking for skills', () => {
+    const techs = [{ name: 'Ann', skills: [], active: true }, { name: 'Bo', skills: ['Service'], active: false }]
+    expect(nothingPlannedHint(inputFor({ ...ready(), technicians: techs }))).toMatch(/^None of the active technicians has a skill matched/)
+  })
+  it('otherwise sends the reader to the reasons', () => {
+    expect(nothingPlannedHint(inputFor(ready()))).toBe('Nothing could be planned. The reasons are listed below.')
   })
 })

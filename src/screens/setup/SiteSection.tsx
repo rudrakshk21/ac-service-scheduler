@@ -63,7 +63,7 @@ export function RulesSection() {
         <NumberField label="Average speed (km/h)" value={s.speedKmh} onCommit={(v) => set({ speedKmh: v })} help="Used to turn distance into driving time." />
         <NumberField label="Road factor" value={s.roadFactor} onCommit={(v) => set({ roadFactor: v })} help="Road distance divided by straight-line distance, usually 1.2 to 1.5." />
         <NumberField label="Time between visits in one area (minutes)" value={s.sameAreaHopMin} onCommit={(v) => set({ sameAreaHopMin: v })} />
-        <NumberField label="Longest trip (km)" value={s.maxKm} onCommit={(v) => set({ maxKm: v })} />
+        <NumberField label="Longest trip (km)" value={s.maxKm} onCommit={(v) => set({ maxKm: v })} help="Not used by the planner yet. A day's driving time limits trips." />
         <TimeField label="The day starts at" minutes={s.dayStartMin} onCommit={(v) => v !== undefined && set({ dayStartMin: v })} />
         <TimeField label="Lunch starts at" minutes={s.lunchStartMin} onCommit={(v) => v !== undefined && set({ lunchStartMin: v })} />
         <NumberField label="Working hours per day" value={Math.round((s.usableMin / 60) * 100) / 100} onCommit={(v) => set({ usableMin: Math.round(v * 60) })} help="Driving and visits, not counting the break." />
