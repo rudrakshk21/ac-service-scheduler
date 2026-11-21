@@ -678,7 +678,7 @@
   "setup.data.storage.mayClear": "The browser may clear your data when it runs short of space. Save a backup now and then.",
   "setup.data.storage.checking": "Checking whether the browser will keep your data…",
   "setup.data.delete.title": "Delete all my data",
-  "setup.data.delete.help": "Removes the cases, technicians, places, saved matchings and set-up from this browser. This cannot be undone. Save a backup first if you may need it.",
+  "setup.data.delete.help": "Removes the cases, technicians, places, saved matchings, set-up and opened route files from this browser. This cannot be undone. Save a backup first if you may need it.",
   "setup.data.delete.yes": "Yes, delete everything",
   "setup.data.delete.keep": "Keep my data",
   "setup.data.msg.loaded": "Loaded the set-up from {file}.",
