@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "serve:dist": "node scripts/serve-dist.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
