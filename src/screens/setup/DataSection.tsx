@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { t, tn } from '../../i18n'
 import { parseSite, serializeSite } from '../../intake/site/site'
 import { parseWorkspace } from '../../workspace/backup'
 import { promptInstall } from '../../pwa/register'
@@ -30,7 +31,7 @@ export function DataSection() {
     try {
       const site = parseSite(await readText(file))
       update((w) => replaceSite(w, site))
-      say(`Loaded the set-up from ${file.name}.`)
+      say(t('setup.data.msg.loaded', { file: file.name }))
     } catch (e) {
       say(e instanceof Error ? e.message : String(e), true)
     }
@@ -46,87 +47,88 @@ export function DataSection() {
     }
   }
 
-  const sizeText = `${workspace.cases.length} cases, ${workspace.technicians.length} technicians, ${workspace.site.places.length} places`
+  const sizeOf = (cases: number, technicians: number, places: number): string =>
+    t('setup.data.size', { cases: tn('data.cases', cases), technicians: tn('data.technicians', technicians), places: tn('data.places', places) })
 
   return (
     <section className="card stack" aria-labelledby="set-data">
-      <h2 id="set-data" className="step-heading">Your data and files</h2>
-      <p className="muted small">Everything is kept in this browser only. Nothing is sent anywhere. Now holding: {sizeText}.</p>
+      <h2 id="set-data" className="step-heading">{t('setup.data.title')}</h2>
+      <p className="muted small">{t('setup.data.where', { size: sizeOf(workspace.cases.length, workspace.technicians.length, workspace.site.places.length) })}</p>
 
       <div className="stack-tight">
-        <b>The set-up of your centre</b>
-        <p className="muted small">Work types, skills, priority levels, places and rules, without any cases. Use it to set up another browser or share it.</p>
+        <b>{t('setup.data.site.title')}</b>
+        <p className="muted small">{t('setup.data.site.help')}</p>
         <div className="row">
-          <button type="button" className="btn" onClick={() => { downloadText(`site-setup-${stamp()}.json`, serializeSite(workspace.site)); say('Saved the set-up as a file.') }}>Save the set-up</button>
+          <button type="button" className="btn" onClick={() => { downloadText(`site-setup-${stamp()}.json`, serializeSite(workspace.site)); say(t('setup.data.msg.savedSite')) }}>{t('setup.data.site.save')}</button>
           <label className="btn" style={{ cursor: 'pointer' }}>
-            Load a set-up
+            {t('setup.data.site.load')}
             <input type="file" accept=".json,application/json" className="visually-hidden" onChange={(e) => { void loadSite(e.target.files?.[0]); e.target.value = '' }} />
           </label>
         </div>
       </div>
 
       <div className="stack-tight">
-        <b>A backup of everything</b>
-        <p className="muted small">The set-up plus all cases, technicians and saved column matchings. It contains your case data, so keep it private.</p>
+        <b>{t('setup.data.backup.title')}</b>
+        <p className="muted small">{t('setup.data.backup.help')}</p>
         <div className="row">
-          <button type="button" className="btn" onClick={() => { saveBackupFile(workspace, update); say('Saved a backup of everything.') }}>Save a backup</button>
+          <button type="button" className="btn" onClick={() => { saveBackupFile(workspace, update); say(t('setup.data.msg.savedBackup')) }}>{t('backup.save')}</button>
           <label className="btn" style={{ cursor: 'pointer' }}>
-            Restore a backup
+            {t('setup.data.backup.restore')}
             <input type="file" accept=".json,application/json" className="visually-hidden" onChange={(e) => { void chooseBackup(e.target.files?.[0]); e.target.value = '' }} />
           </label>
         </div>
       </div>
 
       {pending?.kind === 'restore' && (
-        <div className="alert alert-note" role="alertdialog" aria-label="Restore a backup">
-          <p>Restoring <b>{pending.fileName}</b> replaces everything now in the app with {pending.workspace.cases.length} cases, {pending.workspace.technicians.length} technicians and {pending.workspace.site.places.length} places.</p>
+        <div className="alert alert-note" role="alertdialog" aria-label={t('setup.data.restore.aria')}>
+          <p>{t('setup.data.restore.text', { file: pending.fileName, cases: tn('data.cases', pending.workspace.cases.length), technicians: tn('data.technicians', pending.workspace.technicians.length), places: tn('data.places', pending.workspace.site.places.length) })}</p>
           <div className="row" style={{ marginTop: 8 }}>
-            <button type="button" className="btn btn-primary" onClick={() => { update(() => pending.workspace); setPending(null); say('Restored the backup.') }}>Replace everything</button>
-            <button type="button" className="btn" onClick={() => setPending(null)}>Cancel</button>
+            <button type="button" className="btn btn-primary" onClick={() => { update(() => pending.workspace); setPending(null); say(t('setup.data.msg.restored')) }}>{t('setup.data.restore.yes')}</button>
+            <button type="button" className="btn" onClick={() => setPending(null)}>{t('setup.data.cancel')}</button>
           </div>
         </div>
       )}
 
       <div className="stack-tight">
-        <b>Install on this device</b>
-        <p className="muted small">Installed, the app opens full screen from the home screen and works without a connection.</p>
+        <b>{t('setup.data.install.title')}</b>
+        <p className="muted small">{t('setup.data.install.help')}</p>
         {canInstall && (
-          <div className="row"><button type="button" className="btn btn-primary" onClick={() => void promptInstall()}>Install the app</button></div>
+          <div className="row"><button type="button" className="btn btn-primary" onClick={() => void promptInstall()}>{t('setup.data.install.button')}</button></div>
         )}
         <details className="setup-details">
-          <summary>If there is no install button</summary>
+          <summary>{t('setup.data.install.noButton')}</summary>
           <ul className="small stack-tight">
-            <li>Chrome on Android: open the menu (three dots), then choose Install app or Add to Home screen.</li>
-            <li>Samsung Internet: open the menu, choose Add page to, then Home screen.</li>
-            <li>Firefox on Android: open the menu, then choose Install.</li>
-            <li>Safari on iPhone: tap Share, then Add to Home Screen.</li>
+            <li>{t('setup.data.install.chrome')}</li>
+            <li>{t('setup.data.install.samsung')}</li>
+            <li>{t('setup.data.install.firefox')}</li>
+            <li>{t('setup.data.install.safari')}</li>
           </ul>
         </details>
       </div>
 
       <div className="stack-tight">
-        <b>Storage</b>
+        <b>{t('setup.data.storage.title')}</b>
         <p className="muted small" role="status">
           {status === 'memory'
-            ? 'This browser is not keeping your data. It will be lost when you close the page. Save a backup before you leave.'
+            ? t('setup.data.storage.memory')
             : persisted === true
-              ? 'The browser has promised to keep your data.'
+              ? t('setup.data.storage.kept')
               : persisted === false
-                ? 'The browser may clear your data when it runs short of space. Save a backup now and then.'
-                : 'Checking whether the browser will keep your data…'}
+                ? t('setup.data.storage.mayClear')
+                : t('setup.data.storage.checking')}
         </p>
       </div>
 
       <div className="stack-tight">
-        <b>Delete all my data</b>
-        <p className="muted small">Removes the cases, technicians, places, saved matchings and set-up from this browser. This cannot be undone. Save a backup first if you may need it.</p>
+        <b>{t('setup.data.delete.title')}</b>
+        <p className="muted small">{t('setup.data.delete.help')}</p>
         {pending?.kind === 'delete' ? (
           <div className="row">
-            <button type="button" className="btn danger" onClick={() => { update(() => emptyWorkspace()); setPending(null); say('All data deleted.') }}>Yes, delete everything</button>
-            <button type="button" className="btn" onClick={() => setPending(null)}>Keep my data</button>
+            <button type="button" className="btn danger" onClick={() => { update(() => emptyWorkspace()); setPending(null); say(t('setup.data.msg.deleted')) }}>{t('setup.data.delete.yes')}</button>
+            <button type="button" className="btn" onClick={() => setPending(null)}>{t('setup.data.delete.keep')}</button>
           </div>
         ) : (
-          <div className="row"><button type="button" className="btn danger" onClick={() => setPending({ kind: 'delete' })}>Delete all my data</button></div>
+          <div className="row"><button type="button" className="btn danger" onClick={() => setPending({ kind: 'delete' })}>{t('setup.data.delete.title')}</button></div>
         )}
       </div>
 
