@@ -9,6 +9,7 @@
   --on-work: #ffffff;
   --travel: #8da0a8;
   --flash: rgba(11, 92, 168, 0.16);
+  width: 100%;
   max-width: 1120px;
   margin: 0 auto;
   padding: 20px 16px 48px;

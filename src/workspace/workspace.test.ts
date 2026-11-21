@@ -7,7 +7,7 @@ describe('workspace', () => {
   it('starts empty with the starter site', () => {
     const w = emptyWorkspace()
     expect(w.site).toEqual(starterSite())
-    expect([w.technicians, w.cases, w.profiles, w.changes, w.imports]).toEqual([[], [], [], [], []])
+    expect([w.technicians, w.cases, w.profiles, w.changes, w.imports, w.holidays]).toEqual([[], [], [], [], [], []])
     expect(emptyWorkspace()).not.toBe(w)
   })
   it('saves and loads', async () => {

@@ -89,7 +89,10 @@ for each technician's start and end, export and import of the site profile file,
 | `src/screens/import/ImportScreen.tsx`, `FileStep.tsx`, `ColumnsStep.tsx`, `ValuesStep.tsx`, `CheckStep.tsx`, `import.css` | the four steps |
 | `src/screens/data/dataView.ts`, `DataScreen.tsx`, `data.css` | counts, filters, case detail |
 | `src/screens/shell.css` | shell, tab bar, shared form controls |
-| PR B: `src/screens/plan/*`, `src/screens/setup/*` | plan on real data, set-up |
+| `src/screens/plan/planData.ts`, `usePlan.ts`, `PlanScreen.tsx` | what can be planned, the worker call, the board on real data |
+| `src/screens/setup/setupActions.ts` | every set-up change as a pure function with a plain refusal message |
+| `src/screens/setup/*Section.tsx`, `SetupScreen.tsx`, `setup.css`, `useAction.ts` | the set-up sections |
+| `src/workspace/backup.ts`, `src/screens/files.ts` | backup file text, saving and reading files in the browser |
 
 ## 8. Errors and empty states
 
@@ -124,3 +127,33 @@ Estimate: 14 to 20 hours of build time in total.
   was made by a newer version.
 - Not in A: manual technician choice lists only technicians that were imported; there is no technician or place editor
   yet (pull request B).
+
+## 12. As built in pull request B
+
+- **Plan on real data.** `prepare` turns the workspace into a plan input or says plainly why it cannot: no technicians,
+  no cases, nothing ready (with the counts), every technician switched off, or no case that can be planned yet. Cases
+  held back (on hold, needing review, without a place) are listed with their reason. The plan runs in the worker; the
+  Active switch on a technician saves to the workspace and re-plans with the moved-cases note. The first plan day skips
+  the centre's rest days and holidays. "See the demo" opens the old demo inside the tab with "Back to my plan".
+- **Set-up.** One page of sections with jump buttons: the centre and its base, rules (speed, road factor, hours, break,
+  ceilings, rest days, priority weights), work types and their required skills, skills, priority levels, places with
+  aliases, technicians (switch, skills, leave dates, start and end place, shift start and hours; removal needs a second
+  click), and workspace holidays. Every edit is a pure function in `setupActions.ts` that returns the new workspace or
+  a refusal in plain words ("3 cases use this work type", "A site needs at least one work type", "Write the date as
+  year-month-day, for example 2026-12-25"). A rename carries through to the cases, technicians, place aliases and saved
+  column matchings that use the name; a removal is refused while anything still uses it.
+- **Files and data.** Save and load the site set-up file; save and restore a backup of everything (restore says what it
+  replaces and waits for a second click); storage status says whether the browser promised to keep the data; "Delete
+  all my data" needs a second click. A restored file made by a newer version of the app is refused, and an older
+  file is filled in with defaults.
+- **Workspace changed.** `holidays: string[]` joined the workspace (still version 1). `readWorkspace` fills any missing
+  field, so a workspace saved by pull request A opens unchanged.
+- **Found on the way.** The demo's lane view ignored per-technician shift start and hours; it now follows them, so the
+  board matches the engine. At 375 px the demo's day strip stretched the page: grid items in `.stack` now have
+  `min-width: 0` and `.page` has `width: 100%`.
+- **Differences from section 6.** A separate "import a places file" was not built: places arrive from coordinates
+  during import and travel inside the site file. The browser-only glue (`files.ts`, `usePlan.ts`, `useAction.ts`,
+  `useWorkspace.ts`) is excluded from the Node coverage figure by name and checked in the browser instead.
+- **Verified in the browser at 375 px:** plan on imported data, a technician switch that survives a reload, set-up
+  edits with their refusals and cascades, backup, restore, delete and load-site, every empty state, and no sideways
+  scroll on any tab including the demo.

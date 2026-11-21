@@ -1,4 +1,5 @@
 import type { PlanInput, PlanResult } from '../engine'
+import { visitMinutes } from '../engine/context'
 
 /** Everything the demo page shows is computed here, from the engine's input and result, as plain data. */
 
@@ -83,18 +84,19 @@ export function lanesForDay(input: PlanInput, result: PlanResult, day: number): 
     }
     if (route === undefined) return lane
 
-    let cursor = input.settings.dayStartMin
+    let cursor = tech.dayStartMin ?? input.settings.dayStartMin
     let stopTravel = 0
     for (const id of route.stops) {
       const s = scheduled.get(id)
       const c = cases.get(id)
       if (s === undefined || c === undefined) continue
       const workType = input.workTypes[c.workType]
+      const minutes = visitMinutes(input, c)
       const arrive = cursor + s.travelMin
       const start = clockToMinutes(s.eta)
       lane.blocks.push({ kind: 'travel', startMin: cursor, endMin: arrive })
       if (start - arrive > BREAK_GAP_MIN) lane.blocks.push({ kind: 'break', startMin: arrive, endMin: start })
-      lane.blocks.push({ kind: 'work', startMin: start, endMin: start + workType.serviceMin, workType: c.workType })
+      lane.blocks.push({ kind: 'work', startMin: start, endMin: start + minutes, workType: c.workType })
       lane.stops.push({
         visit: s.visit,
         id,
@@ -102,13 +104,13 @@ export function lanesForDay(input: PlanInput, result: PlanResult, day: number): 
         place: input.places[c.place].name,
         workType: c.workType,
         workTypeName: workType.name,
-        serviceMin: workType.serviceMin,
+        serviceMin: minutes,
         travelMin: s.travelMin,
         why: s.why,
         flag: s.flag,
       })
       stopTravel += s.travelMin
-      cursor = start + workType.serviceMin
+      cursor = start + minutes
     }
     const back = route.travelMin - stopTravel
     if (lane.stops.length > 0 && back > 0) lane.blocks.push({ kind: 'travel', startMin: cursor, endMin: cursor + back })
@@ -128,8 +130,11 @@ export interface Axis {
 
 /** The time axis of the board: whole hours, from the day start to the hour after the planned or actual end. */
 export function dayAxis(input: PlanInput, lanes: Lane[]): Axis {
-  const startMin = Math.floor(input.settings.dayStartMin / 60) * 60
-  const planned = input.settings.dayStartMin + input.settings.usableMin + input.settings.breakMin
+  const s = input.settings
+  const starts = input.technicians.map((t) => t.dayStartMin ?? s.dayStartMin)
+  const ends = input.technicians.map((t) => (t.dayStartMin ?? s.dayStartMin) + (t.usableMin ?? s.usableMin) + (t.breakMin ?? s.breakMin))
+  const startMin = Math.floor(Math.min(s.dayStartMin, ...starts) / 60) * 60
+  const planned = Math.max(s.dayStartMin + s.usableMin + s.breakMin, ...ends)
   const last = Math.max(planned, ...lanes.map((l) => l.endMin))
   const endMin = Math.ceil(last / 60) * 60
   const ticks: number[] = []

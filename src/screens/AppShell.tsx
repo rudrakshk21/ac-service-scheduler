@@ -3,8 +3,8 @@ import { useWorkspace } from '../workspace/useWorkspace'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
 import './shell.css'
 
-const Plan = lazy(() => import('../demo/DemoPage').then((m) => ({ default: m.DemoPage })))
-const Placeholder = lazy(() => import('./Placeholder'))
+const Plan = lazy(() => import('./plan/PlanScreen'))
+const SetupScreen = lazy(() => import('./setup/SetupScreen'))
 const ImportScreen = lazy(() => import('./import/ImportScreen'))
 const DataScreen = lazy(() => import('./data/DataScreen'))
 
@@ -12,7 +12,7 @@ function Screen({ tab }: { tab: Tab }) {
   if (tab === 'plan') return <Plan />
   if (tab === 'data') return <DataScreen />
   if (tab === 'import') return <ImportScreen />
-  return <Placeholder title="Set-up" text="Work types, skills, places and rules for your centre will be set here." />
+  return <SetupScreen />
 }
 
 export function AppShell() {

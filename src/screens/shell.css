@@ -137,8 +137,10 @@
   color: var(--ink-soft);
 }
 
-.stack { display: grid; gap: 16px; }
-.stack-tight { display: grid; gap: 8px; }
+.stack { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.stack-tight { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+/* A grid item never shrinks below its content unless told to: scroll strips inside would stretch the page. */
+.stack > *, .stack-tight > * { min-width: 0; }
 .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .muted { color: var(--ink-soft); }
 .small { font-size: 0.875rem; }
