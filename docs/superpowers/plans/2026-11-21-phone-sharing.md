@@ -90,14 +90,98 @@
 
 ---
 
-## Part D: share and print (outline; detailed plan written when C is merged)
+## Part D: share and print (branch `share-print`, from `main` after C is merged)
 
-1. `src/share/tables.ts`: five tables from workspace and plan result; tests with fixed rows.
-2. `src/share/csv.ts`: encode, BOM, CRLF, quote, SEC-5 apostrophe; tests incl. `=cmd`, `+1`, `-1`, `@x`, quotes, commas, newlines.
-3. `src/share/xlsx.ts` (lazy `write-excel-file`, move it to dependencies; check the chunk size); test the cell values through `read-excel-file` round trip.
-4. `src/share/routePack.ts`: `buildPack`, `serialisePack`, `parsePack`, `staleness`; PRV-9 test that no field outside the allowed list can appear; stale after the valid-for date and when the plan changed (pack carries a plan fingerprint).
-5. Export and Share panel in the Plan tab (export menu, per-technician "Share route pack" through `navigator.share` with a file, download fallback; "Print route sheet").
-6. Route sheet (print CSS) and the Route tab (open a pack, saved packs in IndexedDB key `routePacks`, stale warning, `geo:` links); five tabs on the bar; verify at 360 px, offline.
+Facts used below. The plan result (`PlanResult`) holds `scheduled` (`id`, `day` as days since 1970-01-01, `tech` index,
+`visit`, `eta` "HH:MM", `travelMin`, `prevKm`, `why`, `flag`), `unscheduled` (`id`, `reason`), `days`, `routes`
+(`day`, `tech`, `stops`, `travelMin`, `serviceMin`, `load`). `input.cases[i]` has `id`, `workType` (index) and `place`
+(index); `input.places[i]` has `name`, `lat`, `lon`. `prepare()` in `src/screens/plan/planData.ts` gives `input`,
+`caseIds`, `planStart`, `left`. `ChangeLogEntry` is `{ caseId, field, previous, next, reason }`. The workspace has no
+customer names, so nothing built here can contain one (PRV-9).
+
+### Task D1: Tables for export (test first)
+
+**Files:** Create `src/share/tables.ts`, `src/share/tables.test.ts`. Modify `src/screens/plan/planData.ts` (export `isoOf`).
+
+**Interfaces:**
+- `type Cell = string | number`; `interface Table { name: string; headers: string[]; rows: Cell[][] }`.
+- `buildTables(w: Workspace, p: { input: PlanInput; planStart: string; left: { hold: number; review: number; noPlace: number } }, result: PlanResult, madeAt: string): Table[]`, in this order and with these names and headers:
+  1. `Schedule`: Case, Work type, Place, Date, Weekday, Technician, Visit, Arrival, Driving minutes, Kilometres, Reason, Flag.
+  2. `Day routes`: Date, Technician, Visits, Stops in order, Driving minutes, On-site minutes.
+  3. `Not planned`: Case, Reason (engine reasons first, then one row per held-back state: `Left out`, "N on hold" and so on).
+  4. `Summary`: Item, Value (cases planned, days, technicians working, driving hours, on-site hours, first day, made on).
+  5. `Change log`: Case, Field, Before, After, Reason.
+- Dates are `YYYY-MM-DD` text, weekday is the English name, numbers stay numbers.
+
+- [ ] **Step 1: Failing tests** with a small fixed plan built by `plan()` from `prepare()` (reuse `ready()` from `planData.test.ts`, copied): five tables in the order above; schedule rows follow plan order and carry names (not indices); `Day routes` stops are joined with ` > `; `Not planned` contains an engine reason and the held-back counts; `Summary` values equal `summarise()`; change log rows copy `w.changes`; an empty plan still gives five tables with headers.
+- [ ] **Step 2:** Implement; export `isoOf`. **Step 3:** green, lint, type check, commit `feat(share): the five tables of a plan`.
+
+### Task D2: CSV and the formula guard (test first)
+
+**Files:** Create `src/share/csv.ts`, `src/share/csv.test.ts`.
+
+**Interfaces:** `neutralise(cell: Cell): Cell` (a text cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a leading `'`; numbers are untouched); `toCsv(table: Table): string` (UTF-8 byte-order mark first, `\r\n` line ends, a cell is quoted when it holds a comma, a quote, a line break or leading/trailing space, quotes doubled, formulas neutralised, header row first).
+
+- [ ] **Step 1: Failing tests:** `=cmd|' /C calc'!A0`, `+1`, `-1`, `@SUM(1)`, a leading tab; plain text and numbers (including `-5` as a number) unchanged; quotes, commas, newlines; BOM present; a cell that is only `-` is neutralised; empty table gives only the header line.
+- [ ] **Step 2:** Implement. **Step 3:** green, commit `feat(share): CSV that spreadsheets will not run as formulas`.
+
+### Task D3: Excel file (lazy)
+
+**Files:** Create `src/share/xlsx.ts`, `src/share/xlsx.test.ts`. Modify `package.json` (move `write-excel-file` from devDependencies to dependencies).
+
+**Interfaces:** `toXlsx(tables: Table[]): Promise<Blob>`, importing `write-excel-file` inside the function so it is a separate chunk. Text cells go through `neutralise`; numbers are number cells; header row bold; column widths from the longest cell (capped at 60).
+
+- [ ] **Step 1:** Read `node_modules/write-excel-file/README.md` for the multi-sheet call of version 4. **Step 2: Test** by writing the five tables of D1's fixture and reading the result back with `read-excel-file/universal`: sheet names, headers, a number stays a number, a hostile text cell comes back with its apostrophe. **Step 3:** Implement. **Step 4:** green; `npm run build` and print the chunk size (it must be its own chunk, not in the entry). Commit `feat(share): Excel export, loaded only when used`.
+
+### Task D4: Route pack (test first)
+
+**Files:** Create `src/share/routePack.ts`, `src/share/routePack.test.ts`.
+
+**Interfaces:**
+```ts
+export interface PackStop { visit: number; caseId: string; workType: string; place: string; lat: number; lon: number; arrival: string; kilometres: number; drivingMinutes: number }
+export interface RoutePack { packVersion: 1; site: string; technician: string; date: string; createdAt: string; validFor: string; stops: PackStop[] }
+buildPack(site: string, input: PlanInput, result: PlanResult, tech: number, day: number, createdAt: string): RoutePack
+serialisePack(p: RoutePack): string          // pretty JSON, newline at the end
+parsePack(text: string): RoutePack           // throws PackError with a plain message
+packFileName(p: RoutePack): string           // route-<technician>-<date>.json, lower case, letters, digits and dashes only
+staleness(p: RoutePack, today: string): { past: boolean; daysAgo: number }
+```
+`date` and `validFor` are `YYYY-MM-DD` (the same day: a pack is valid for its own date); `createdAt` is an ISO time.
+
+- [ ] **Step 1: Failing tests:** `buildPack` has exactly the keys above and each stop exactly the stop keys (PRV-9: no customer, no address, no notes); only that technician's stops on that day, in visit order, with names not indices; round trip `parsePack(serialisePack(p))` equals `p`; `parsePack` drops unknown fields (a pack with `customerName` shows none); rejects non-JSON ("This file is not a route pack."), another `packVersion` ("This route pack was made by a different version of the app."), missing stops, a time that is not `HH:MM`, latitude outside -90 to 90, a duplicate visit number; `packFileName` for `Asha K.` and `2026-11-22` is `route-asha-k-2026-11-22.json`; `staleness` is not past on the day, past the day after with `daysAgo: 1`.
+- [ ] **Step 2:** Implement. **Step 3:** green, commit `feat(share): route pack file for one technician and day`.
+
+### Task D5: Saved packs on the phone (test first)
+
+**Files:** Create `src/screens/route/packStore.ts`, `packStore.test.ts`.
+
+**Interfaces:** `addPack(list: RoutePack[], pack: RoutePack): RoutePack[]` (a pack for the same technician and date replaces the older one; newest creation first; at most 20); `removePack(list, technician, date)`; `loadPacks(store: KeyValueStore): Promise<RoutePack[]>` and `savePacks(store, list)` on the key `routePacks` of the same database (`src/workspace/db.ts`), each stored pack run through `parsePack` on load so damaged entries are dropped, not shown.
+
+- [ ] **Step 1: Failing tests** (with `fake-indexeddb` as the workspace tests do): replace, order, cap of 20, remove, a damaged stored entry is dropped. **Step 2:** Implement. **Step 3:** commit `feat(route): keep opened route packs on the phone`.
+
+### Task D6: Share glue, Export and Share panel, route sheet
+
+**Files:** Create `src/share/shareFile.ts` (browser glue: `shareOrDownload(fileName, text, type)` uses `navigator.canShare({ files })` then `navigator.share`, else `downloadText`; returns `'shared' | 'downloaded' | 'cancelled'`; an `AbortError` is "cancelled"), `src/screens/plan/ShareBar.tsx`, `src/screens/route/RouteList.tsx` (the ordered stops, read-only: number, arrival, case, work type, place, kilometres, a `geo:lat,lon` link "Open in maps"), `src/screens/route/routeSheet.css`. Modify `PlanScreen.tsx`, `vite.config.ts` (coverage excludes `src/share/shareFile.ts`).
+
+- [ ] **Step 1:** `ShareBar` under the day picker: "Export" with CSV (a file per table, named `<table>-<date>.csv`; one tap offers all five) and Excel; for the chosen day, one row per technician with a route: "Route sheet" and "Share route pack". While a plan is being recalculated the buttons are disabled.
+- [ ] **Step 2:** "Route sheet" opens a preview section with the technician's name, date, site name, `RouteList`, and a Print button (`window.print()`); `@media print` hides everything except that section, black on white, no shadows.
+- [ ] **Step 3:** "Share route pack" calls `shareOrDownload`; the status line says "Shared", "Saved as a file" or nothing when cancelled.
+- [ ] **Step 4:** Lint, type check, commit `feat(share): export, route sheet and route pack buttons on the plan`.
+
+### Task D7: The Route tab
+
+**Files:** Create `src/screens/route/RouteScreen.tsx`, `route.css`. Modify `src/screens/nav.ts` (tab `route`, label "Route", last in the bar), `src/screens/nav.test.ts` if it exists, `AppShell.tsx` (lazy `RouteScreen`), `shell.css` (`.shell-nav ul` five columns), the empty Plan state (a "I have a route file" link to `#/route`).
+
+- [ ] **Step 1:** `RouteScreen`: "Open a route file" (file input, `.json`); the newest saved pack opens by default; a list of other saved packs (technician, date); read-only `RouteList`; a notice with the creation time ("Made 21 Nov 2026 at 14:05. If the plan changed since, ask for a new file."); a warning in the warning colour when `staleness` says past; remove a saved pack (two clicks); plain errors from `parsePack`.
+- [ ] **Step 2:** Five tabs fit at 360 px (each at least 48 px wide and tall).
+- [ ] **Step 3:** Commit `feat(route): the Route tab opens a route pack with no connection`.
+
+### Task D8: Verify and finish part D
+
+- [ ] **Step 1:** In the browser on invented data: export CSV and Excel (read them back in the page: BOM, headers, a hostile case id such as `=1+1` comes out with an apostrophe); share a route pack (download fallback in the pane), open it in the Route tab of a second origin (`vite preview` port 4173, empty database), stop the server, reload: the pack is still there and opens; a pack dated yesterday shows the warning.
+- [ ] **Step 2:** 360 px: no sideways scroll on any tab, every control at least 48 px; print preview shows only the sheet (`matchMedia('print')` is not available, so check the print CSS by emulating media in the tests of the class names, and by a screenshot of the section).
+- [ ] **Step 3:** Full check and build; sizes (Excel chunk separate; entry still small). Spec "As built in part D"; memory; push; ask the owner for the pull request link.
 
 ## Part E: map (outline)
 

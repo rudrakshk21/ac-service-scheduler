@@ -5,6 +5,7 @@ import { daysWithVisits, summarise } from '../../demo/viewModel'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { setBase, toggleTechnician } from '../setup/setupActions'
 import { baseAdvice, nothingPlannedHint, prepare } from './planData'
+import { ShareBar } from './ShareBar'
 import { usePlan, type SwitchNote } from './usePlan'
 import '../../demo/demo.css'
 
@@ -50,6 +51,7 @@ export default function PlanScreen() {
           <p>{prepared.text}</p>
           <div className="row" style={{ marginTop: 16 }}>
             <a className="btn btn-primary" href={prepared.action.href}>{prepared.action.label}</a>
+            <a className="btn" href="#/route">I have a route file</a>
             <button type="button" className="btn" onClick={() => setDemo(true)}>See the demo with invented data</button>
           </div>
         </div>
@@ -134,6 +136,8 @@ export default function PlanScreen() {
           </p>
 
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={onToggle} />
+
+          <ShareBar workspace={workspace} input={input} caseIds={prepared.caseIds} planStart={prepared.planStart} result={result} day={day} busy={busy} />
         </>
       )}
 

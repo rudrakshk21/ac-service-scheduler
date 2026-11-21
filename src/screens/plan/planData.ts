@@ -2,9 +2,8 @@ import { dayNumber, weekday } from '../../engine/calendar'
 import { haversineKm } from '../../engine/geo'
 import type { PlanInput } from '../../engine/types'
 import { toPlanInput } from '../../intake/import/plan-input'
+import { isoOf } from '../../share/dates'
 import type { Workspace } from '../../workspace/workspace'
-
-const isoOf = (day: number): string => new Date(day * 86_400_000).toISOString().slice(0, 10)
 
 /** The first day on or after `today` that is not a rest day or a holiday. `YYYY-MM-DD`. */
 export function startDate(today: string, restWeekdays: number[], holidays: string[]): string {

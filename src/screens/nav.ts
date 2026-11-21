@@ -1,10 +1,11 @@
-export type Tab = 'plan' | 'data' | 'import' | 'setup'
+export type Tab = 'plan' | 'data' | 'import' | 'setup' | 'route'
 
 export const TABS: { id: Tab; label: string }[] = [
   { id: 'plan', label: 'Plan' },
   { id: 'data', label: 'Data' },
   { id: 'import', label: 'Import' },
   { id: 'setup', label: 'Set-up' },
+  { id: 'route', label: 'Route' },
 ]
 
 /** The tab named by the URL hash (`#/data`). Anything else gives the plan. */

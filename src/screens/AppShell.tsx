@@ -9,11 +9,13 @@ const Plan = lazy(() => import('./plan/PlanScreen'))
 const SetupScreen = lazy(() => import('./setup/SetupScreen'))
 const ImportScreen = lazy(() => import('./import/ImportScreen'))
 const DataScreen = lazy(() => import('./data/DataScreen'))
+const RouteScreen = lazy(() => import('./route/RouteScreen'))
 
 function Screen({ tab }: { tab: Tab }) {
   if (tab === 'plan') return <Plan />
   if (tab === 'data') return <DataScreen />
   if (tab === 'import') return <ImportScreen />
+  if (tab === 'route') return <RouteScreen />
   return <SetupScreen />
 }
 

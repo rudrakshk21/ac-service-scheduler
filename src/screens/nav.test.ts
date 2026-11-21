@@ -14,7 +14,7 @@ describe('tabs and the URL hash', () => {
   it('falls back to the plan for an empty or unknown hash', () => {
     for (const h of ['', '#', '#/', '#/nope', '#/DATA', 'data']) expect(tabFromHash(h)).toBe('plan')
   })
-  it('lists four tabs with plain labels', () => {
-    expect(TABS.map((t) => t.label)).toEqual(['Plan', 'Data', 'Import', 'Set-up'])
+  it('lists five tabs with plain labels', () => {
+    expect(TABS.map((t) => t.label)).toEqual(['Plan', 'Data', 'Import', 'Set-up', 'Route'])
   })
 })

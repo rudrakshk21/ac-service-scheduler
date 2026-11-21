@@ -93,6 +93,31 @@ remain: try the install on the reference phone (PD-9) and on Samsung Internet an
 - **Not done here (owner):** install on the reference phone and on Samsung Internet and Firefox (AC-31, R-19); the live
   site's headers (`_headers`) are checked after the merge.
 
+## 10. As built in pull request D
+
+- **Tables.** `buildTables` gives Schedule (sorted by date, technician and visit, with names and a weekday), Day routes
+  (empty routes left out), Not planned (the planner's reasons, then every held-back case with its state), Summary and
+  Change log. One module feeds CSV and Excel. CSV has a byte-order mark and CRLF; the formula guard (SEC-5) also covers a
+  leading tab or carriage return and is applied to headers. The Excel writer (`write-excel-file`, now a dependency)
+  loads on demand; the first download stays at 70.25 KB compressed.
+- **Route pack.** Exactly `packVersion, site, technician, date, createdAt, validFor, stops`, and per stop `visit, caseId,
+  workType, place, lat, lon, arrival, kilometres, drivingMinutes`. `parsePack` rebuilds the pack from those fields only,
+  so a file with a customer name or address shows neither; it refuses another version, bad times, bad coordinates and
+  repeated visit numbers, naming the stop. A pack is valid for its own date and shows a warning from the day after.
+- **Plan tab.** A "Share and export" panel under the board: per technician of the chosen day "Route sheet" and "Share
+  route pack" (share sheet, else download), "Excel file, all tables", and CSV one table at a time.
+- **Route sheet.** Print styles only: the print dialog shows just the sheet, black on white, one stop never split over a
+  page. On Android the print dialog offers "Save as PDF". A generated PDF file (FR-28.6 names it) is not built; sharing
+  the route pack covers the "or".
+- **Route tab (fifth).** Opens a pack read-only with stops, arrival, distance and an "Open in maps" link (`geo:`
+  address). Packs are kept in IndexedDB (key `routePacks`, newest first, 20 at most, same technician and day replaced),
+  removed with two clicks. Verified: a pack made by the Share button on one origin was opened on a clean second origin,
+  the server was stopped, the app reopened from its cache and showed the route.
+- **Checked at 360 px:** no sideways scroll on Plan or Route, every control at least 48 px, five tabs of 64 x 48 px.
+- **Noticed, not done.** The sheets and packs carry the centre's name, which is "New site" until someone renames it in
+  Set-up; places made from coordinates read as `12.93000,77.66000`. Opening a pack straight from a messaging app (a
+  share target in the manifest), the open data format export (FR-27.3) and the route sheet map (part E) are later.
+
 ## 8. Finish line
 
 - C: the built app opens offline after one visit; installs from Chrome on Android; a new build shows the update banner.

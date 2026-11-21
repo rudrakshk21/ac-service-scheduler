@@ -1,0 +1,53 @@
+/* Stops of a route, shared by the printed sheet, the Route tab and the plan's share panel. */
+.route-list { list-style: none; display: grid; gap: 8px; padding: 0; margin: 0; }
+.route-stop {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.route-no {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+}
+.route-body { min-width: 0; display: grid; gap: 2px; }
+.route-head { display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; }
+.route-time { font-variant-numeric: tabular-nums; font-size: 1.125rem; }
+.route-maplink { display: inline-flex; align-items: center; min-height: 48px; font-weight: 600; }
+
+.sheet-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+.sheet-date { font-size: 1.0625rem; }
+
+/* The share and export panel under the board. */
+.share-panel { margin-top: 24px; }
+.share-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.share-csv summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+
+/* Printing shows only the sheet, black on white, one stop never split over two pages. */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0 auto auto 0; width: 100%; padding: 0; }
+  .print-area, .print-area * { color: #000 !important; background: #fff !important; border-color: #888 !important; box-shadow: none !important; }
+  .print-area .route-no { border: 2px solid #000; }
+  .print-area .route-stop { break-inside: avoid; }
+  .no-print { display: none !important; }
+}
