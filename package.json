@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "serve:dist": "node scripts/serve-dist.mjs",
+    "check:size": "node scripts/check-size.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
