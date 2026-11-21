@@ -14,7 +14,38 @@ function canDo(ctx: Ctx, t: number, c: number): boolean {
   return ctx.technicians[t].skills.includes(ctx.workTypes[ctx.cases[c].workType].requiredSkill)
 }
 
-/** Greedy cheapest insertion: repeatedly take the best-scoring feasible (case, technician) pair. */
+/** Working space for `greedy`, made once for a whole plan: one entry for every case and technician pair. */
+interface GreedyWork {
+  /** Where each technician stands in the eligible list of each case (-1: not in it). It settles equal scores. */
+  rank: Int32Array
+  /** The route version an offer was worked out for (-1: not yet). */
+  stamp: Int32Array
+  /** The score of adding the case to the route, or Infinity when it does not fit. */
+  offered: Float64Array
+  /** The position in the route that offer is for. */
+  where: Int32Array
+}
+
+function makeGreedyWork(ctx: Ctx, eligible: Map<number, number[]>): GreedyWork {
+  const nTech = ctx.technicians.length
+  const n = ctx.cases.length * nTech
+  const rank = new Int32Array(n).fill(-1)
+  for (const [c, list] of eligible) {
+    for (let i = 0; i < list.length; i++) rank[c * nTech + list[i]] = i
+  }
+  return { rank, stamp: new Int32Array(n), offered: new Float64Array(n), where: new Int32Array(n) }
+}
+
+/**
+ * Greedy cheapest insertion: repeatedly take the best-scoring feasible (case, technician) pair. Among equal scores
+ * the first case in pool order wins, and for that case the first technician in its eligible order.
+ *
+ * Adding a stop changes one route only, so what it would cost to add a case to every other route is unchanged. What
+ * adding a case to a route costs is worked out once for each version of the route and kept. Each case also keeps its
+ * best offer; after a stop is added, only the cases that favoured that route are looked at again in full, and every
+ * other case just compares its old best with what the changed route now offers. The choice is the one a scan of every
+ * case and technician would make, found without doing that scan for every stop.
+ */
 function greedy(
   ctx: Ctx,
   routes: Map<number, Route>,
@@ -22,48 +53,93 @@ function greedy(
   left: number[],
   eligible: Map<number, number[]>,
   day: number,
+  work: GreedyWork,
 ): void {
   const nTech = ctx.technicians.length
-  const cache = new Map<number, { ver: number; d: number; p: number }>()
-  for (;;) {
-    let bestScore = Infinity
-    let bc = -1
-    let bt = -1
-    let bp = 0
-    for (const c of pool) {
-      const cs = ctx.cases[c]
-      const age = Math.min(90.0, Math.max(0.0, day - cs.reportedDay))
-      let bonus = age * ctx.s.ageWeight + ctx.caseWeight[c]
-      if (cs.dueDay !== undefined) {
-        bonus += ctx.dueWeight * Math.min(90.0, Math.max(0.0, ctx.dueWindow - (cs.dueDay - day)))
+  const nCase = ctx.cases.length
+  const { rank, stamp, offered, where } = work
+  stamp.fill(-1)
+  const routeOf: (Route | undefined)[] = new Array<Route | undefined>(nTech)
+  for (const [t, r] of routes) routeOf[t] = r
+  const bonus = new Float64Array(nCase)
+  const bestScore = new Float64Array(nCase)
+  const bestTech = new Int32Array(nCase)
+  const bestPos = new Int32Array(nCase)
+
+  /** The score of adding case `c` to technician `t`'s route as it is now; Infinity when it does not fit. */
+  const offer = (c: number, t: number): number => {
+    const r = routeOf[t]
+    if (r === undefined) return Infinity
+    const k = c * nTech + t
+    if (stamp[k] !== r.ver) {
+      const { delta, pos } = bestInsert(ctx, r, c)
+      stamp[k] = r.ver
+      where[k] = pos
+      offered[k] = fits(ctx, r, c, delta) ? delta + ctx.s.balanceWeight * (r.travel + r.service) - bonus[c] : Infinity
+    }
+    return offered[k]
+  }
+
+  /** The best offer for case `c` over all its technicians. */
+  const rescan = (c: number): void => {
+    let score = Infinity
+    let tech = -1
+    for (const t of eligible.get(c) ?? []) {
+      const s = offer(c, t)
+      if (s < score) {
+        score = s
+        tech = t
       }
-      for (const t of eligible.get(c) ?? []) {
-        const r = routes.get(t)
-        if (r === undefined) continue
-        const key = c * nTech + t
-        let ent = cache.get(key)
-        if (ent === undefined || ent.ver !== r.ver) {
-          const { delta, pos } = bestInsert(ctx, r, c)
-          ent = { ver: r.ver, d: delta, p: pos }
-          cache.set(key, ent)
-        }
-        if (!fits(ctx, r, c, ent.d)) continue
-        const score = ent.d + ctx.s.balanceWeight * (r.travel + r.service) - bonus
-        if (score < bestScore) {
-          bestScore = score
-          bc = c
-          bt = t
-          bp = ent.p
-        }
+    }
+    bestScore[c] = score
+    bestTech[c] = tech
+    bestPos[c] = tech < 0 ? 0 : where[c * nTech + tech]
+  }
+
+  for (const c of pool) {
+    const cs = ctx.cases[c]
+    const age = Math.min(90.0, Math.max(0.0, day - cs.reportedDay))
+    let b = age * ctx.s.ageWeight + ctx.caseWeight[c]
+    if (cs.dueDay !== undefined) {
+      b += ctx.dueWeight * Math.min(90.0, Math.max(0.0, ctx.dueWindow - (cs.dueDay - day)))
+    }
+    bonus[c] = b
+    rescan(c)
+  }
+
+  for (;;) {
+    let best = Infinity
+    let bc = -1
+    for (const c of pool) {
+      if (bestScore[c] < best) {
+        best = bestScore[c]
+        bc = c
       }
     }
     if (bc < 0) break
-    const rr = routes.get(bt)
+    const bt = bestTech[bc]
+    const rr = routeOf[bt]
     if (rr === undefined) break
-    rr.stops.splice(bp, 0, bc)
+    rr.stops.splice(bestPos[bc], 0, bc)
     recalc(ctx, rr)
     removeFirst(pool, bc)
     removeFirst(left, bc)
+    // Only route `bt` changed.
+    for (const c of pool) {
+      if (bestTech[c] === bt) {
+        rescan(c)
+        continue
+      }
+      const rk = rank[c * nTech + bt]
+      if (rk < 0) continue
+      const s = offer(c, bt)
+      const current = bestTech[c]
+      if (s < bestScore[c] || (s === bestScore[c] && current >= 0 && rk < rank[c * nTech + current])) {
+        bestScore[c] = s
+        bestTech[c] = bt
+        bestPos[c] = where[c * nTech + bt]
+      }
+    }
   }
 }
 
@@ -134,6 +210,7 @@ export function runPlan(ctx: Ctx): RawResult {
     }
   }
 
+  const work = makeGreedyWork(ctx, eligible)
   let day = s.startDay
   let worked = 0
   let guard = 0
@@ -176,11 +253,11 @@ export function runPlan(ctx: Ctx): RawResult {
       res.date.set(c, day)
     }
     for (let pass = 0; pass < 3; pass++) {
-      greedy(ctx, routes, pool, left, eligible, day)
+      greedy(ctx, routes, pool, left, eligible, day, work)
       for (const r of routes.values()) orderRoute(ctx, r)
       relocate(ctx, routes, eligible)
     }
-    greedy(ctx, routes, pool, left, eligible, day)
+    greedy(ctx, routes, pool, left, eligible, day, work)
     for (const r of routes.values()) orderRoute(ctx, r)
     res.days.push(day)
     res.routes.set(day, routes)

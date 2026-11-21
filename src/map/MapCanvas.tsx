@@ -94,7 +94,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
         role="button"
         tabIndex={0}
         aria-pressed={on}
-        aria-label={t('map.stop.aria', { name: layer.name, visit: s.visit, case: s.caseId, time: s.arrival, place: s.place })}
+        aria-label={t('map.stop.aria', { mark: `${layer.label}${s.visit}`, name: layer.name, visit: s.visit, case: s.caseId, time: s.arrival, place: s.place })}
         onClick={choose}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose() } }}
       >

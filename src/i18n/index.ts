@@ -30,6 +30,17 @@ export function tOptional(key: string, params?: Params): string | undefined {
 }
 
 export const localeCode = (): string => state.code
+
+/** The language in use with all its messages, to hand to code that runs without the page (a worker). */
+export const currentLanguage = (): { code: string; messages: Messages } => ({ code: state.code, messages: state.messages })
+
+/**
+ * Adopts a language whose messages are already in hand. For a worker: it has no page to set up (no `lang`, no stored
+ * choice) and needs no file loaded, because the page sends the messages with the work.
+ */
+export function adoptLanguage(language: { code: string; messages: Messages }): void {
+  state = { code: language.code, messages: language.messages }
+}
 export const isRtl = (): boolean => LOCALES.find((l) => l.code === state.code)?.dir === 'rtl'
 
 export function subscribe(listener: () => void): () => void {

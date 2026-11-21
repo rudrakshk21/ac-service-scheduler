@@ -1,13 +1,16 @@
 {
   "name": "ac-service-scheduler",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "serve:dist": "node scripts/serve-dist.mjs",
+    "check:size": "node scripts/check-size.mjs",
+    "check:privacy": "node scripts/check-privacy.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

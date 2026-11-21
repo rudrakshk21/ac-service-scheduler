@@ -40,6 +40,16 @@
   min-width: 0;
 }
 
+/* Out of the page until a keyboard user reaches it; fixed, so it takes no place in the grid. */
+.skip-link {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 20;
+  transform: translateY(-300%);
+}
+.skip-link:focus { transform: none; }
+
 .shell-top {
   display: flex;
   align-items: center;

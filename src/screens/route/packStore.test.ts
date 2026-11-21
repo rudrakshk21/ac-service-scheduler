@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { memoryStore } from '../../workspace/db'
 import type { RoutePack } from '../../share/routePack'
-import { addPack, loadPacks, MAX_PACKS, removePack, savePacks } from './packStore'
+import { addPack, clearPacks, loadPacks, MAX_PACKS, removePack, savePacks } from './packStore'
 
 const pack = (technician: string, date: string, createdAt = '2026-10-13T10:00:00.000Z'): RoutePack => ({
   packVersion: 1, site: 'Test centre', technician, date, createdAt, validFor: date,
@@ -71,5 +71,18 @@ describe('loadPacks and savePacks', () => {
     const store = memoryStore()
     await store.set('routePacks', [{ ...pack('Asha', '2026-10-13'), customerName: 'Someone' }])
     expect(JSON.stringify(await loadPacks(store))).not.toContain('Someone')
+  })
+})
+
+describe('clearPacks', () => {
+  it('removes every saved pack, so deleting all data leaves no route behind', async () => {
+    const store = memoryStore()
+    await savePacks(store, [pack('Asha', '2026-10-13'), pack('Bo', '2026-10-13')])
+    await clearPacks(store)
+    expect(await loadPacks(store)).toEqual([])
+    expect(await store.get('routePacks')).toBeUndefined()
+  })
+  it('is fine when there is nothing saved', async () => {
+    await expect(clearPacks(memoryStore())).resolves.toBeUndefined()
   })
 })

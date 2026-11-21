@@ -8,7 +8,11 @@ export function RouteList({ pack }: { pack: RoutePack }) {
     <ol className="route-list" aria-label={t('route.list.aria', { name: pack.technician })}>
       {pack.stops.map((s) => (
         <li key={s.visit} className="route-stop">
-          <span className="route-no" aria-label={t('route.stop.aria', { n: formatNumber(s.visit) })}>{formatNumber(s.visit)}</span>
+          <span className="route-no">
+            {/* A label on a plain span is not read by many screen readers, so the full words are text that only they see. */}
+            <span aria-hidden="true">{formatNumber(s.visit)}</span>
+            <span className="visually-hidden">{t('route.stop.aria', { n: formatNumber(s.visit) })}</span>
+          </span>
           <div className="route-body">
             <div className="route-head">
               <b className="route-time">{s.arrival}</b>

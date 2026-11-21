@@ -37,3 +37,8 @@ export async function loadPacks(store: KeyValueStore): Promise<RoutePack[]> {
 export async function savePacks(store: KeyValueStore, list: RoutePack[]): Promise<void> {
   await store.set(KEY, list.map((p) => JSON.parse(serialisePack(p)) as unknown))
 }
+
+/** Removes every saved pack. */
+export async function clearPacks(store: KeyValueStore): Promise<void> {
+  await store.delete(KEY)
+}

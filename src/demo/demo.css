@@ -231,31 +231,32 @@
 .switch input:disabled + .track { opacity: 0.6; }
 .switch-text { font-size: 0.9375rem; }
 
-/* The lane bar */
-.bar {
+/* The lane's buttons: the stops, and the switch */
+.lane-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.lane-toggle { padding: 0 14px; border-color: var(--line); font-size: 0.9375rem; }
+.lane[data-open='true'] .lane-toggle { border-color: var(--ink); }
+
+/* The lane bar: a picture of the day, not a control */
+.lane-bar {
   position: relative;
   display: block;
   width: 100%;
   height: 48px;
-  padding: 0;
-  border: 0;
   border-radius: 6px;
   background:
     repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px calc(100% / 9)) var(--paper);
-  cursor: pointer;
   text-align: start;
 }
 
-.bar-empty {
+.lane-bar-empty {
   display: flex;
   align-items: center;
   padding: 0 12px;
   font-size: 0.875rem;
   color: var(--ink-soft);
-  cursor: default;
 }
 
-.bar[aria-expanded='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
+.lane[data-open='true'] .lane-bar { outline: 2px solid var(--ink); outline-offset: 1px; }
 
 .block {
   position: absolute;
@@ -271,7 +272,7 @@
 
 .block.work { background: var(--c); color: var(--on-work); font-variant-numeric: tabular-nums; }
 .block.work b { font-weight: 700; }
-.block.work small { font-size: 0.6875rem; opacity: 0.85; }
+.block.work small { font-size: 0.6875rem; }
 
 .block.travel {
   top: 16px;

@@ -38,26 +38,39 @@ export function Board({ input, result, day, change, busy, onToggle }: BoardProps
           const pulse = changed ? (change.id % 2 === 0 ? 'a' : 'b') : undefined
           const expanded = open === lane.tech && lane.stops.length > 0
           return (
-            <li key={lane.tech} className="lane" data-off={!lane.active} data-pulse={pulse}>
+            <li key={lane.tech} className="lane" data-off={!lane.active} data-open={expanded} data-pulse={pulse}>
               <div className="lane-head">
                 <div className="lane-title">
                   <span className="lane-name">{lane.name}</span>
                   <span className="lane-meta">{laneMeta(lane)}</span>
                 </div>
-                <label className="switch">
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    checked={lane.active}
-                    aria-label={t('board.switchAria', { name: lane.name })}
-                    disabled={busy}
-                    onChange={() => onToggle(lane.tech)}
-                  />
-                  <span className="track" aria-hidden="true" />
-                  <span className="switch-text">{t('board.active')}</span>
-                </label>
+                <div className="lane-actions">
+                  {lane.stops.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn lane-toggle"
+                      aria-expanded={expanded}
+                      aria-label={t('board.toggleAria', { action: expanded ? t('board.hideStops') : t('board.showStops'), name: lane.name })}
+                      onClick={() => setOpen(expanded ? null : lane.tech)}
+                    >
+                      {expanded ? t('board.hideStops') : t('board.showStops')}
+                    </button>
+                  )}
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      checked={lane.active}
+                      aria-label={t('board.switchAria', { name: lane.name })}
+                      disabled={busy}
+                      onChange={() => onToggle(lane.tech)}
+                    />
+                    <span className="track" aria-hidden="true" />
+                    <span className="switch-text">{t('board.active')}</span>
+                  </label>
+                </div>
               </div>
-              <LaneBar lane={lane} input={input} pct={pct} expanded={expanded} onOpen={() => setOpen(expanded ? null : lane.tech)} />
+              <LaneBar lane={lane} input={input} pct={pct} />
               {expanded && (
                 <ol className="stops">
                   {lane.stops.map((s) => (
@@ -94,13 +107,12 @@ interface LaneBarProps {
   lane: Lane
   input: PlanInput
   pct: (minute: number) => number
-  expanded: boolean
-  onOpen: () => void
 }
 
-function LaneBar({ lane, input, pct, expanded, onOpen }: LaneBarProps) {
+/** The day of one technician as a picture. It is not a control: the button beside the name opens the stops. */
+function LaneBar({ lane, input, pct }: LaneBarProps) {
   if (lane.stops.length === 0) {
-    return <div className="bar bar-empty">{lane.active ? t('board.noVisitsDay') : t('board.off')}</div>
+    return <div className="lane-bar lane-bar-empty">{lane.active ? t('board.noVisitsDay') : t('board.off')}</div>
   }
   // The visit number of each work block: how many work blocks come up to and including it.
   const visitAt: number[] = []
@@ -110,13 +122,7 @@ function LaneBar({ lane, input, pct, expanded, onOpen }: LaneBarProps) {
     visitAt.push(worked)
   }
   return (
-    <button
-      type="button"
-      className="bar"
-      aria-expanded={expanded}
-      aria-label={t('board.barAria', { name: lane.name, meta: laneMeta(lane), action: expanded ? t('board.hideStops') : t('board.showStops') })}
-      onClick={onOpen}
-    >
+    <div className="lane-bar" role="img" aria-label={t('board.barAria', { name: lane.name, meta: laneMeta(lane) })}>
       {lane.blocks.map((b: Block, i) => {
         const style = { insetInlineStart: `${pct(b.startMin)}%`, width: `${pct(b.endMin) - pct(b.startMin)}%` }
         if (b.kind === 'work') {
@@ -130,6 +136,6 @@ function LaneBar({ lane, input, pct, expanded, onOpen }: LaneBarProps) {
         }
         return <span key={i} className={`block ${b.kind}`} style={style} />
       })}
-    </button>
+    </div>
   )
 }

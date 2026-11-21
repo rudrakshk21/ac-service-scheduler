@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Repo `C:\Users\lenovo\Projects\ac-service-scheduler`, branch `data-intake` (never `main`). Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+- Repo `<repo>`, branch `data-intake` (never `main`). Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 - Real data never enters a committed file. All test data is invented. The real DS-1 check is local only (git-ignored `reference-local/`, skipped otherwise and reported as skipped).
 - Pure library: no React, no `window`/`localStorage`/`fetch`, no `Date.now()` or `new Date()` without an argument. The caller passes dates (`importDate`, `planStart`) as `YYYY-MM-DD` text.
 - Dates inside the library are `YYYY-MM-DD` text; engine day numbers appear only in `plan-input.ts` (use `dayNumber` from `../engine/calendar`).
@@ -22,7 +22,7 @@
 - No site-specific names in code: category words, status words, place names and rule values live only in profiles, the dictionary data and test data.
 - `src/intake/testing/` is excluded from coverage. Intake coverage at least 90% statements and lines (extend the Vitest `coverage.include` to `src/intake/**/*.ts` in Task 0).
 - Commands: from PowerShell pass paths to npm/npx with forward slashes; in Bash use `py` for Python. Full local check (run after every task, all must pass):
-  `cd /c/Users/lenovo/Projects/ac-service-scheduler && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`
+  `cd <repo> && npm run lint && npx tsc -b && npm run test:coverage && py -m unittest discover -s reference -p "test_*.py" && py reference/check_ds1_local.py`
 - Before using the Write tool on a path, check it does not exist (`ls`); a Write over an existing test file once replaced it.
 
 ## Shared types (defined once, used by later tasks; copy exactly)

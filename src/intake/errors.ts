@@ -1,6 +1,8 @@
 export type IntakeErrorCode =
   | 'not_a_data_file'
   | 'empty_file'
+  | 'file_too_large'
+  | 'too_many_rows'
   | 'unsupported_format'
   | 'no_case_id_column'
   | 'bad_profile'

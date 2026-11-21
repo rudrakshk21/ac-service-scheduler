@@ -1,9 +1,10 @@
-import { useRef, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { t, type MessageKey } from '../../i18n'
 import { suggestProfile } from '../../intake/map/suggest'
 import type { Kind } from '../../intake/map/model'
-import { readSource } from '../../intake/read'
-import type { ReadOptions } from '../../intake/read/table'
+import { fileTooLarge, isTooLarge } from '../../intake/read'
+import type { ReadOptions, SourceTable } from '../../intake/read/table'
+import { IntakeCancelled, startRead, type IntakeJob } from '../../worker/intakeClient'
 import { profileFor } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { describeTable, guessKind, kindLabel } from './importFlow'
@@ -22,26 +23,46 @@ export function FileStep({ flow, dispatch }: StepProps) {
   const [over, setOver] = useState(false)
   const source = useRef<{ data: Uint8Array; name: string } | null>(null)
   const options = useRef<ReadOptions>({})
+  const job = useRef<IntakeJob<SourceTable> | null>(null)
   const table = flow.table
+
+  // Leaving the step stops a file that is still being read.
+  useEffect(() => () => {
+    job.current?.cancel()
+    job.current = null
+  }, [])
 
   async function read(kind?: Kind) {
     const s = source.current
     if (s === null) return
+    // The file is read in a worker (SEC-4), so a large file never freezes the screen. A newer read replaces an older one.
+    job.current?.cancel()
+    const mine = startRead(s.data, s.name, options.current)
+    job.current = mine
     setBusy(true)
     try {
-      const parsed = await readSource(s.data, s.name, options.current)
+      const parsed = await mine.result
       const k = kind ?? guessKind(parsed, workspace.site)
       const result = suggestProfile(parsed, k, workspace.site, s.name)
       dispatch({ type: 'file', table: parsed, fileName: s.name, kind: k, result, known: profileFor(workspace, k, result.profile.fingerprint) ?? null })
     } catch (e) {
+      if (e instanceof IntakeCancelled) return
       dispatch({ type: 'error', message: e instanceof Error ? e.message : String(e) })
     } finally {
-      setBusy(false)
+      if (job.current === mine) {
+        job.current = null
+        setBusy(false)
+      }
     }
   }
 
   async function choose(file: File | undefined) {
     if (file === undefined) return
+    // Refuse a file that is too big before it is read into memory at all.
+    if (isTooLarge(file.size)) {
+      dispatch({ type: 'error', message: fileTooLarge(file.name, file.size).message })
+      return
+    }
     source.current = { data: new Uint8Array(await file.arrayBuffer()), name: file.name }
     options.current = {}
     await read()

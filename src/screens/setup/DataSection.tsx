@@ -4,12 +4,23 @@ import { parseSite, serializeSite } from '../../intake/site/site'
 import { parseWorkspace } from '../../workspace/backup'
 import { promptInstall } from '../../pwa/register'
 import { usePwa } from '../../pwa/usePwa'
+import { openIndexedStore } from '../../workspace/db'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
+import { clearPacks } from '../route/packStore'
 import { downloadText, readText, saveBackupFile, stamp } from '../files'
 import { replaceSite } from './setupActions'
 
 type Pending = { kind: 'restore'; workspace: Workspace; fileName: string } | { kind: 'delete' } | null
+
+/** The route files opened on this device are data too: "delete all my data" removes them with the rest. */
+async function deleteSavedRoutes(): Promise<void> {
+  try {
+    await clearPacks(await openIndexedStore())
+  } catch {
+    // No browser storage: there are no saved routes to delete.
+  }
+}
 
 export function DataSection() {
   const { workspace, update, status } = useWorkspace()
@@ -54,6 +65,7 @@ export function DataSection() {
     <section className="card stack" aria-labelledby="set-data">
       <h2 id="set-data" className="step-heading">{t('setup.data.title')}</h2>
       <p className="muted small">{t('setup.data.where', { size: sizeOf(workspace.cases.length, workspace.technicians.length, workspace.site.places.length) })}</p>
+      <p className="muted small">{t('setup.data.privacy')}</p>
 
       <div className="stack-tight">
         <b>{t('setup.data.site.title')}</b>
@@ -124,7 +136,7 @@ export function DataSection() {
         <p className="muted small">{t('setup.data.delete.help')}</p>
         {pending?.kind === 'delete' ? (
           <div className="row">
-            <button type="button" className="btn danger" onClick={() => { update(() => emptyWorkspace()); setPending(null); say(t('setup.data.msg.deleted')) }}>{t('setup.data.delete.yes')}</button>
+            <button type="button" className="btn danger" onClick={() => { update(() => emptyWorkspace()); void deleteSavedRoutes(); setPending(null); say(t('setup.data.msg.deleted')) }}>{t('setup.data.delete.yes')}</button>
             <button type="button" className="btn" onClick={() => setPending(null)}>{t('setup.data.delete.keep')}</button>
           </div>
         ) : (
