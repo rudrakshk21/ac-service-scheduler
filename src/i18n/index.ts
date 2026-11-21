@@ -39,6 +39,11 @@ export function subscribe(listener: () => void): () => void {
   }
 }
 
+/** "a, b or c": a list of choices written the way the current language writes it. */
+export function formatChoices(items: readonly string[]): string {
+  return new Intl.ListFormat(intlLocale(state.code), { style: 'long', type: 'disjunction' }).format(items)
+}
+
 /** A number written the way the current language writes it. */
 export function formatNumber(n: number, options?: Intl.NumberFormatOptions): string {
   return new Intl.NumberFormat(intlLocale(state.code), options).format(n)

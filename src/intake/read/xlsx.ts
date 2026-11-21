@@ -1,6 +1,7 @@
 // The `.xlsx` package is loaded on demand so that it stays out of the first download. `read-excel-file/universal`
 // works in a browser and in Node. It returns every sheet as `{ sheet, data }`, keeps date cells as `Date`, and
 // reports an old `.xls` file or a non-spreadsheet through `InvalidInputError` codes, which are translated below.
+import { t } from '../../i18n'
 import { IntakeError } from '../errors'
 import type { Cell } from './table'
 
@@ -15,8 +16,7 @@ export function isOleFile(bytes: Uint8Array): boolean {
   return bytes.length >= 4 && bytes[0] === 0xd0 && bytes[1] === 0xcf && bytes[2] === 0x11 && bytes[3] === 0xe0
 }
 
-export const xlsMessage = (fileName: string): string =>
-  `${fileName} is an old Excel (.xls) file. Open it in Excel and save it as .xlsx or CSV, then import again.`
+export const xlsMessage = (fileName: string): string => t('intake.file.xls', { file: fileName })
 
 const hasData = (rows: Cell[][]): boolean =>
   rows.some((r) => r.some((c) => c !== null && !(typeof c === 'string' && c.trim() === '')))
@@ -31,20 +31,20 @@ export async function readXlsx(bytes: Uint8Array, fileName: string, sheet?: stri
   } catch (e) {
     const code = (e as { code?: string }).code
     if (code === 'XLS_FILE_NOT_SUPPORTED') throw new IntakeError('unsupported_format', xlsMessage(fileName))
-    if (code === 'NO_DATA') throw new IntakeError('empty_file', `${fileName} is empty.`)
+    if (code === 'NO_DATA') throw new IntakeError('empty_file', t('intake.file.empty', { file: fileName }))
     if (code === 'FILE_NOT_SUPPORTED' || code === 'INVALID_ZIP' || code === 'INPUT_TYPE_NOT_SUPPORTED') {
-      throw new IntakeError('unsupported_format', `${fileName} is not an Excel (.xlsx) file.`)
+      throw new IntakeError('unsupported_format', t('intake.file.notExcel', { file: fileName }))
     }
-    throw new IntakeError('unreadable', `${fileName} could not be read as an Excel (.xlsx) file; it may be damaged.`)
+    throw new IntakeError('unreadable', t('intake.file.excelUnreadable', { file: fileName }))
   }
   const sheets = all.map((s) => s.sheet)
   let chosen = all.find((s) => hasData(s.data))
   if (sheet !== undefined) {
     chosen = all.find((s) => s.sheet === sheet)
     if (chosen === undefined) {
-      throw new IntakeError('unreadable', `${fileName} has no sheet named "${sheet}". Its sheets are: ${sheets.join(', ')}.`)
+      throw new IntakeError('unreadable', t('intake.file.noSheet', { file: fileName, sheet, sheets: sheets.join(', ') }))
     }
   }
-  if (chosen === undefined) throw new IntakeError('empty_file', `${fileName} has no data on any sheet.`)
+  if (chosen === undefined) throw new IntakeError('empty_file', t('intake.file.noDataAnySheet', { file: fileName }))
   return { sheets, sheet: chosen.sheet, rows: chosen.data }
 }

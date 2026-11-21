@@ -1,4 +1,5 @@
 import { dayNumber } from '../engine/calendar'
+import { t } from '../i18n'
 import { readWorkspace, WorkspaceError, type Workspace } from './workspace'
 
 /** The data lives only in this browser, so a backup is suggested after this many days without one. */
@@ -32,7 +33,7 @@ export function parseWorkspace(text: string): Workspace {
   try {
     raw = JSON.parse(text)
   } catch {
-    throw new WorkspaceError('This file is not a backup of the app.')
+    throw new WorkspaceError(t('workspace.err.notBackup'))
   }
   return readWorkspace(raw)
 }

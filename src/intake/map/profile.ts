@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { checker, parseJson } from '../validate'
 import { normaliseName, type Kind, type StatusAction } from './model'
 
@@ -54,12 +55,11 @@ export function serializeProfile(p: MappingProfile): string {
 
 /** Reads a profile file. Throws an `IntakeError` (`bad_profile`) that names the field when it is invalid. */
 export function parseProfile(text: string): MappingProfile {
-  const c = checker('bad_profile', 'Mapping profile')
-  const o = c.record(parseJson(text, 'bad_profile', 'Mapping profile'), 'file')
+  const prefix = t('intake.prefix.profile')
+  const c = checker('bad_profile', prefix)
+  const o = c.record(parseJson(text, 'bad_profile', prefix), 'file')
   if (o.profileVersion !== 1) {
-    c.fail('profileVersion', typeof o.profileVersion === 'number' && o.profileVersion > 1
-      ? 'is newer than this app understands (it reads version 1)'
-      : 'must be 1')
+    c.fail('profileVersion', typeof o.profileVersion === 'number' && o.profileVersion > 1 ? t('intake.v.newer') : t('intake.v.mustBeOne'))
   }
   const formatsIn = o.formats === undefined ? {} : c.record(o.formats, 'formats')
   const formats: MappingProfile['formats'] = {}

@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { detectDateOrder, parseDate } from '../read/dates'
 import { detectDecimal } from '../read/numbers'
 import type { Cell, SourceTable } from '../read/table'
@@ -155,7 +156,7 @@ export function suggestProfile(
         named.add(col)
         cands.push({
           field, col, conf: s,
-          reason: s === 1 ? `column name "${table.headers[col]}" is a known name for ${field}` : `column name "${table.headers[col]}" resembles ${field}`,
+          reason: t(s === 1 ? 'intake.suggest.known' : 'intake.suggest.resembles', { header: table.headers[col], field }),
         })
       }
     }
@@ -166,14 +167,14 @@ export function suggestProfile(
     if (dateLike(cells)) {
       const field = dateFieldFor(kind, h)
       if (field !== null && fields.includes(field)) {
-        cands.push({ field, col, conf: 0.55, reason: `the values in "${table.headers[col]}" look like dates` })
+        cands.push({ field, col, conf: 0.55, reason: t('intake.suggest.dates', { header: table.headers[col] }) })
         return
       }
     }
     if (kind === 'cases' && idLike(table, col)) {
-      cands.push({ field: 'caseId', col, conf: 0.5, reason: `the values in "${table.headers[col]}" are unique, like case identifiers` })
+      cands.push({ field: 'caseId', col, conf: 0.5, reason: t('intake.suggest.unique', { header: table.headers[col] }) })
     } else if (kind === 'cases' && lowVariety(table, col, cells)) {
-      cands.push({ field: 'workType', col, conf: 0.4, reason: `"${table.headers[col]}" has only a few different values, like a category` })
+      cands.push({ field: 'workType', col, conf: 0.4, reason: t('intake.suggest.category', { header: table.headers[col] }) })
     }
   })
 

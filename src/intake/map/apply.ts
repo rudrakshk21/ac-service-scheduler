@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 import { parseDate } from '../read/dates'
 import { parseNumber } from '../read/numbers'
 import type { Cell, SourceTable } from '../read/table'
@@ -137,7 +138,7 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
   const exceptions: IntakeException[] = []
   const created = new Map<string, SitePlace>()
   const base = { rowsRead: table.rows.length, blank: table.detected.blankRows, total: 0, ragged: table.detected.raggedRows, duplicates: 0, unresolved: 0 }
-  const label = (i: number): string => `(row ${i + 1})`
+  const label = (i: number): string => t('intake.ex.row', { n: i + 1 })
 
   const date = (row: Cell[], field: string, id: string): string | undefined => {
     const raw = first(row, field)
@@ -146,7 +147,7 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
     if (d === null) {
       const shown = cellText(raw) ?? ''
       markBadDate(tally, field, shown)
-      exceptions.push({ caseId: id, issue: 'bad_date', detail: `${field} "${shown}" is not a date`, suggestedAction: 'Fix the date in the file or confirm the day and month order.' })
+      exceptions.push({ caseId: id, issue: 'bad_date', detail: t('intake.ex.badDate', { field, value: shown }), suggestedAction: 'Fix the date in the file or confirm the day and month order.' })
       return undefined
     }
     return d
@@ -163,7 +164,7 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
     if (profile.kind === 'cases') {
       let id = text(row, 'caseId')
       if (id === undefined) {
-        exceptions.push({ caseId: label(r), issue: 'missing_id', detail: 'The row has no case identifier.', suggestedAction: 'Add an identifier in the file; the row was not imported.' })
+        exceptions.push({ caseId: label(r), issue: 'missing_id', detail: t('intake.ex.noCaseId'), suggestedAction: 'Add an identifier in the file; the row was not imported.' })
         return
       }
       if (TOTAL_ROW.test(id)) {
@@ -173,7 +174,7 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
       id = id.replace(/^(\d+)\.0+$/, '$1')
       if (seen.has(id)) {
         base.duplicates += 1
-        exceptions.push({ caseId: id, issue: 'duplicate_id', detail: `The identifier ${id} appears more than once; the first row was kept.`, suggestedAction: 'Remove the repeated rows or check the identifiers.' })
+        exceptions.push({ caseId: id, issue: 'duplicate_id', detail: t('intake.ex.dupCase', { id }), suggestedAction: 'Remove the repeated rows or check the identifiers.' })
         return
       }
       seen.add(id)
@@ -186,7 +187,7 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
       if (wt.name !== null) c.workTypeName = wt.name
       else if (wt.unknown !== null) {
         markUnknown(tally, 'workType', wt.unknown)
-        exceptions.push({ caseId: id, issue: 'unknown_work_type', detail: `The category "${wt.unknown}" is not mapped to a work type.`, suggestedAction: 'Map the category to a work type; the case waits in review until then.' })
+        exceptions.push({ caseId: id, issue: 'unknown_work_type', detail: t('intake.ex.unknownType', { name: wt.unknown }), suggestedAction: 'Map the category to a work type; the case waits in review until then.' })
       }
       if (wtSource !== undefined) c.workType = wtSource
 
@@ -208,8 +209,8 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
       if (place !== null) c.place = place
       else {
         base.unresolved += 1
-        const given = [areas[0], postal, address].filter((x) => x !== undefined).join(' / ') || 'nothing'
-        exceptions.push({ caseId: id, issue: 'no_location', detail: `The location (${given}) is not in the place table.`, suggestedAction: 'Add the place or an alias for it in the site set-up.' })
+        const given = [areas[0], postal, address].filter((x) => x !== undefined).join(' / ') || t('intake.ex.nothing')
+        exceptions.push({ caseId: id, issue: 'no_location', detail: t('intake.ex.noLocation', { given }), suggestedAction: 'Add the place or an alias for it in the site set-up.' })
       }
 
       const st = mapStatus(profile, text(row, 'status'))
@@ -244,12 +245,12 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
     if (profile.kind === 'technicians') {
       const name = text(row, 'name')
       if (name === undefined) {
-        exceptions.push({ caseId: label(r), issue: 'missing_id', detail: 'The row has no technician name.', suggestedAction: 'Add a name in the file; the row was not imported.' })
+        exceptions.push({ caseId: label(r), issue: 'missing_id', detail: t('intake.ex.noTechName'), suggestedAction: 'Add a name in the file; the row was not imported.' })
         return
       }
       if (seen.has(normaliseName(name))) {
         base.duplicates += 1
-        exceptions.push({ caseId: name, issue: 'duplicate_id', detail: `The name ${name} appears more than once; the first row was kept.`, suggestedAction: 'Make the names unique.' })
+        exceptions.push({ caseId: name, issue: 'duplicate_id', detail: t('intake.ex.dupTech', { name }), suggestedAction: 'Make the names unique.' })
         return
       }
       seen.add(normaliseName(name))
@@ -257,45 +258,45 @@ export function applyProfile(table: SourceTable, profile: MappingProfile, site: 
       for (const f of cols.keys()) if (first(row, f) !== undefined) markFilled(tally, f)
       const sk = mapSkills(profile, site, all(row, 'skills'))
       for (const u of sk.unknown) markUnknown(tally, 'skill', u)
-      const t: ImportedTechnician = { name, skills: sk.skills, active: parseActive(first(row, 'active')) }
+      const tech: ImportedTechnician = { name, skills: sk.skills, active: parseActive(first(row, 'active')) }
       const from = date(row, 'leaveFrom', name)
-      if (from !== undefined) t.leaveFrom = from
+      if (from !== undefined) tech.leaveFrom = from
       const to = date(row, 'leaveTo', name)
-      if (to !== undefined) t.leaveTo = to
+      if (to !== undefined) tech.leaveTo = to
       for (const side of ['start', 'end'] as const) {
         const area = text(row, `${side}Area`)
         const latitude = number(row, `${side}Latitude`)
         const longitude = number(row, `${side}Longitude`)
         if (area === undefined && latitude === undefined && longitude === undefined) continue
         const p = resolveLocation({ area, latitude, longitude }, site, created).place
-        if (p !== null) t[`${side}Place`] = p
-        else exceptions.push({ caseId: name, issue: 'no_location', detail: `The ${side} place (${area ?? 'coordinates'}) is not in the place table.`, suggestedAction: 'Add the place in the site set-up; the technician starts and ends at the base until then.' })
+        if (p !== null) tech[`${side}Place`] = p
+        else exceptions.push({ caseId: name, issue: 'no_location', detail: t(side === 'start' ? 'intake.ex.techStart' : 'intake.ex.techEnd', { area: area ?? t('intake.ex.coordinates') }), suggestedAction: 'Add the place in the site set-up; the technician starts and ends at the base until then.' })
       }
       const clock = parseClock(first(row, 'shiftStart'))
-      if (clock !== undefined) t.shiftStart = clock
+      if (clock !== undefined) tech.shiftStart = clock
       const hours = number(row, 'shiftHours')
-      if (hours !== undefined) t.shiftHours = hours
+      if (hours !== undefined) tech.shiftHours = hours
       const brk = number(row, 'breakMin')
-      if (brk !== undefined) t.breakMin = brk
-      out.technicians.push(t)
+      if (brk !== undefined) tech.breakMin = brk
+      out.technicians.push(tech)
       return
     }
 
     // places
     const name = text(row, 'area')
     if (name === undefined) {
-      exceptions.push({ caseId: label(r), issue: 'missing_id', detail: 'The row has no place name.', suggestedAction: 'Add a name in the file; the row was not imported.' })
+      exceptions.push({ caseId: label(r), issue: 'missing_id', detail: t('intake.ex.noPlaceName'), suggestedAction: 'Add a name in the file; the row was not imported.' })
       return
     }
     if (placeNames.has(normaliseName(name))) {
       base.duplicates += 1
-      exceptions.push({ caseId: name, issue: 'duplicate_id', detail: `The place ${name} appears more than once; the first row was kept.`, suggestedAction: 'Make the place names unique.' })
+      exceptions.push({ caseId: name, issue: 'duplicate_id', detail: t('intake.ex.dupPlace', { name }), suggestedAction: 'Make the place names unique.' })
       return
     }
     const lat = number(row, 'latitude')
     const lon = number(row, 'longitude')
     if (lat === undefined || lon === undefined || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
-      exceptions.push({ caseId: name, issue: 'no_location', detail: `The place ${name} has no usable coordinates.`, suggestedAction: 'Add latitude and longitude in decimal degrees.' })
+      exceptions.push({ caseId: name, issue: 'no_location', detail: t('intake.ex.noCoords', { name }), suggestedAction: 'Add latitude and longitude in decimal degrees.' })
       return
     }
     placeNames.add(normaliseName(name))
