@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { PlanInput, PlanResult } from '../engine'
+import { formatNumber, t, tn } from '../i18n'
 import type { ChangeNote } from './useDemoPlan'
 import { dayAxis, lanesForDay, type Block, type Lane } from './viewModel'
 
@@ -12,8 +13,7 @@ interface BoardProps {
   onToggle: (tech: number) => void
 }
 
-const hoursText = (minutes: number): string => (minutes / 60).toFixed(1)
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
+const hoursText = (minutes: number): string => formatNumber(minutes / 60, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 /** The dispatch board: one lane per technician across the working day, built from blocks sized by real minutes. */
 export function Board({ input, result, day, change, busy, onToggle }: BoardProps) {
@@ -24,11 +24,11 @@ export function Board({ input, result, day, change, busy, onToggle }: BoardProps
   const pct = (minute: number): number => ((minute - axis.startMin) / span) * 100
 
   return (
-    <section className="board" aria-label="Technicians and their day">
+    <section className="board" aria-label={t('board.aria')}>
       <div className="axis" aria-hidden="true">
-        {axis.ticks.slice(0, -1).map((t) => (
-          <span key={t} className="tick" style={{ left: `${pct(t)}%` }}>
-            {String(Math.floor(t / 60)).padStart(2, '0')}
+        {axis.ticks.slice(0, -1).map((tick) => (
+          <span key={tick} className="tick" style={{ insetInlineStart: `${pct(tick)}%` }}>
+            {String(Math.floor(tick / 60)).padStart(2, '0')}
           </span>
         ))}
       </div>
@@ -49,12 +49,12 @@ export function Board({ input, result, day, change, busy, onToggle }: BoardProps
                     type="checkbox"
                     role="switch"
                     checked={lane.active}
-                    aria-label={`${lane.name} active`}
+                    aria-label={t('board.switchAria', { name: lane.name })}
                     disabled={busy}
                     onChange={() => onToggle(lane.tech)}
                   />
                   <span className="track" aria-hidden="true" />
-                  <span className="switch-text">Active</span>
+                  <span className="switch-text">{t('board.active')}</span>
                 </label>
               </div>
               <LaneBar lane={lane} input={input} pct={pct} expanded={expanded} onOpen={() => setOpen(expanded ? null : lane.tech)} />
@@ -71,7 +71,7 @@ export function Board({ input, result, day, change, busy, onToggle }: BoardProps
                         </p>
                         <p className="stop-why">{s.why}</p>
                       </div>
-                      <span className="stop-leg">{Math.round(s.travelMin)} min driving before this stop</span>
+                      <span className="stop-leg">{t('board.legLabel', { min: formatNumber(Math.round(s.travelMin)) })}</span>
                     </li>
                   ))}
                 </ol>
@@ -85,9 +85,9 @@ export function Board({ input, result, day, change, busy, onToggle }: BoardProps
 }
 
 function laneMeta(lane: Lane): string {
-  if (!lane.active) return 'Switched off'
-  if (lane.stops.length === 0) return 'No visits'
-  return `${plural(lane.stops.length, 'stop', 'stops')}, ${hoursText(lane.serviceMin)} h on site, ${hoursText(lane.travelMin)} h driving`
+  if (!lane.active) return t('board.off')
+  if (lane.stops.length === 0) return t('board.noVisits')
+  return tn('board.meta', lane.stops.length, { onsite: hoursText(lane.serviceMin), drive: hoursText(lane.travelMin) })
 }
 
 interface LaneBarProps {
@@ -100,7 +100,7 @@ interface LaneBarProps {
 
 function LaneBar({ lane, input, pct, expanded, onOpen }: LaneBarProps) {
   if (lane.stops.length === 0) {
-    return <div className="bar bar-empty">{lane.active ? 'No visits this day' : 'Switched off'}</div>
+    return <div className="bar bar-empty">{lane.active ? t('board.noVisitsDay') : t('board.off')}</div>
   }
   // The visit number of each work block: how many work blocks come up to and including it.
   const visitAt: number[] = []
@@ -114,11 +114,11 @@ function LaneBar({ lane, input, pct, expanded, onOpen }: LaneBarProps) {
       type="button"
       className="bar"
       aria-expanded={expanded}
-      aria-label={`${lane.name}: ${laneMeta(lane)}. ${expanded ? 'Hide' : 'Show'} the stops.`}
+      aria-label={t('board.barAria', { name: lane.name, meta: laneMeta(lane), action: expanded ? t('board.hideStops') : t('board.showStops') })}
       onClick={onOpen}
     >
       {lane.blocks.map((b: Block, i) => {
-        const style = { left: `${pct(b.startMin)}%`, width: `${pct(b.endMin) - pct(b.startMin)}%` }
+        const style = { insetInlineStart: `${pct(b.startMin)}%`, width: `${pct(b.endMin) - pct(b.startMin)}%` }
         if (b.kind === 'work') {
           const name = input.workTypes[b.workType ?? 0].name
           return (

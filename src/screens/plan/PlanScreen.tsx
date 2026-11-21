@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo, useRef, useState } from 'react'
-import type { ChangeNote } from '../../demo/useDemoPlan'
 import { Board } from '../../demo/Board'
+import { changeText } from '../../demo/changeText'
 import { daysWithVisits, summarise } from '../../demo/viewModel'
+import { formatNumber, t, tn } from '../../i18n'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { setBase, toggleTechnician } from '../setup/setupActions'
 import { baseAdvice, nothingPlannedHint, prepare } from './planData'
@@ -12,12 +13,7 @@ import '../../demo/demo.css'
 
 const DemoPage = lazy(() => import('../../demo/DemoPage').then((m) => ({ default: m.DemoPage })))
 
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`
-
-function changeText(c: ChangeNote): string {
-  const moved = c.moved === 0 ? 'No case moved.' : `${plural(c.moved, 'case', 'cases')} moved.`
-  return `${c.techName} switched ${c.switchedOn ? 'on' : 'off'}. ${moved}`
-}
+const hours = (n: number): string => formatNumber(n, { minimumFractionDigits: 0, maximumFractionDigits: 1 })
 
 export default function PlanScreen() {
   const { workspace, update } = useWorkspace()
@@ -36,9 +32,9 @@ export default function PlanScreen() {
     return (
       <div className="stack">
         <div className="screen" style={{ paddingBottom: 0 }}>
-          <button type="button" className="btn" onClick={() => setDemo(false)}>Back to my plan</button>
+          <button type="button" className="btn" onClick={() => setDemo(false)}>{t('plan.demoBack')}</button>
         </div>
-        <Suspense fallback={<p className="screen muted">Loading…</p>}><DemoPage /></Suspense>
+        <Suspense fallback={<p className="screen muted">{t('common.loading')}</p>}><DemoPage /></Suspense>
       </div>
     )
   }
@@ -46,14 +42,14 @@ export default function PlanScreen() {
   if (!prepared.ok) {
     return (
       <section className="screen">
-        <h1 className="screen-title" tabIndex={-1}>Plan</h1>
+        <h1 className="screen-title" tabIndex={-1}>{t('plan.title')}</h1>
         <div className="empty">
           <h2>{prepared.title}</h2>
           <p>{prepared.text}</p>
           <div className="row" style={{ marginTop: 16 }}>
             <a className="btn btn-primary" href={prepared.action.href}>{prepared.action.label}</a>
-            <a className="btn" href="#/route">I have a route file</a>
-            <button type="button" className="btn" onClick={() => setDemo(true)}>See the demo with invented data</button>
+            <a className="btn" href="#/route">{t('plan.routeFile')}</a>
+            <button type="button" className="btn" onClick={() => setDemo(true)}>{t('plan.seeDemo')}</button>
           </div>
         </div>
       </section>
@@ -69,7 +65,7 @@ export default function PlanScreen() {
   }
   const onToggle = (i: number) => {
     const name = prepared.input.technicians[i].name
-    const tech = workspace.technicians.find((t) => t.name === name)
+    const tech = workspace.technicians.find((x) => x.name === name)
     note.current = { techName: name, switchedOn: tech?.active !== true }
     update((w) => toggleTechnician(w, name))
   }
@@ -80,60 +76,64 @@ export default function PlanScreen() {
     <div className="page">
       <header className="top">
         <div>
-          <h1 tabIndex={-1}>Plan</h1>
+          <h1 tabIndex={-1}>{t('plan.title')}</h1>
           {summary !== null ? (
             <p className="lede">
-              {plural(summary.scheduled, 'case', 'cases')} planned over {plural(summary.days, 'working day', 'working days')}
-              {summary.unscheduled > 0 && `, ${summary.unscheduled} not planned`}. {summary.techniciansUsed} of {summary.techniciansTotal} technicians
-              work. {summary.travelHours} hours of driving, {summary.onSiteHours} hours on site. Starting {prepared.planStart}.
+              {t('plan.lede', {
+                cases: tn('plan.cases', summary.scheduled),
+                days: tn('plan.workingDays', summary.days),
+                left: summary.unscheduled > 0 ? t('plan.left', { count: formatNumber(summary.unscheduled) }) : '',
+                used: formatNumber(summary.techniciansUsed),
+                total: formatNumber(summary.techniciansTotal),
+                drive: hours(summary.travelHours),
+                onsite: hours(summary.onSiteHours),
+                start: prepared.planStart,
+              })}
             </p>
           ) : (
-            <p className="lede">{error === null ? 'Planning…' : ''}</p>
+            <p className="lede">{error === null ? t('plan.planning') : ''}</p>
           )}
         </div>
       </header>
 
-      {error !== null && <p className="error" role="alert">The plan could not be made. {error}</p>}
+      {error !== null && <p className="error" role="alert">{t('plan.error', { error })}</p>}
 
       {advice !== null && (
         <div className="alert alert-note" role="status">
-          <p>
-            The base location of your centre is {advice.nearestKm} km from the nearest case, so no visit fits in a day.
-            Put the base in the middle of your cases, or set it yourself in Set-up.
-          </p>
+          <p>{t('plan.baseFar', { km: formatNumber(advice.nearestKm) })}</p>
           <div className="row" style={{ marginTop: 8 }}>
-            <button type="button" className="btn btn-primary" onClick={putBaseInMiddle}>Put the base in the middle of my cases</button>
-            <a className="btn" href="#/setup">Open set-up</a>
+            <button type="button" className="btn btn-primary" onClick={putBaseInMiddle}>{t('plan.baseMiddle')}</button>
+            <a className="btn" href="#/setup">{t('plan.openSetup')}</a>
           </div>
         </div>
       )}
 
       {advice === null && summary !== null && summary.scheduled === 0 && (
-        <p className="alert alert-note" role="status">{nothingPlannedHint(prepared.input)} <a href="#/setup">Open set-up</a></p>
+        <p className="alert alert-note" role="status">{nothingPlannedHint(prepared.input)} <a href="#/setup">{t('plan.openSetup')}</a></p>
       )}
 
       {input !== null && result !== null && day !== undefined && (
         <>
-          <div className="days" role="group" aria-label="Choose a day">
+          <div className="days" role="group" aria-label={t('plan.chooseDay')}>
             {days.map((d) => (
               <button key={d.day} type="button" className="day" aria-pressed={d.day === day} onClick={() => setPicked(d.day)}>
                 <span className="day-name">{d.weekday}</span>
                 <span className="day-date">{d.date}</span>
-                <span className="day-count">{plural(d.visits, 'visit', 'visits')}</span>
+                <span className="day-count">{tn('plan.visits', d.visits)}</span>
               </button>
             ))}
           </div>
 
-          <ul className="legend" aria-label="Colours">
+          <ul className="legend" aria-label={t('plan.colours')}>
             {input.workTypes.map((w, i) => (
               <li key={w.name}><span className={`swatch w${i % 6}`} aria-hidden="true" />{w.name}</li>
             ))}
-            <li><span className="swatch travel" aria-hidden="true" />Driving</li>
-            <li><span className="swatch break" aria-hidden="true" />Break</li>
+            <li><span className="swatch travel" aria-hidden="true" />{t('plan.driving')}</li>
+            <li><span className="swatch break" aria-hidden="true" />{t('plan.break')}</li>
           </ul>
 
           <p className="change" role="status" aria-live="polite">
-            {change !== null ? changeText(change) : 'Switch a technician off to see the plan change.'}
+            {change !== null ? changeText(change) : t('plan.switchHint')}
           </p>
 
           <Board input={input} result={result} day={day} change={change} busy={busy} onToggle={onToggle} />
@@ -145,18 +145,18 @@ export default function PlanScreen() {
       )}
 
       {result !== null && result.unscheduled.length > 0 && (
-        <section className="stack-tight" aria-label="Cases not planned" style={{ marginTop: 24 }}>
-          <h2 className="step-heading">Not planned ({result.unscheduled.length})</h2>
+        <section className="stack-tight" aria-label={t('plan.notPlanned.aria')} style={{ marginTop: 24 }}>
+          <h2 className="step-heading">{t('plan.notPlanned.title', { count: formatNumber(result.unscheduled.length) })}</h2>
           <ul className="issues">
             {result.unscheduled.slice(0, 20).map((u) => <li key={u.id}><b>{u.id}</b>: {u.reason}</li>)}
           </ul>
-          {result.unscheduled.length > 20 && <p className="muted small">And {result.unscheduled.length - 20} more.</p>}
+          {result.unscheduled.length > 20 && <p className="muted small">{t('plan.more', { count: formatNumber(result.unscheduled.length - 20) })}</p>}
         </section>
       )}
 
       {leftOut > 0 && (
         <p className="muted" style={{ marginTop: 24 }}>
-          Left out of the plan: {left.hold} on hold, {left.review} in review, {left.noPlace} without a known place. <a href="#/data">See the data</a>.
+          {t('plan.leftOut', { hold: formatNumber(left.hold), review: formatNumber(left.review), noPlace: formatNumber(left.noPlace) })} <a href="#/data">{t('plan.seeData')}</a>
         </p>
       )}
     </div>
