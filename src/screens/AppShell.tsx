@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useWorkspace } from '../workspace/useWorkspace'
+import { BackupNotice } from './BackupNotice'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
 import { UpdateBanner } from './UpdateBanner'
 import './shell.css'
@@ -48,6 +49,7 @@ export function AppShell() {
         </p>
       )}
       <UpdateBanner />
+      <BackupNotice />
       <nav className="shell-nav" aria-label="Main">
         <ul>
           {TABS.map((t) => (

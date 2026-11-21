@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { applyProfile, type IssueCode } from '../../intake/map/apply'
 import { applyImport, previewImport } from '../../workspace/actions'
 import { useWorkspace } from '../../workspace/useWorkspace'
+import { askToKeepData } from '../files'
 import { labelOf } from './importFlow'
 import type { StepProps } from './StepProps'
 
@@ -42,6 +43,7 @@ export function CheckStep({ flow, dispatch, onDone }: CheckProps) {
 
   const run = () => {
     update((w) => applyImport(w, imported, profile, flow.fileName, today).workspace)
+    askToKeepData()
     onDone(summary)
     dispatch({ type: 'imported' })
   }

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { parseSite, serializeSite } from '../../intake/site/site'
-import { parseWorkspace, serializeWorkspace } from '../../workspace/backup'
+import { parseWorkspace } from '../../workspace/backup'
 import { promptInstall } from '../../pwa/register'
 import { usePwa } from '../../pwa/usePwa'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
-import { downloadText, readText, stamp } from '../files'
+import { downloadText, readText, saveBackupFile, stamp } from '../files'
 import { replaceSite } from './setupActions'
 
 type Pending = { kind: 'restore'; workspace: Workspace; fileName: string } | { kind: 'delete' } | null
@@ -69,7 +69,7 @@ export function DataSection() {
         <b>A backup of everything</b>
         <p className="muted small">The set-up plus all cases, technicians and saved column matchings. It contains your case data, so keep it private.</p>
         <div className="row">
-          <button type="button" className="btn" onClick={() => { downloadText(`backup-${stamp()}.json`, serializeWorkspace(workspace)); say('Saved a backup of everything.') }}>Save a backup</button>
+          <button type="button" className="btn" onClick={() => { saveBackupFile(workspace, update); say('Saved a backup of everything.') }}>Save a backup</button>
           <label className="btn" style={{ cursor: 'pointer' }}>
             Restore a backup
             <input type="file" accept=".json,application/json" className="visually-hidden" onChange={(e) => { void chooseBackup(e.target.files?.[0]); e.target.value = '' }} />
