@@ -28,7 +28,12 @@ function boot() {
       return {
         async addAll(urls: string[]) {
           // As a real server may answer: a file that varies by Origin.
-          for (const u of urls) entries.set(new URL(u, ORIGIN).href, new Response('cached ' + u, { headers: { Vary: 'Origin' } }))
+          for (const u of urls) {
+            const res = new Response('cached ' + u, { headers: { Vary: 'Origin' } })
+            // Cloudflare answers /index.html with a redirect to /, and the stored copy remembers it.
+            if (u === '/index.html') Object.defineProperty(res, 'redirected', { value: true })
+            entries.set(new URL(u, ORIGIN).href, res)
+          }
         },
         async match(req: { url: string; headers?: { origin?: string } } | string, opts?: { ignoreSearch?: boolean; ignoreVary?: boolean }) {
           const want = new URL(typeof req === 'string' ? req : req.url, ORIGIN)
@@ -38,7 +43,9 @@ function boot() {
             const have = new URL(href)
             if (have.pathname !== want.pathname || (opts?.ignoreSearch !== true && have.search !== want.search)) continue
             if (opts?.ignoreVary !== true && res.headers.get('vary') === 'Origin' && origin !== undefined) continue
-            return res.clone()
+            const copy = res.clone()
+            if (res.redirected) Object.defineProperty(copy, 'redirected', { value: true })
+            return copy
           }
           return undefined
         },
@@ -111,6 +118,15 @@ describe('service worker', () => {
     const res = await w.run('fetch', { request: w.get('/anything/here', { mode: 'navigate' }) })
     // The start address, not /index.html: a host may redirect /index.html to /, and a redirected answer cannot open a page.
     expect(await res?.text()).toBe('cached /')
+  })
+
+  it('never answers with a redirected copy, which a browser refuses for a page (a host may redirect /index.html to /)', async () => {
+    const w = boot()
+    await w.run('install')
+    const res = await w.run('fetch', { request: w.get('/index.html', { mode: 'navigate' }) })
+    expect(res?.redirected).toBe(false)
+    expect(res?.status).toBe(200)
+    expect(await res?.text()).toBe('cached /index.html')
   })
 
   it('asks the network for a file it does not have', async () => {

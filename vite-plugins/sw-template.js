@@ -34,15 +34,22 @@ self.addEventListener('fetch', (event) => {
 // that the page loads with an Origin header (every module script does) would not find the copy stored without one.
 const LOOK = { ignoreSearch: true, ignoreVary: true }
 
+// A browser refuses a redirected answer for a page, and a host may redirect /index.html to /, so the stored copy of
+// /index.html remembers a redirect. Give it out as a plain copy.
+async function clean(response) {
+  if (!response.redirected) return response
+  return new Response(await response.blob(), { status: response.status, statusText: response.statusText, headers: response.headers })
+}
+
 async function answer(request) {
   const cache = await caches.open(CACHE)
   const stored = await cache.match(request, LOOK)
-  if (stored !== undefined) return stored
+  if (stored !== undefined) return clean(stored)
   // A page address the app does not have as a file (a reload on any screen) still opens the app. The start address
   // is used, not /index.html: a host may redirect /index.html to /, and a redirected answer cannot open a page.
   if (request.mode === 'navigate') {
     const page = await cache.match('/', LOOK)
-    if (page !== undefined) return page
+    if (page !== undefined) return clean(page)
   }
   return fetch(request)
 }
