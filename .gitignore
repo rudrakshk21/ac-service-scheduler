@@ -29,6 +29,9 @@ dist-ssr
 # Real data exported for local tests only (never commit)
 /reference-local/
 
+# Invented sample files made by npm run sample-data
+/sample-data/
+
 # Test coverage reports
 coverage
 

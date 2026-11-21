@@ -106,4 +106,4 @@ names or addresses into an issue**; describe the shape of the data, or invent a 
 
 ## Licence
 
-No licence has been chosen yet; ask the maintainer before you rely on one.
+The project is under the [MIT licence](LICENSE). By contributing you agree that your contribution is under it too.

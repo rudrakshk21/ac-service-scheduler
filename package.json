@@ -2,6 +2,7 @@
   "name": "ac-service-scheduler",
   "private": true,
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +12,7 @@
     "serve:dist": "node scripts/serve-dist.mjs",
     "check:size": "node scripts/check-size.mjs",
     "check:privacy": "node scripts/check-privacy.mjs",
+    "sample-data": "node scripts/make-sample-data.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

@@ -38,6 +38,9 @@ technician their day.
   the Plan screen says so and warns that planning can take much longer, most of all on a phone.
 - **A privacy notice in the app** (Set-up, Your data and files): what is kept, where, for how long and who can see it.
 - **Guides.** `docs/phone-guide.md`, `docs/privacy.md`, `CONTRIBUTING.md`, and a guide to adding a language.
+- **MIT licence.**
+- **For testing.** `npm run sample-data` writes invented sample files of any size, and `docs/phone-test-report.md` is
+  the form for the real-phone test (scenarios W, X, Y and S).
 
 ### Changed
 

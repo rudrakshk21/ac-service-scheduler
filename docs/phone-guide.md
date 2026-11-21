@@ -104,6 +104,8 @@ Checked in Chrome at phone widths (375 and 320 px): every screen, the installed 
 server stopped, the update banner, a route file made in one browser and opened in another with no connection, and an
 accessibility audit of every screen (axe-core, the WCAG 2.2 AA rules) with no remaining findings.
 
+A form for the real-phone test, with the exact steps and limits, is [phone-test-report.md](phone-test-report.md).
+
 **Not yet checked, and needed before relying on it in the field:** installing and using it on a real Android phone, in
 Chrome, Samsung Internet and Firefox; using it with TalkBack; and Safari on an iPhone, which this guide only mentions.
 Planning has been timed only on a laptop (about a second for 2,000 cases and 100 technicians); on a phone it will be
