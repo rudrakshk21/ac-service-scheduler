@@ -4,6 +4,7 @@ import { memoryStore, openIndexedStore, type KeyValueStore } from '../../workspa
 import { readText } from '../files'
 import { longDate, madeText } from './format'
 import { addPack, loadPacks, removePack, savePacks } from './packStore'
+import { PackMap } from './PackMap'
 import { RouteList } from './RouteList'
 import './route.css'
 
@@ -90,6 +91,7 @@ export default function RouteScreen() {
           {late.past && (
             <p className="alert" role="alert">This route was for {longDate(pack.validFor)}, {daysText(late.daysAgo)}. Ask for a new file if you need a later day.</p>
           )}
+          <PackMap pack={pack} />
           <RouteList pack={pack} />
         </>
       )}

@@ -1,0 +1,87 @@
+/* The schematic map. Technician colours differ from the work-type colours of the board; a label on every marker means colour is never the only clue. */
+:root {
+  --t0: #2468b5;
+  --t1: #c2610f;
+  --t2: #6b4bb0;
+  --t3: #0b7a80;
+  --t4: #b8325a;
+  --t5: #7a6a00;
+  --t6: #8a5a3c;
+  --t7: #3f6f1e;
+  --on-map: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --t0: #5b9be6;
+    --t1: #e8923c;
+    --t2: #a58bea;
+    --t3: #3dbdc4;
+    --t4: #ee6f95;
+    --t5: #d4c04a;
+    --t6: #c99371;
+    --t7: #86c460;
+    --on-map: #0b1519;
+  }
+}
+
+.map-c0 { --c: var(--t0); }
+.map-c1 { --c: var(--t1); }
+.map-c2 { --c: var(--t2); }
+.map-c3 { --c: var(--t3); }
+.map-c4 { --c: var(--t4); }
+.map-c5 { --c: var(--t5); }
+.map-c6 { --c: var(--t6); }
+.map-c7 { --c: var(--t7); }
+
+.map-wrap { display: grid; gap: 8px; min-width: 0; }
+
+.map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  touch-action: pan-y;
+}
+/* Zoomed in, a drag moves the map; at the whole map a drag still scrolls the page. */
+.map-svg.zoomed { touch-action: none; cursor: grab; }
+
+.map-line { fill: none; stroke: var(--c); stroke-linejoin: round; stroke-linecap: round; }
+.map-leg { fill: none; stroke: var(--c); stroke-linecap: round; opacity: 0.6; }
+
+.map-stop { cursor: pointer; outline: none; }
+.map-stop .dot { fill: var(--c); stroke: var(--surface); }
+.map-stop .ring { fill: none; stroke: var(--ink); opacity: 0; }
+.map-stop[aria-pressed='true'] .ring, .map-stop:focus-visible .ring { opacity: 1; }
+.map-stop text { fill: var(--on-map); font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.map-stop .hit { fill: transparent; }
+
+/* A halo in the surface colour keeps a label readable where a line or marker passes behind it. */
+.map-base .shape { fill: var(--ink); stroke: var(--surface); stroke-width: 2px; }
+.map-base text { fill: var(--ink); font-weight: 700; text-anchor: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 0.35em; stroke-linejoin: round; }
+
+.map-scale line { stroke: var(--ink); stroke-linecap: round; }
+.map-scale text { fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 0.35em; stroke-linejoin: round; }
+
+.map-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.map-tools .btn { min-width: 48px; }
+
+.map-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0; margin: 0; }
+.map-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.map-swatch {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 14px;
+  background: var(--c);
+  color: var(--on-map);
+  font-weight: 700;
+}
+
+@media print {
+  .print-area .map-svg { border-color: #888; background: #fff; }
+}
