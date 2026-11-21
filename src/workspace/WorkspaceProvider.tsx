@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { t } from '../i18n'
 import { memoryStore, openIndexedStore, type KeyValueStore } from './db'
 import { WorkspaceContext, type StorageStatus } from './useWorkspace'
 import { emptyWorkspace, loadWorkspace, saveWorkspace, WorkspaceError, type Workspace } from './workspace'
-
-const NOT_KEPT = 'Your data cannot be kept in this browser (a private window, or storage is blocked). It will be lost when you close this page.'
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace>(() => emptyWorkspace())
@@ -26,7 +25,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         // Data that is damaged or from a newer version is never overwritten: work in memory instead.
         store.current = memoryStore()
         next = 'memory'
-        note = e instanceof WorkspaceError ? `${e.message} Changes made now will not be saved.` : NOT_KEPT
+        note = e instanceof WorkspaceError ? t('workspace.notSaved', { message: e.message }) : t('workspace.notKept')
       }
       if (!live) return
       latest.current = loaded ?? emptyWorkspace()
@@ -54,7 +53,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       },
       () => {
         setStatus('memory')
-        setMessage(NOT_KEPT)
+        setMessage(t('workspace.notKept'))
       },
     )
   }, [])

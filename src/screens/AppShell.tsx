@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { t } from '../i18n'
+import { LanguageSelect } from '../i18n/LanguageSelect'
 import { useWorkspace } from '../workspace/useWorkspace'
 import { BackupNotice } from './BackupNotice'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
@@ -43,7 +45,8 @@ export function AppShell() {
   return (
     <div className="shell">
       <header className="shell-top">
-        <span className="brand">AC Service Scheduler</span>
+        <span className="brand">{t('app.name')}</span>
+        <LanguageSelect />
       </header>
       {status === 'memory' && message !== null && (
         <p className="banner" role="status">
@@ -52,19 +55,19 @@ export function AppShell() {
       )}
       <UpdateBanner />
       <BackupNotice />
-      <nav className="shell-nav" aria-label="Main">
+      <nav className="shell-nav" aria-label={t('nav.main')}>
         <ul>
-          {TABS.map((t) => (
-            <li key={t.id}>
-              <a href={hashFor(t.id)} aria-current={t.id === tab ? 'page' : undefined}>
-                {t.label}
+          {TABS.map((item) => (
+            <li key={item.id}>
+              <a href={hashFor(item.id)} aria-current={item.id === tab ? 'page' : undefined}>
+                {t(item.labelKey)}
               </a>
             </li>
           ))}
         </ul>
       </nav>
       <main className="shell-main" ref={main} tabIndex={-1}>
-        <Suspense fallback={<p className="screen muted">Loading…</p>}>
+        <Suspense fallback={<p className="screen muted">{t('common.loading')}</p>}>
           <Screen tab={tab} />
         </Suspense>
       </main>

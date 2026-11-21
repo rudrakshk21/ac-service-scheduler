@@ -41,7 +41,21 @@
 }
 
 .shell-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 16px 6px;
+}
+
+.lang-select select {
+  min-height: 48px;
+  max-width: 12rem;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
 }
 
 .brand {

@@ -1,0 +1,19 @@
+{
+  "app.name": "AC Service Scheduler",
+  "common.loading": "Loading…",
+  "lang.label": "Language",
+  "nav.main": "Main",
+  "nav.plan": "Plan",
+  "nav.data": "Data",
+  "nav.import": "Import",
+  "nav.setup": "Set-up",
+  "nav.route": "Route",
+  "update.ready": "A new version of the app is ready.",
+  "update.reload": "Reload",
+  "backup.notice.one": "You have not saved a backup for {count} day. Your data lives only in this browser.",
+  "backup.notice.other": "You have not saved a backup for {count} days. Your data lives only in this browser.",
+  "backup.save": "Save a backup",
+  "backup.later": "Later",
+  "workspace.notKept": "Your data cannot be kept in this browser (a private window, or storage is blocked). It will be lost when you close this page.",
+  "workspace.notSaved": "{message} Changes made now will not be saved."
+}
