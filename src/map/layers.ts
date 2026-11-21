@@ -32,34 +32,57 @@ export interface MapData {
   layers: MapLayer[]
 }
 
+/** A label has to fit in a marker beside the visit number: three letters at most. */
+const MAX_LABEL_LETTERS = 3
+
+/** A, B, … Z, AA, AB, …: the n-th spare label (from 0). */
+function spareLabel(n: number): string {
+  let out = ''
+  for (let k = n + 1; k > 0; k = Math.floor((k - 1) / 26)) out = String.fromCharCode(65 + ((k - 1) % 26)) + out
+  return out
+}
+
 /**
- * Short, different labels for names: the first letter, lengthened for those that would be alike ("As" and "An"), and
- * numbered when the names are the same. A name without letters is labelled by its place in the list.
+ * Short, different labels for names, each at most three letters and never ending in a digit (a digit would read as
+ * the visit number that follows it). The first letter, lengthened for names that would be alike ("As" and "An"). Names
+ * that are still alike after three letters ("Technician 01", "Technician 02") each get a spare letter, A, B, C, …,
+ * which the legend explains. A name without letters is labelled by its place in the list.
  */
 export function labelsFor(names: string[]): string[] {
-  const clean = names.map((n) => n.replace(/[^\p{L}\p{N}]/gu, ''))
-  const length = clean.map(() => 1)
-  const label = (i: number): string => (clean[i] === '' ? String(i + 1) : clean[i].slice(0, length[i]).replace(/^./u, (c) => c.toLocaleUpperCase()))
-  for (let guard = 0; guard < 64; guard++) {
-    const labels = clean.map((_, i) => label(i).toLocaleLowerCase())
-    let grew = false
-    for (let i = 0; i < clean.length; i++) {
-      const clash = labels.some((l, j) => j !== i && l === labels[i])
-      if (clash && length[i] < clean[i].length) {
+  const letters = names.map((n) => Array.from(n.replace(/[^\p{L}]/gu, '')))
+  const length = letters.map(() => 1)
+  // A capital that would turn into two letters ("ß" into "SS") is left as typed, so the label keeps its length.
+  const capital = (c: string): string => (Array.from(c.toLocaleUpperCase()).length === 1 ? c.toLocaleUpperCase() : c)
+  const shown = (i: number): string => {
+    const [first = '', ...rest] = letters[i].slice(0, length[i])
+    return capital(first) + rest.join('')
+  }
+  const key = (label: string): string => label.toLocaleLowerCase()
+
+  for (let grew = true; grew; ) {
+    grew = false
+    const labels = letters.map((_, i) => shown(i))
+    for (let i = 0; i < letters.length; i++) {
+      const room = length[i] < Math.min(MAX_LABEL_LETTERS, letters[i].length)
+      if (room && labels.some((l, j) => j !== i && key(l) === key(labels[i]))) {
         length[i] += 1
         grew = true
       }
     }
-    if (!grew) break
   }
-  const out = clean.map((_, i) => label(i))
-  const seen = new Map<string, number>()
-  return out.map((l) => {
-    if (out.filter((x) => x.toLocaleLowerCase() === l.toLocaleLowerCase()).length === 1) return l
-    const n = (seen.get(l) ?? 0) + 1
-    seen.set(l, n)
-    return `${l}${n}`
-  })
+
+  const out = letters.map((l, i) => (l.length === 0 ? String(i + 1) : shown(i)))
+  const count = new Map<string, number>()
+  for (const l of out) count.set(key(l), (count.get(key(l)) ?? 0) + 1)
+  const taken = new Set(count.keys())
+  let next = 0
+  const spare = (): string => {
+    for (;;) {
+      const label = spareLabel(next++)
+      if (!taken.has(key(label))) return label
+    }
+  }
+  return out.map((l) => (count.get(key(l)) === 1 ? l : spare()))
 }
 
 /** The routes of every technician who has visits on `day`: stops in visit order, a line from start to end. */

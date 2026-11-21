@@ -1,3 +1,4 @@
+import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { plan } from '../engine/index'
 import type { StoredCase } from '../intake/import/merge'
@@ -31,11 +32,37 @@ describe('labelsFor', () => {
   })
   it('lengthens the label until each one is different', () => {
     expect(labelsFor(['Asha', 'Anil', 'Bo'])).toEqual(['As', 'An', 'B'])
-    expect(labelsFor(['Ann', 'Anna'])).toEqual(['Ann', 'Anna'])
+    expect(labelsFor(['Ann', 'Anil'])).toEqual(['Ann', 'Ani'])
   })
-  it('numbers names that are the same, so no two labels are alike', () => {
-    const labels = labelsFor(['Sam', 'Sam', 'Sam'])
-    expect(new Set(labels).size).toBe(3)
+  it('gives names that stay alike a spare letter, so no two labels are alike', () => {
+    expect(labelsFor(['Sam', 'Sam', 'Sam'])).toEqual(['A', 'B', 'C'])
+  })
+  it('keeps a label short when names only differ by a number: a label is never longer than the marker can hold', () => {
+    const labels = labelsFor(['Technician 01', 'Technician 02', 'Technician 03', 'Technician 04'])
+    expect(labels).toEqual(['A', 'B', 'C', 'D'])
+    expect(labelsFor(['Tech 1', 'Tech 10'])).toEqual(['A', 'B'])
+  })
+  it('never ends a label with a digit, which would read as the visit number that follows it', () => {
+    for (const label of labelsFor(['Team 1', 'Team 2', 'Asha 7', 'Asha 8', 'Bo'])) expect(label).not.toMatch(/\d$/)
+  })
+  it('takes a spare letter that no other label uses', () => {
+    expect(labelsFor(['Asha', 'Technician 01', 'Technician 02'])).toEqual(['A', 'B', 'C'])
+    expect(labelsFor(['B', 'Technician 01', 'Technician 02'])).toEqual(['B', 'A', 'C'])
+  })
+  it('goes on to two letters when more than 26 names are alike', () => {
+    const labels = labelsFor(Array.from({ length: 30 }, (_, i) => `Technician ${i + 1}`))
+    expect(new Set(labels).size).toBe(30)
+    expect(labels[26]).toBe('AA')
+  })
+  it('gives every label at most three characters, and no two the same, whatever the names', () => {
+    const name = fc.string({ maxLength: 14 })
+    fc.assert(
+      fc.property(fc.array(name, { maxLength: 40 }), (names) => {
+        const labels = labelsFor(names)
+        expect(new Set(labels.map((l) => l.toLocaleLowerCase())).size).toBe(names.length)
+        for (const l of labels) expect(Array.from(l).length).toBeLessThanOrEqual(3)
+      }),
+    )
   })
   it('copes with an empty name and an empty list', () => {
     expect(labelsFor([''])).toEqual(['1'])
