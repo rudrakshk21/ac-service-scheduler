@@ -1,6 +1,6 @@
 .setup-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
 .setup-nav button {
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -22,7 +22,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -31,8 +31,8 @@
 .days-off input { width: 20px; height: 20px; }
 
 /* The on/off switch, as on the plan board. */
-.switch { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; position: relative; }
-.switch input { position: absolute; opacity: 0; width: 44px; height: 44px; margin: 0; cursor: pointer; }
+.switch { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; cursor: pointer; position: relative; }
+.switch input { position: absolute; opacity: 0; width: 48px; height: 48px; margin: 0; cursor: pointer; }
 .switch .track { position: relative; width: 44px; height: 26px; border-radius: 13px; background: var(--travel, #8da0a8); transition: background 120ms; }
 .switch .track::after {
   content: '';
