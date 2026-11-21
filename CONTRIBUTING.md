@@ -10,8 +10,9 @@ to be: free to run, working on any centre's data, private by construction, and u
 2. **Any centre's data.** Nothing in the code may be specific to one company: no place, technician or work-type names.
    Everything a centre can differ in is a setting or a mapping. The only data in the repository is invented.
 3. **No real data in git, ever.** Real exports stay in `reference-local/`, which git ignores. Not even anonymised
-   copies without the data owner's written consent. `npm run check:privacy` fails the build on a local path, a person's
-   email address or a cloud-drive folder; do not work around it, remove the thing.
+   copies without the data owner's written consent. `npm run check:privacy` fails the build on a local path, a key or
+   token, a person's email address or a cloud-drive folder; do not work around it, remove the thing. To ask for support
+   for a new file layout, share its column names only, never rows.
 4. **Every visible word goes through `t()`.** See [src/i18n/README.md](src/i18n/README.md). Look at your screen with
    `?lang=xa` (accented, longer text) and `?lang=xb` (right to left): any plain English left is a word you missed.
 5. **Plans must not change by accident.** See *The engine* below.
@@ -19,6 +20,13 @@ to be: free to run, working on any centre's data, private by construction, and u
 ## Getting started
 
 [README.md](README.md) has the commands. In short: `npm ci`, then `npm run dev`.
+
+Adding something that needs no planning code:
+
+- **A language:** a JSON file and one line, see [src/i18n/README.md](src/i18n/README.md).
+- **A starter template or a mapping profile** (the column names of another system): files in the app's own formats,
+  see [src/intake/README.md](src/intake/README.md). A profile holds column names and value spellings, never case data;
+  a test checks that.
 
 ## How a change is made
 

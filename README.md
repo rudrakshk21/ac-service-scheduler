@@ -50,7 +50,7 @@ npm run dev
 | `npm test` | The tests. `npm run test:coverage` adds the coverage report (90% is the floor) |
 | `npm run lint` | Lints the code |
 | `npm run check:size` | Fails when the build passes its size budget (first download 300 KB compressed) |
-| `npm run check:privacy` | Fails when a committed file holds a local path, an email address or a cloud folder |
+| `npm run check:privacy` | Fails when a committed file holds a local path, a person's email address, a cloud folder or a key |
 | `py -m unittest discover -s reference -p "test_*.py"` | The Python reference engine's tests |
 
 The same checks run on every pull request. Opt-in measurements of planning speed:

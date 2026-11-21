@@ -1,5 +1,5 @@
 // Fails when a file that is committed to git holds something personal: a path on somebody's computer, an email address
-// of a person, a cloud-drive folder. Real data stays in the git-ignored folder reference-local/ and never enters git.
+// of a person, a cloud-drive folder, a key or token. Real data stays in the git-ignored folder reference-local/ and never enters git.
 // Usage: npm run check:privacy
 // (Node strips the types of the imported .ts file itself.)
 import { execFileSync } from 'node:child_process'
@@ -27,4 +27,4 @@ if (count > 0) {
   console.error(`\n${count} place(s) in committed files look personal. Remove them, or keep the file out of git (see .gitignore).`)
   process.exit(1)
 }
-console.log(`ok  ${files.length} committed files checked: no local paths, personal email addresses or cloud folders.`)
+console.log(`ok  ${files.length} committed files checked: no local paths, personal email addresses, cloud folders or keys.`)

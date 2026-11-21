@@ -26,6 +26,17 @@ describe('privacyFindings', () => {
     const text = 'Co-Authored-By: Someone <noreply@anthropic.com>\n123+name@users.noreply.github.com\nuser@example.com\nme@mail.example.org\nx@host.test'
     expect(privacyFindings(text)).toEqual([])
   })
+  it('finds a key or token of a common kind (SEC-3: no secret in the repository)', () => {
+    const fake = (parts: string[]): string => parts.join('')
+    expect(kinds(fake(['-----BEGIN RSA ', 'PRIVATE KEY-----']))).toEqual(['secret'])
+    expect(kinds(fake(['token = "ghp_', 'a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8"']))).toEqual(['secret'])
+    expect(kinds(fake(['key: AKIA', 'ABCDEFGHIJKLMNOP']))).toEqual(['secret'])
+    expect(kinds(fake(['x = "xoxb-', '1234567890-abcdefghij"']))).toEqual(['secret'])
+    expect(kinds(fake(['Authorization: Bearer eyJ', 'hbGciOiJIUzI1NiIsInR5cCI6IkpX.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV']))).toEqual(['secret'])
+  })
+  it('does not mistake ordinary text for a secret', () => {
+    expect(kinds('the sk-1 rule, ghp is a prefix, AKIA alone, a long-identifier-with-dashes-that-is-just-a-name-1234567890')).toEqual([])
+  })
   it('reads Windows line ends and finds several things in one text', () => {
     expect(kinds('a@b.co\r\nC:\\Users\\x\\y')).toEqual(['email address', 'local path'])
   })
