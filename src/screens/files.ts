@@ -3,7 +3,12 @@ import type { Workspace } from '../workspace/workspace'
 
 /** Offers text as a file download. Browser code: checked in the browser, not in Node. */
 export function downloadText(fileName: string, text: string, type = 'application/json'): void {
-  const url = URL.createObjectURL(new Blob([text], { type }))
+  downloadBlob(fileName, new Blob([text], { type }))
+}
+
+/** Offers a file (a Blob) as a download. */
+export function downloadBlob(fileName: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
   a.download = fileName

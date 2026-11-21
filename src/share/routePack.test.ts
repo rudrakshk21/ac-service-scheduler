@@ -3,7 +3,7 @@ import { plan } from '../engine/index'
 import type { StoredCase } from '../intake/import/merge'
 import { prepare } from '../screens/plan/planData'
 import { emptyWorkspace, type Workspace } from '../workspace/workspace'
-import { buildPack, PackError, packFileName, parsePack, serialisePack, staleness, type RoutePack } from './routePack'
+import { buildPack, PackError, packFileName, parsePack, routesOfDay, serialisePack, staleness, type RoutePack } from './routePack'
 
 const stored = (id: string, over: Partial<StoredCase> = {}): StoredCase => ({
   caseId: id, workTypeName: 'Service', place: 'North', state: 'active', reportedAt: '2026-10-10', overrides: {},
@@ -126,6 +126,24 @@ describe('serialisePack and parsePack', () => {
       if (stops.length < 2) throw new Error('fixture needs two stops')
       stops[1].visit = stops[0].visit
     }, 'Two stops have the same visit number.')
+  })
+})
+
+describe('routesOfDay', () => {
+  it('lists the technicians that have visits on the day, with their names and visit counts, and no empty routes', () => {
+    const { input, result, tech, day } = fixture()
+    const routes = routesOfDay(input, result, day)
+    expect(routes.length).toBeGreaterThan(0)
+    for (const r of routes) {
+      expect(r.name).toBe(input.technicians[r.tech].name)
+      expect(r.visits).toBe(result.scheduled.filter((s) => s.tech === r.tech && s.day === day).length)
+      expect(r.visits).toBeGreaterThan(0)
+    }
+    expect(routes.map((r) => r.tech)).toContain(tech)
+  })
+  it('is empty for a day without visits', () => {
+    const { input, result } = fixture()
+    expect(routesOfDay(input, result, 1)).toEqual([])
   })
 })
 

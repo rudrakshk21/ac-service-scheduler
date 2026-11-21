@@ -68,6 +68,13 @@ export function buildPack(site: string, input: PlanInput, result: PlanResult, te
   return { packVersion: 1, site, technician: input.technicians[tech].name, date, createdAt, validFor: date, stops }
 }
 
+/** The technicians who have visits on a day, in technician order, for the buttons that make their packs and sheets. */
+export function routesOfDay(input: PlanInput, result: PlanResult, day: number): { tech: number; name: string; visits: number }[] {
+  return result.routes
+    .filter((r) => r.day === day && r.stops.length > 0)
+    .map((r) => ({ tech: r.tech, name: input.technicians[r.tech].name, visits: r.stops.length }))
+}
+
 export function serialisePack(pack: RoutePack): string {
   return JSON.stringify(pack, null, 2) + '\n'
 }

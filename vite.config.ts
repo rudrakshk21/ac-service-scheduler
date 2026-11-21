@@ -16,7 +16,7 @@ export default defineConfig({
         'src/intake/**/*.test.ts', 'src/intake/**/testing/**',
         'src/workspace/**/*.test.ts', 'src/screens/**/*.test.ts',
         // Thin browser/React glue (downloads, hooks). Checked in a real browser, not in Node; all logic they call is covered above.
-        'src/screens/files.ts', 'src/screens/plan/usePlan.ts', 'src/screens/setup/useAction.ts', 'src/workspace/useWorkspace.ts',
+        'src/screens/files.ts', 'src/share/shareFile.ts', 'src/screens/plan/usePlan.ts', 'src/screens/setup/useAction.ts', 'src/workspace/useWorkspace.ts',
       ],
       thresholds: { statements: 90, lines: 90 },
     },
