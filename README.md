@@ -30,7 +30,8 @@ either. A technician can open their day's route on a phone with no signal.
 3. **Plan** shows the schedule per day with a reason for each choice, what could not be planned and why, and the map.
 4. **Share**: route sheet, route pack, Excel or CSV. The technician opens the pack in the **Route** tab.
 
-Phones: [docs/phone-guide.md](docs/phone-guide.md). What is stored and what is not: [docs/privacy.md](docs/privacy.md).
+Phones: [docs/phone-guide.md](docs/phone-guide.md), and the form for testing on a real phone,
+[docs/phone-test-report.md](docs/phone-test-report.md). What is stored and what is not: [docs/privacy.md](docs/privacy.md).
 
 ## Running it from the source
 
@@ -51,6 +52,7 @@ npm run dev
 | `npm run lint` | Lints the code |
 | `npm run check:size` | Fails when the build passes its size budget (first download 300 KB compressed) |
 | `npm run check:privacy` | Fails when a committed file holds a local path, a person's email address, a cloud folder or a key |
+| `npm run sample-data` | Writes invented sample files (default 300 cases, 20 technicians) into `sample-data/`, for trying the app |
 | `py -m unittest discover -s reference -p "test_*.py"` | The Python reference engine's tests |
 
 The same checks run on every pull request. Opt-in measurements of planning speed:
@@ -83,4 +85,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Changes to the version are in [CHANGELOG
 
 ## Licence
 
-No licence has been chosen yet.
+[MIT](LICENSE). The planner is free to use, copy and change, including for a business, as long as the licence text stays
+with it. The sample data in the repository is invented; the licence says nothing about, and gives no right to, any
+centre's real data.
