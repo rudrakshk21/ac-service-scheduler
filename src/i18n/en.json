@@ -740,5 +740,10 @@
   "workspace.err.newer": "The saved data was made by a newer version of the app, so it was not opened and has not been changed.",
   "workspace.err.notBackup": "This file is not a backup of the app.",
   "intake.ex.row": "(row {n})",
-  "intake.ex.nothing": "nothing"
+  "intake.ex.nothing": "nothing",
+  "crash.title": "Something went wrong",
+  "crash.text": "The app hit a problem and stopped. Your data is still in this browser. Save a backup if you can, then reload the page.",
+  "crash.reload": "Reload the page",
+  "crash.backup": "Save a backup of my data",
+  "crash.details": "Technical details"
 }
