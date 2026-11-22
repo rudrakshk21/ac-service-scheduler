@@ -64,6 +64,8 @@ that the TypeScript gives the same plans.
   src/screens/plan/planSpeed.measure.test.ts` prints the planning time for centres of 500 to 10,000 cases. The target
   is 2,000 cases, 100 technicians and 30 days in 30 seconds on an ordinary laptop. The shape of the data matters:
   a centre where each technician can do two work types is about twice as costly as one skill each.
+  `src/workspace/scale.measure.test.ts` (same switch) measures a centre of 300 technicians, and a month of their report
+  files: what planning, merging reports and saving the workspace cost.
 
 ## Accessibility
 

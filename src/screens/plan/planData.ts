@@ -64,8 +64,13 @@ export function nothingPlannedHint(input: PlanInput): string {
   return t('plan.hint.generic')
 }
 
-/** The largest centre the app has been measured with (NFR-4): beyond it, the app says so instead of promising a time. */
-export const TESTED_SIZE = { cases: 2000, technicians: 100, days: 30 } as const
+/**
+ * The largest centre the app has been measured with: beyond it, the app says so instead of promising a time. NFR-4 asks for
+ * 2,000 cases, 100 technicians and 30 days; 300 technicians were measured later (src/workspace/scale.measure.test.ts: 2,000
+ * cases take about 2 s on a laptop even when every technician can do every case, and the screens, the report files and the
+ * storage were tried at that size in the browser). The 1,000-technician case is not covered (18 s and more).
+ */
+export const TESTED_SIZE = { cases: 2000, technicians: 300, days: 30 } as const
 
 /** The numbers of a centre larger than `TESTED_SIZE` in any way (technicians counted when working), or null when it is not. */
 export function sizeNotice(input: PlanInput): { cases: number; technicians: number; days: number } | null {

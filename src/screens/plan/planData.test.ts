@@ -151,21 +151,22 @@ describe('sizeNotice (NFR-4: the app states its limits for a larger data set)', 
     return input
   }
 
-  it('says nothing up to the size the app was tested with: 2,000 cases, 100 technicians, 30 days', () => {
+  it('says nothing up to the size the app was tested with: 2,000 cases, 300 technicians, 30 days', () => {
+    expect(sizeNotice(sized(2000, 300, 30))).toBeNull()
     expect(sizeNotice(sized(2000, 100, 30))).toBeNull()
     expect(sizeNotice(sized(10, 3))).toBeNull()
   })
   it('gives the numbers when there are more cases, more technicians or a longer horizon', () => {
-    expect(sizeNotice(sized(2001, 100))).toEqual({ cases: 2001, technicians: 100, days: 30 })
-    expect(sizeNotice(sized(2000, 101))).toEqual({ cases: 2000, technicians: 101, days: 30 })
-    expect(sizeNotice(sized(2000, 100, 31))).toEqual({ cases: 2000, technicians: 100, days: 31 })
+    expect(sizeNotice(sized(2001, 300))).toEqual({ cases: 2001, technicians: 300, days: 30 })
+    expect(sizeNotice(sized(2000, 301))).toEqual({ cases: 2000, technicians: 301, days: 30 })
+    expect(sizeNotice(sized(2000, 300, 31))).toEqual({ cases: 2000, technicians: 300, days: 31 })
   })
   it('counts only the technicians who are working', () => {
-    const input = sized(100, 120)
+    const input = sized(100, 330)
     input.technicians.slice(0, 30).forEach((t) => { t.active = false })
-    expect(sizeNotice(input)).toBeNull() // 90 active
+    expect(sizeNotice(input)).toBeNull() // 300 active
   })
   it('publishes the tested size, so the message and the measurements say the same', () => {
-    expect(TESTED_SIZE).toEqual({ cases: 2000, technicians: 100, days: 30 })
+    expect(TESTED_SIZE).toEqual({ cases: 2000, technicians: 300, days: 30 })
   })
 })

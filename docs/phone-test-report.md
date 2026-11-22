@@ -51,7 +51,7 @@ The live address is in the README.
 | Come back to *Plan* with nothing changed | Instant (the plan is kept) | |
 | With the larger files (2,000 cases, 100 technicians): time to "2,000 cases planned" (information, no limit) | | ___ s |
 | Did the browser close or reload the page during any of these? | No | |
-| Optional: with `--cases 2100 --technicians 100`, does the *Plan* screen show the note about a large set? (2,000 and 100 is exactly the measured size, so it shows no note) | Yes, above 2,000 cases, 100 technicians or 30 days | |
+| Optional: with `--cases 2100 --technicians 100`, does the *Plan* screen show the note about a large set? (2,000 cases is the measured limit and 2,100 is above it) | Yes, above 2,000 cases, 300 technicians or 30 days | |
 
 ## 3. Route pack to a technician (scenario X; AC-33, FR-28.6 to 28.9)
 

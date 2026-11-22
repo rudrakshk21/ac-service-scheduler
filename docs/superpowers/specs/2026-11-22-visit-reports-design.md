@@ -84,3 +84,23 @@ All seven pieces are built. Where the build differs from the plan above, or sett
   it reads as the technician's own words in any language.
 - Checked in the built app at 320 px in light and dark, English and Hindi, with an axe audit of the Plan panel and the Route
   controls (no findings) and a content-security-policy listener (no violations). Not yet tried on a real phone.
+
+## 8. Checked at 300 technicians
+
+The design was sized for 300 technicians (section 3); this was measured afterwards (laptop; `src/workspace/scale.measure.test.ts`,
+run with `VITE_MEASURE_SPEED=1`, and the built app in the browser pane, which runs workers at about half speed).
+
+| What | Result |
+|---|---|
+| Plan 1,500 / 3,000 cases, 300 technicians, one skill each | 0.5 s / 1.1 s |
+| Plan 2,000 / 3,000 cases, 300 technicians, every technician every skill (the costly case) | 2.1 s / 3.7 s |
+| Serialise, parse and merge 300 report files (2,400 visits, 422 KB) | under 10 ms |
+| A month of such files (72,000 records): merge a day / day summary / mark done | 30 ms worst / 11 ms / 19 ms |
+| The workspace with that month (21 MB as JSON): structured clone / open the app | 160 ms / 240 ms |
+| IndexedDB, 14.7 MB: write / read | 55 ms / 65 ms |
+| Retention pass over that workspace, on / nothing to do | 55 ms / 76 ms |
+| Browser, 300 technicians and 2,400 cases | Plan tab 10,900 page elements; plan shown a few seconds after load; switching a technician off, about 2.5 s (the cost is the new plan, not the screen); 300 report files read and merged in 140 ms; no security-policy violations |
+
+Conclusions: nothing in the report path is a problem at this size, and no change to how the workspace is stored is needed. A month
+of reports makes the workspace large (21 MB) and every change saves all of it, so the retention setting (1.2.0) is also the
+answer to growth. Not measured: a phone, and 1,000 technicians (planning itself, 18 s, is the limit there).
