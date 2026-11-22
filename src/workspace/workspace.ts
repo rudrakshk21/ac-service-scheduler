@@ -6,6 +6,7 @@ import type { MappingProfile } from '../intake/map/profile'
 import type { SiteProfile } from '../intake/site/site'
 import { starterSite } from '../intake/site/starter'
 import type { KeyValueStore } from './db'
+import { readStoredReports, type StoredReport } from './reportRecords'
 
 export interface ImportRecord {
   /** `YYYY-MM-DD`. */
@@ -28,6 +29,8 @@ export interface Workspace {
   imports: ImportRecord[]
   /** Days nobody works, `YYYY-MM-DD`, sorted. */
   holidays: string[]
+  /** What technicians reported about their visits, one record for each case and day. */
+  reports: StoredReport[]
   /** The day the person last saved a backup file, `YYYY-MM-DD`. Absent: never. */
   lastBackupAt?: string
 }
@@ -42,7 +45,7 @@ export class WorkspaceError extends Error {
 const KEY = 'workspace'
 
 export function emptyWorkspace(): Workspace {
-  return { workspaceVersion: 1, site: starterSite(), technicians: [], cases: [], profiles: [], changes: [], imports: [], holidays: [] }
+  return { workspaceVersion: 1, site: starterSite(), technicians: [], cases: [], profiles: [], changes: [], imports: [], holidays: [], reports: [] }
 }
 
 /**
@@ -57,7 +60,7 @@ export function readWorkspace(raw: unknown): Workspace {
     throw new WorkspaceError(t('workspace.err.newer'))
   }
   if (version !== 1) throw damaged
-  return { ...emptyWorkspace(), ...(raw as Partial<Workspace>) }
+  return { ...emptyWorkspace(), ...(raw as Partial<Workspace>), reports: readStoredReports((raw as { reports?: unknown }).reports) }
 }
 
 /** The saved workspace, or null when nothing is saved yet. Unreadable data is refused, never overwritten. */
