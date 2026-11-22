@@ -15,6 +15,8 @@ export interface StoredCase extends Omit<ImportedCase, 'state'> {
   overrides: Overrides
   firstImported: string
   lastImported: string
+  /** `YYYY-MM-DD`: the first day the app saw the case finished (done or closed). Only kept while a retention period is set. */
+  closedAt?: string
 }
 
 export interface ImportPreview {
