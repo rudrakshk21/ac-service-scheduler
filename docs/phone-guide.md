@@ -120,6 +120,15 @@ phone runs low on space or when its data is cleared by hand. To be safe, open **
 **Save a backup** now and then. After 14 days without a backup the app reminds you. **Restore a backup** brings
 everything back, on the same phone or another. The backup contains your case data: keep it private.
 
+### Keeping finished work for a limited time
+
+By default finished cases and reports stay until you delete them. If you do not need them for long, open **Set-up**, *Your
+data and files*, **Keep finished work for**, and choose 30 days, 90 days, 180 days or 1 year. The app first shows how many
+reports would go right away and asks you to confirm; after that it removes finished cases and old reports by itself when
+their time has passed, and tells you with a notice at the top of the screen. Save a backup first if you may need them
+later, and close the cases in your own system as well: a case that your system still lists as open comes back as a new
+case at the next import. The full explanation is in [privacy.md](privacy.md).
+
 ## Language
 
 The language chooser is at the top of every screen. English is complete. The Hindi translation is a draft that a Hindi

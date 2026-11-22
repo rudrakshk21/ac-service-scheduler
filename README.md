@@ -23,6 +23,8 @@ either. A technician can open their day's route on a phone with no signal.
   finished cases as done so they are not planned again.
 - **Shows the day on a map.** A drawn map of the routes from the coordinates, true to scale, with no map service and
   no network.
+- **Forgets on schedule, if you want.** Finished cases and old reports can be removed from the browser after 30 days to
+  a year. It is off until you choose a time.
 - **Speaks your language.** English, and a Hindi draft. A new language is a JSON file, with no code.
 
 ## Using it

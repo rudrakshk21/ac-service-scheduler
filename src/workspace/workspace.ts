@@ -7,6 +7,7 @@ import type { SiteProfile } from '../intake/site/site'
 import { starterSite } from '../intake/site/starter'
 import type { KeyValueStore } from './db'
 import { readStoredReports, type StoredReport } from './reportRecords'
+import { isRetentionDays, type RetentionDays } from './retention'
 
 export interface ImportRecord {
   /** `YYYY-MM-DD`. */
@@ -33,6 +34,8 @@ export interface Workspace {
   reports: StoredReport[]
   /** The day the person last saved a backup file, `YYYY-MM-DD`. Absent: never. */
   lastBackupAt?: string
+  /** Finished cases, and reports, are removed from this browser after this many days. Absent: kept until deleted. */
+  retentionDays?: RetentionDays
 }
 
 export class WorkspaceError extends Error {
@@ -60,7 +63,10 @@ export function readWorkspace(raw: unknown): Workspace {
     throw new WorkspaceError(t('workspace.err.newer'))
   }
   if (version !== 1) throw damaged
-  return { ...emptyWorkspace(), ...(raw as Partial<Workspace>), reports: readStoredReports((raw as { reports?: unknown }).reports) }
+  const w: Workspace = { ...emptyWorkspace(), ...(raw as Partial<Workspace>), reports: readStoredReports((raw as { reports?: unknown }).reports) }
+  // A period that is not one of the choices (a damaged or altered backup) is not trusted: the data is kept until deleted.
+  if (!isRetentionDays(w.retentionDays)) delete w.retentionDays
+  return w
 }
 
 /** The saved workspace, or null when nothing is saved yet. Unreadable data is refused, never overwritten. */

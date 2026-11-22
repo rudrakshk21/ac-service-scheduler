@@ -3,6 +3,7 @@ import { t } from '../i18n'
 import { LanguageSelect } from '../i18n/LanguageSelect'
 import { useWorkspace } from '../workspace/useWorkspace'
 import { BackupNotice } from './BackupNotice'
+import { RetentionNotice } from './RetentionNotice'
 import { hashFor, TABS, tabFromHash, type Tab } from './nav'
 import { UpdateBanner } from './UpdateBanner'
 import './shell.css'
@@ -59,6 +60,7 @@ export function AppShell() {
       )}
       <UpdateBanner />
       <BackupNotice />
+      <RetentionNotice />
       <nav className="shell-nav" aria-label={t('nav.main')}>
         <ul>
           {TABS.map((item) => (

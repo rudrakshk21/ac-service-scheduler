@@ -1,7 +1,13 @@
 import { createContext, useContext } from 'react'
+import type { Removed } from './retention'
 import type { Workspace } from './workspace'
 
 export type StorageStatus = 'loading' | 'ready' | 'memory'
+
+/** What the retention period removed since the person last dismissed the notice, and the period it was removed under. */
+export interface RemovedNotice extends Removed {
+  days: number
+}
 
 export interface WorkspaceApi {
   workspace: Workspace
@@ -10,6 +16,9 @@ export interface WorkspaceApi {
   message: string | null
   /** Applies a pure change, shows it at once and saves it. */
   update: (change: (w: Workspace) => Workspace) => void
+  /** Set when the retention period removed something on its own (not through the Set-up control); null otherwise. */
+  removed: RemovedNotice | null
+  dismissRemoved: () => void
 }
 
 export const WorkspaceContext = createContext<WorkspaceApi | null>(null)
