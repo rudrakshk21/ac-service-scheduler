@@ -127,15 +127,20 @@ export function parsePack(text: string): RoutePack {
   return { packVersion: 1, site: p.site, technician: p.technician, date: p.date, createdAt: p.createdAt, validFor: p.validFor, stops }
 }
 
-/** `route-asha-k-2026-11-22.json`: letters, digits and dashes only. */
-export function packFileName(pack: Pick<RoutePack, 'technician' | 'date'>): string {
-  const slug = pack.technician
+/** A name for a file: letters, digits and dashes only (`Asha K.` is `asha-k`); `technician` when nothing is left. */
+export function fileSlug(name: string): string {
+  const slug = name
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-  return `route-${slug === '' ? 'technician' : slug}-${pack.date}.json`
+  return slug === '' ? 'technician' : slug
+}
+
+/** `route-asha-k-2026-11-22.json`: letters, digits and dashes only. */
+export function packFileName(pack: Pick<RoutePack, 'technician' | 'date'>): string {
+  return `route-${fileSlug(pack.technician)}-${pack.date}.json`
 }
 
 /** Whether the day the pack is meant for has gone by, and by how many days. */
