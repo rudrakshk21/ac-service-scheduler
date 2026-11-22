@@ -10,7 +10,7 @@ Everything below is on the device and browser you use, and nowhere else.
 
 | What | Where | When it goes away |
 |---|---|---|
-| Your cases, technicians, places, set-up, saved column matchings, import history, change log, holidays | The browser's IndexedDB (database `ac-scheduler`) | *Set-up, Your data and files, Delete all my data*, or clearing the site's data in the browser |
+| Your cases, technicians, places, set-up, saved column matchings, import history, change log, holidays | The browser's IndexedDB (database `ac-scheduler`) | *Set-up, Your data and files, Delete all my data*, the time chosen for finished work running out (finished cases and reports only; off by default), or clearing the site's data in the browser |
 | Route files you opened on a phone (the Route tab) | The same IndexedDB | *Remove* in the Route tab, or the same ways as above |
 | What a technician entered about their visits, before and after sending it (the Route tab) | The same IndexedDB, on the technician's phone | *Remove* of that route in the Route tab (it takes the entries with it), *Delete all my data*, or the same ways as above |
 | Report files a coordinator opened (the Plan tab) | The coordinator's IndexedDB, with the workspace | *Remove all reports* in the Plan tab, *Delete all my data*, or the same ways as above |
@@ -21,13 +21,37 @@ The app sets no cookies.
 
 ## For how long, and who can see it
 
-- **For how long:** until you delete it with *Delete all my data*, or the browser clears it. The app has no expiry of its
-  own: closed cases stay until you delete them. (A retention period for closed cases, which the requirements propose, is
-  not built yet.)
+- **For how long:** until you delete it with *Delete all my data*, until the time you chose for finished work runs out (see
+  *Keeping finished work for a limited time*), or until the browser clears it. Without a choice the app has no expiry of
+  its own: finished cases stay until you delete them.
 - **Who can see it:** whoever can open this browser on this device. No one else: not the project, not the host, not the
   other devices of your technicians. Each technician's phone holds only the route files that technician opened.
 
 The same four facts (what, where, how long, who) are in the app, in *Set-up*, *Your data and files*.
+
+## Keeping finished work for a limited time
+
+*Set-up, Your data and files, Keep finished work for* lets you limit how long finished work stays in the browser: 30 days,
+90 days, 180 days or 1 year. **It is off until you choose a time**; nothing is ever removed by itself without it.
+
+- **What is removed.** A finished case (marked done, or no longer in your system's export) more than the chosen time after
+  the first day the app saw it finished; a report from a technician more than the chosen time after the day of its
+  route; and the lines of the change log about a removed case. Cases that are not finished are never removed. Import
+  history, holidays and set-up are not touched.
+- **Before and after.** Choosing a time first shows how many finished cases there are and how many reports would go right
+  away, and asks you to confirm. If the app is opened after the time has passed (a month after it was last used, for
+  example), it removes what has expired and a notice says what it removed, until you dismiss it. Switching it off needs no
+  confirmation and removes nothing.
+- **The clock.** For cases that are already finished when you choose a time, it starts that day, so none of them goes on
+  the first day. A case that comes back (open again in a later import) loses its date and starts over when it is
+  finished again.
+- **A catch.** If you marked a case done but your own system still lists it as open, then after it has been removed here the
+  next import brings it back as a new case, and the planner can plan it again. Close it in your system first, or leave
+  the time long.
+- **What it does not do.** It runs only in the browser where you chose it. It does not reach backups or files you saved
+  or sent earlier (delete those yourself), other browsers or devices, and not a technician's phone (there, removing a
+  route removes the entries for it, and a phone keeps at most 20 routes). A backup that you restore is held to the choice
+  stored in it: what has already expired is removed as it is restored, and a notice says so.
 
 ## What is sent
 
@@ -109,6 +133,7 @@ remarks. No customer name, address or phone number is asked for, and no photo.
 
 - Do not map the personal columns; the plan works without them.
 - Tell technicians what the remarks are for, and not to write personal details in them.
+- Choose a time for finished work (*Set-up, Your data and files, Keep finished work for*) if you do not need old cases.
 - *Set-up, Your data and files, Delete all my data* removes everything from the browser. It cannot be undone.
 - Use a browser's private window or a separate profile for a trial; closing it removes the data.
 

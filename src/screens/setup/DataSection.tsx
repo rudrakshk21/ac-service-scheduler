@@ -172,14 +172,14 @@ export function DataSection() {
       </div>
 
       <div className="stack-tight">
-        <label htmlFor="set-retention"><b>{t('setup.data.retention.title')}</b></label>
-        <p className="muted small">{t('setup.data.retention.help')}</p>
-        <div className="row">
-          <select id="set-retention" value={workspace.retentionDays ?? ''} onChange={(e) => chooseRetention(e.target.value)}>
+        <label className="field">
+          <span className="label">{t('setup.data.retention.title')}</span>
+          <select id="set-retention" aria-describedby="set-retention-help" value={workspace.retentionDays ?? ''} onChange={(e) => chooseRetention(e.target.value)}>
             <option value="">{t('setup.data.retention.off')}</option>
             {RETENTION_CHOICES.map((d) => <option key={d} value={d}>{t(`setup.data.retention.opt.${d}`)}</option>)}
           </select>
-        </div>
+        </label>
+        <p id="set-retention-help" className="muted small">{t('setup.data.retention.help')}</p>
         <p className="muted small" role="status">
           {workspace.retentionDays === undefined ? t('setup.data.retention.statusOff') : t('setup.data.retention.statusOn', { days: formatNumber(workspace.retentionDays) })}
         </p>

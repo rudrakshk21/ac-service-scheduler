@@ -24,7 +24,7 @@ the person deletes them. This adds it as an option that is off by default.
 | When does it run? | After the workspace loads and after every change (so the stamps are exact), but only while the setting is on. A pass that changes nothing returns the same object, so nothing is saved or planned again. |
 | Is the person told? | Before: choosing a period shows how many cases are finished, how many reports go now, and what comes back (below), and asks to confirm; switching it off needs no confirmation. After: a banner says what was removed and does not go away until dismissed. |
 | Switching it off | Removes the setting and the stamps, so switching it on again starts a fresh clock rather than removing at once. |
-| A restored backup | Carries the setting and the stamps, and is subject to it from the next change. Expired data in an old backup is removed at once; the confirmation for restoring already says everything is replaced. |
+| A restored backup | Carries the setting and the stamps, and is subject to it as it is restored (a restore is a change like any other). Expired data in an old backup is removed at once and the banner says so; the confirmation for restoring already says everything is replaced. |
 
 The catch, stated in the app and in the privacy statement: a case that was marked done but that the person's own system still
 lists as open comes back as a new case at the next import, once it has been removed here.
@@ -60,3 +60,22 @@ lists as open comes back as a new case at the next import, once it has been remo
 
 A person can choose how long finished work is kept; nothing is removed unless they chose it, saw the effect first, and are told
 what went; the default is unchanged; the privacy statement says exactly what the option does and does not do.
+
+## 7. As built
+
+All six pieces are built. Where the build differs from the plan, or settles something the plan left open:
+
+- `previewRetention` returns `{ removeNow, finishedKept }`: what applying a period removes right now, and how many finished cases
+  stay. It is computed by running `setRetention` on a copy, so the preview cannot disagree with what applying does (a test
+  checks it).
+- The sweep runs inside the provider's `update` as well as after load, so a restore, an import and the Set-up control all pass
+  through it. Removal through the Set-up control reports itself in that section; only removals the person did not just ask
+  for (opening the app after the time has passed, a restore, an import) raise the banner.
+- A stamp that is not a real calendar day (for example `2026-13-45`, found by a test) is not trusted and is replaced by today.
+- The select uses the app's `.field` class (48 px high) and is tied to its help text with `aria-describedby`; a first version
+  with a bare select was 18 px high and white in dark mode, caught in the 320 px dark check.
+- Checked in the built app: off does nothing; choosing a period changes nothing until confirmed; Cancel leaves everything; the
+  counts in the confirmation; applying stamps six finished cases and removes the two old reports; a case exactly 90 days
+  after its stamp is kept and 91 removed; opening the app later removes, saves, and shows the banner (English and Hindi);
+  switching off removes the setting and every stamp and nothing else; axe finds nothing with the confirmation open, in light
+  and in dark at 320 px; no content-security-policy violations.

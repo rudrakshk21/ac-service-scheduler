@@ -725,7 +725,7 @@
   "setup.holidays.add": "Add holiday",
   "setup.data.title": "Your data and files",
   "setup.data.where": "Everything is kept in this browser only. Nothing is sent anywhere. Now holding: {size}.",
-  "setup.data.privacy": "What is kept: your cases, technicians, places, set-up, the route files you open and the visit reports technicians write and coordinators open. Where: only in this browser, on this device. How long: until you delete it (below) or the browser clears it. Who can see it: whoever can open this browser on this device. A file you send, such as a route pack, a report file or an Excel file, leaves the app, and whoever receives it can read it.",
+  "setup.data.privacy": "What is kept: your cases, technicians, places, set-up, the route files you open and the visit reports technicians write and coordinators open. Where: only in this browser, on this device. How long: until you delete it (below), until the time you chose for finished work runs out (below, off unless you choose one), or until the browser clears it. Who can see it: whoever can open this browser on this device. A file you send, such as a route pack, a report file or an Excel file, leaves the app, and whoever receives it can read it.",
   "setup.data.size": "{cases}, {technicians}, {places}",
   "setup.data.site.title": "The set-up of your centre",
   "setup.data.site.help": "Work types, skills, priority levels, places and rules, without any cases. Use it to set up another browser or share it.",

@@ -3,6 +3,29 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
+## [1.2.0] - 2026-11-22
+
+Retention of finished work (requirement PRV-4): an option to remove finished cases and old reports after a time you choose.
+It is **off by default**, so nothing changes unless you choose a time.
+
+### Added
+
+- **Keep finished work for** (Set-up, Your data and files): until I delete it (the default), 30 days, 90 days, 180 days
+  or 1 year. Choosing a time shows how many finished cases there are and how many reports would be removed right away,
+  and asks you to confirm; switching it off needs no confirmation and removes nothing.
+- When on, a finished case (done, or no longer in the export) is removed more than the chosen time after the first day the
+  app saw it finished (for cases already finished, from the day you chose); a report is removed by the day of its
+  route; the change-log lines of a removed case go with it. If the app is opened after the time has passed, a notice
+  says what was removed and stays until dismissed.
+- The privacy statement, the in-app privacy text and the phone guide describe what it removes, what it does not (backups
+  and files already saved or sent, other devices, technicians' phones) and the catch: a case that your system still lists
+  as open comes back as a new case at the next import after it has been removed here.
+
+### Known limits
+
+- Not applied to a technician's phone; there removing a route removes the entries for it, and at most 20 routes are kept.
+- The date a case was finished is the day the app first saw it so, not the date in your system.
+
 ## [1.1.0] - 2026-11-22
 
 Visit reports: the technician says how each visit went, and the coordinator reads it against the plan. No server and
