@@ -69,7 +69,7 @@ export default function RouteScreen() {
       <div className="row">
         <label className="btn btn-primary" style={{ cursor: 'pointer' }}>
           {t('route.open')}
-          <input type="file" accept=".json,application/json" className="visually-hidden" onChange={(e) => { void open(e.target.files?.[0]); e.target.value = '' }} />
+          <input type="file" accept=".json,application/json,.txt,text/plain" className="visually-hidden" onChange={(e) => { void open(e.target.files?.[0]); e.target.value = '' }} />
         </label>
       </div>
 

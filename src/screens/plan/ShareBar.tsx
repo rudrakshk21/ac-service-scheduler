@@ -53,7 +53,10 @@ export function ShareBar({ workspace, input, caseIds, planStart, result, day, bu
   const packFor = (tech: number): RoutePack => buildPack(workspace.site.name, input, result, tech, day, new Date().toISOString())
   const sendPack = async (tech: number): Promise<void> => {
     const pack = packFor(tech)
-    report(await shareOrDownload(packFileName(pack), serialisePack(pack), 'application/json'), t('share.what.pack', { name: pack.technician }))
+    const name = packFileName(pack)
+    // Chrome on Android refuses .json in the share sheet but takes plain text; the Route tab opens either.
+    const asText = { fileName: name.replace(/\.json$/i, '.txt'), type: 'text/plain' }
+    report(await shareOrDownload(name, serialisePack(pack), 'application/json', asText), t('share.what.pack', { name: pack.technician }))
   }
 
   return (

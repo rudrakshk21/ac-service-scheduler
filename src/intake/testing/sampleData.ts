@@ -9,6 +9,13 @@ export interface SampleOptions {
   technicians: number
   /** The same seed always gives the same files. */
   seed?: number
+  /**
+   * Where the cases are scattered (within about 30 km). Default 20, 30: the made-up region of the app's starting base,
+   * which is empty desert on a real map. Give the coordinates of your own city to see pins on real streets; the Plan
+   * screen then offers "put the base in the middle of my cases" (one tap).
+   */
+  centerLat?: number
+  centerLon?: number
 }
 
 export interface SampleFiles {
@@ -32,7 +39,9 @@ function random(seed: number): () => number {
  * A made-up centre: cases scattered within about 30 km of the app's starting base (20, 30), each work type, and
  * technicians who each do two of the three work types, so that every case can be planned.
  */
-export function sampleFiles({ cases, technicians, seed = 1 }: SampleOptions): SampleFiles {
+export function sampleFiles({ cases, technicians, seed = 1, centerLat = 20, centerLon = 30 }: SampleOptions): SampleFiles {
+  if (!(Math.abs(centerLat) <= 90)) throw new Error('centerLat must be a latitude between -90 and 90')
+  if (!(Math.abs(centerLon) <= 180)) throw new Error('centerLon must be a longitude between -180 and 180')
   if (!Number.isInteger(cases) || cases < 1) throw new Error('cases must be a whole number of at least 1')
   if (cases > 50_000) throw new Error('cases must be at most 50,000, the most the app reads from one file')
   if (!Number.isInteger(technicians) || technicians < 1) throw new Error('technicians must be a whole number of at least 1')
@@ -42,8 +51,8 @@ export function sampleFiles({ cases, technicians, seed = 1 }: SampleOptions): Sa
   const pad = (n: number): string => String(n).padStart(2, '0')
   const caseRows = ['case_id,work_type,latitude,longitude,area,reported_at,priority']
   for (let i = 0; i < cases; i++) {
-    const lat = (20 + (rnd() - 0.5) * 0.6).toFixed(5)
-    const lon = (30 + (rnd() - 0.5) * 0.6).toFixed(5)
+    const lat = (centerLat + (rnd() - 0.5) * 0.6).toFixed(5)
+    const lon = (centerLon + (rnd() - 0.5) * 0.6).toFixed(5)
     const reported = `2026-11-${pad(1 + Math.floor(rnd() * 20))}`
     caseRows.push([100001 + i, WORK_TYPES[Math.floor(rnd() * 3)], lat, lon, `Area ${1 + (i % 12)}`, reported, rnd() < 0.05 ? 'escalated' : 'normal'].join(','))
   }

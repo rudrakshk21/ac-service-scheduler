@@ -60,6 +60,8 @@ technician their day.
   dark, down to 320 px: the day bars are a picture with a real "Show stops" button, markers' names start with their
   visible label, two contrast shortfalls in light mode, the route stop number, and the keyboard bypass.
 
+- **Found on the first real-phone test (iQOO Z6 5G, Android 14, Chrome 157):** *Open in maps* dropped no pin (a bare `geo:` link only centres the map; it now carries `q=lat,lon(label)`); and *Share route pack* went straight to a download because Chrome on Android does not let `.json` through the share sheet (the pack is now offered to the share sheet as plain text first, and the Route tab opens `.txt` files too).
+
 ### Known limits
 
 - Not yet tried on a real Android phone (Chrome, Samsung Internet, Firefox), with TalkBack, or on an iPhone.
@@ -68,5 +70,7 @@ technician their day.
 - Planning has been timed only on a laptop: 5,000 cases and 200 technicians take about 18 s there and 10,000 cases and
   300 technicians about 100 s, so a phone will be slower for the largest centres.
 - No street-map background and no clicking the map to correct a place.
+- Stops at exactly the same place (several visits to one building) are drawn on top of each other on the map, so only the last one's label shows; the stop list shows them all.
+- Excel files cannot go through the share sheet of Chrome on Android; they are saved to Downloads.
 - A retention period for closed cases (proposed in the requirements) is not built: closed cases stay until deleted.
 - The limit on a file is its size on disk; an .xlsx is a zip, and what it holds when unpacked is not limited.
