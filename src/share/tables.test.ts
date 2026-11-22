@@ -35,9 +35,9 @@ const named = (tables: Table[], name: string): Table => {
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 describe('buildTables', () => {
-  it('gives the five tables in a fixed order', () => {
-    expect(tablesFor(ready()).tables.map((t) => t.name)).toEqual(['Schedule', 'Day routes', 'Not planned', 'Summary', 'Change log'])
-    expect(tablesFor(ready()).tables.map((t) => t.id)).toEqual(['schedule', 'dayRoutes', 'notPlanned', 'summary', 'changeLog'])
+  it('gives the six tables in a fixed order', () => {
+    expect(tablesFor(ready()).tables.map((t) => t.name)).toEqual(['Schedule', 'Day routes', 'Not planned', 'Summary', 'Change log', 'Reports from technicians'])
+    expect(tablesFor(ready()).tables.map((t) => t.id)).toEqual(['schedule', 'dayRoutes', 'notPlanned', 'summary', 'changeLog', 'reports'])
   })
 
   it('writes one schedule row per planned case, with names instead of numbers, sorted by day, technician and visit', () => {
@@ -116,5 +116,31 @@ describe('buildTables', () => {
     expect(t.headers).toEqual(['Case', 'Field', 'Before', 'After', 'Reason'])
     expect(t.rows).toEqual([['10', 'place', 'North', 'South', 'The new file says so']])
     expect(named(tablesFor(ready()).tables, 'Change log').rows).toEqual([])
+  })
+})
+
+describe('the reports table', () => {
+  const withReports = (): Workspace => ({
+    ...ready(),
+    reports: [
+      { caseId: '9', status: 'not_done', reason: 'customer_absent', remarks: '=1+1 nobody home', date: '2026-10-14', technician: 'Bo', reportedAt: '2026-10-14T12:00:00.000Z' },
+      { caseId: '10', status: 'done', finishedAt: '10:15', date: '2026-10-13', technician: 'Ann', reportedAt: '2026-10-13T12:00:00.000Z' },
+      { caseId: '100', status: 'partly', reason: 'part_missing', date: '2026-10-13', technician: 'Ann', reportedAt: '2026-10-13T12:00:00.000Z' },
+    ],
+  })
+
+  it('has a row for each report, by date, technician and case, in the words of the language', () => {
+    const table = named(tablesFor(withReports()).tables, 'Reports from technicians')
+    expect(table.headers).toEqual(['Date', 'Case', 'Technician', 'Status', 'Reason', 'Finished at', 'Remarks', 'Reported at'])
+    expect(table.rows).toEqual([
+      ['2026-10-13', '10', 'Ann', 'Done', '', '10:15', '', '2026-10-13T12:00:00.000Z'],
+      ['2026-10-13', '100', 'Ann', 'Partly done', 'Part missing', '', '', '2026-10-13T12:00:00.000Z'],
+      ['2026-10-14', '9', 'Bo', 'Not done', 'Customer not there', '', '=1+1 nobody home', '2026-10-14T12:00:00.000Z'],
+    ])
+  })
+  it('is there, with its headers and no rows, when nobody has reported', () => {
+    const table = named(tablesFor(ready()).tables, 'Reports from technicians')
+    expect(table.rows).toEqual([])
+    expect(table.headers).toHaveLength(8)
   })
 })

@@ -17,6 +17,10 @@ either. A technician can open their day's route on a phone with no signal.
 - **Gets the plan out.** Print a route sheet, send a technician their **route pack** (one small file per technician
   per day), or export everything to Excel or CSV. A technician opens the pack on their own phone, offline, with a link
   to each stop in their maps app.
+- **Hears back from the technician.** On the **Route** tab a technician says for each stop whether the visit was done,
+  partly done or not done, why, and when, and sends a small report file back, with no connection needed to write it.
+  The coordinator opens many report files at once in **Plan**, sees how the day went against the plan, and marks the
+  finished cases as done so they are not planned again.
 - **Shows the day on a map.** A drawn map of the routes from the coordinates, true to scale, with no map service and
   no network.
 - **Speaks your language.** English, and a Hindi draft. A new language is a JSON file, with no code.
@@ -29,6 +33,8 @@ either. A technician can open their day's route on a phone with no signal.
    unless you choose to bring them in; the plan does not need them.
 3. **Plan** shows the schedule per day with a reason for each choice, what could not be planned and why, and the map.
 4. **Share**: route sheet, route pack, Excel or CSV. The technician opens the pack in the **Route** tab.
+5. **Collect reports**: technicians send their report files back; open them in **Plan**, under *Reports from
+   technicians*.
 
 Phones: [docs/phone-guide.md](docs/phone-guide.md), and the form for testing on a real phone,
 [docs/phone-test-report.md](docs/phone-test-report.md). What is stored and what is not: [docs/privacy.md](docs/privacy.md).

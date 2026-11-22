@@ -8,15 +8,18 @@ import { openIndexedStore } from '../../workspace/db'
 import { useWorkspace } from '../../workspace/useWorkspace'
 import { emptyWorkspace, type Workspace } from '../../workspace/workspace'
 import { clearPacks } from '../route/packStore'
+import { clearDrafts } from '../route/reportStore'
 import { downloadText, readText, saveBackupFile, stamp } from '../files'
 import { replaceSite } from './setupActions'
 
 type Pending = { kind: 'restore'; workspace: Workspace; fileName: string } | { kind: 'delete' } | null
 
-/** The route files opened on this device are data too: "delete all my data" removes them with the rest. */
+/** The route files opened on this device, and what was reported on them, are data too: "delete all my data" removes them with the rest. */
 async function deleteSavedRoutes(): Promise<void> {
   try {
-    await clearPacks(await openIndexedStore())
+    const store = await openIndexedStore()
+    await clearPacks(store)
+    await clearDrafts(store)
   } catch {
     // No browser storage: there are no saved routes to delete.
   }

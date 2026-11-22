@@ -67,6 +67,23 @@ Phone A has the plan (sections 1 and 2). Phone B is the technician's.
 | Look at the file in a text editor, or ask the coordinator: does it hold a customer name or an address? | It holds none | |
 | Open a pack whose date has passed (a day later, or the phone's date set a day ahead) | A warning that the route was for an earlier date | |
 
+## 3b. Visit report to the coordinator (visit reports, 1.1.0)
+
+Continues section 3: phone B has the route open, phone A (or a computer) has the plan. Use invented remarks only.
+
+| Step | Expected | Result |
+|---|---|---|
+| On B: under the first stop, press *Done*; under the second, *Not done* and choose a reason; under the third, *Partly done*, a reason and a remark | The buttons show the choice (the pressed one is filled); *Finished at* shows the time now; the summary says *3 of 3 visits reported* | |
+| On B: is every button, the reason list, the time and the remarks box easy to hit and read, upright and sideways, with the on-screen keyboard open once? | Yes; the keyboard does not hide the remarks box | |
+| On B: close the app completely and open it again, *Route* | The three entries are still there | |
+| On B: switch on airplane mode, change one entry | It works with no connection | |
+| On B: press *Send report* | The share sheet opens (a `.json` or `.txt` file), or the file `report-technician-01-....json` is saved to Downloads: note which happened | |
+| Send it to A, save it there. On A: *Plan*, pick the same day, *Reports from technicians*, *Open report files* | A line says *Read 1 file* with 3 new visits; the day line says *3 of N reported* with 1 done, 1 partly, 1 not done; the two visits not wholly done are listed with their reason and remark | |
+| On A: open the same file again | Nothing changes: 3 already known | |
+| On A: *Mark 1 reported done as done* | The plan is made again without that case | |
+| On A: export the Excel file, open the *Reports from technicians* sheet | One row per reported visit, with the remark; a remark that starts with `=` shows as text | |
+| On B: press *Remove this route* | It says the report is removed with it; the entries are gone afterwards | |
+
 ## 4. Storage cleared (scenario Y; FR-28.10)
 
 | Step | Expected | Result |

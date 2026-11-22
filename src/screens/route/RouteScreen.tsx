@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { t, tn } from '../../i18n'
+import type { Visit } from '../../share/report'
 import { PackError, parsePack, staleness, type RoutePack } from '../../share/routePack'
 import { memoryStore, openIndexedStore, type KeyValueStore } from '../../workspace/db'
 import { readText } from '../files'
 import { longDate, madeText } from './format'
 import { addPack, loadPacks, removePack, savePacks } from './packStore'
 import { PackMap } from './PackMap'
+import { draftVisits, dropDraft, forgetVisit, loadDrafts, markSent, reportVisit, saveDrafts, sentAt, type Draft } from './reportStore'
 import { RouteList } from './RouteList'
+import { SendReport } from './SendReport'
 import './route.css'
 
 const keyOf = (p: Pick<RoutePack, 'technician' | 'date'>): string => `${p.technician}|${p.date}`
@@ -16,6 +19,7 @@ export default function RouteScreen() {
   const [store, setStore] = useState<KeyValueStore | null>(null)
   const [storageNote, setStorageNote] = useState<string | null>(null)
   const [packs, setPacks] = useState<RoutePack[]>([])
+  const [drafts, setDrafts] = useState<Draft[]>([])
   const [chosen, setChosen] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -28,6 +32,7 @@ export default function RouteScreen() {
         if (!live) return
         setStore(s)
         void loadPacks(s).then((list) => { if (live) setPacks(list) }, () => undefined)
+        void loadDrafts(s).then((list) => { if (live) setDrafts(list) }, () => undefined)
       },
       () => {
         if (!live) return
@@ -44,6 +49,21 @@ export default function RouteScreen() {
     setPacks(next)
     if (store !== null) void savePacks(store, next).catch(() => setStorageNote(t('route.storage.saveFailed')))
   }
+
+  /** What the technician enters is kept on the phone at once, so closing the app or losing the signal loses nothing. */
+  const keepDrafts = (next: Draft[]): void => {
+    setDrafts(next)
+    if (store !== null) void saveDrafts(store, next).catch(() => setStorageNote(t('route.storage.saveFailed')))
+  }
+  const visits = pack === undefined ? [] : draftVisits(drafts, pack.technician, pack.date)
+
+  /** A route removed from the phone takes what was entered for it along, so no remarks are left behind with no way to delete them. */
+  const removeRoute = (technician: string, date: string): void => {
+    keep(removePack(packs, technician, date))
+    if (drafts.some((d) => d.technician === technician && d.date === date)) keepDrafts(dropDraft(drafts, technician, date))
+    setRemoving(null)
+  }
+  const removingHasReport = removing !== null && drafts.some((d) => keyOf(d) === removing)
 
   async function open(file: File | undefined): Promise<void> {
     if (file === undefined) return
@@ -92,7 +112,15 @@ export default function RouteScreen() {
             <p className="alert" role="alert">{t('route.late', { date: longDate(pack.validFor), ago: tn('route.ago', late.daysAgo) })}</p>
           )}
           <PackMap pack={pack} />
-          <RouteList pack={pack} />
+          <RouteList
+            pack={pack}
+            reports={{
+              visits,
+              onChange: (visit: Visit) => keepDrafts(reportVisit(drafts, pack.technician, pack.date, visit)),
+              onForget: (caseId: string) => keepDrafts(forgetVisit(drafts, pack.technician, pack.date, caseId)),
+            }}
+          />
+          <SendReport pack={pack} visits={visits} sentAt={sentAt(drafts, pack.technician, pack.date)} onSent={(at) => keepDrafts(markSent(drafts, pack.technician, pack.date, at))} />
         </>
       )}
 
@@ -110,7 +138,7 @@ export default function RouteScreen() {
                   </button>
                   {removing === key ? (
                     <span className="row">
-                      <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, p.technician, p.date)); setRemoving(null) }}>{t('route.removeYes')}</button>
+                      <button type="button" className="btn danger" onClick={() => removeRoute(p.technician, p.date)}>{t('route.removeYes')}</button>
                       <button type="button" className="btn" onClick={() => setRemoving(null)}>{t('route.keep')}</button>
                     </span>
                   ) : (
@@ -127,7 +155,7 @@ export default function RouteScreen() {
         <p className="row">
           {removing === keyOf(pack) ? (
             <>
-              <button type="button" className="btn danger" onClick={() => { keep(removePack(packs, pack.technician, pack.date)); setRemoving(null) }}>{t('route.removeThisYes')}</button>
+              <button type="button" className="btn danger" onClick={() => removeRoute(pack.technician, pack.date)}>{t('route.removeThisYes')}</button>
               <button type="button" className="btn" onClick={() => setRemoving(null)}>{t('route.keep')}</button>
             </>
           ) : (
@@ -135,6 +163,8 @@ export default function RouteScreen() {
           )}
         </p>
       )}
+
+      {removingHasReport && <p className="alert alert-note" role="status">{t('route.removeReport')}</p>}
     </section>
   )
 }

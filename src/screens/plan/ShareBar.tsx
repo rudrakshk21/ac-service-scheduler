@@ -12,7 +12,7 @@ import '../route/route.css'
 
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 /** File name stems: fixed, in English letters, so a file name does not depend on the language. */
-const FILE_STEM = { schedule: 'schedule', dayRoutes: 'day-routes', notPlanned: 'not-planned', summary: 'summary', changeLog: 'change-log' } as const
+const FILE_STEM = { schedule: 'schedule', dayRoutes: 'day-routes', notPlanned: 'not-planned', summary: 'summary', changeLog: 'change-log', reports: 'reports' } as const
 
 interface Props {
   workspace: Workspace

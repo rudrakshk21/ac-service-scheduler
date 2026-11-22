@@ -3,6 +3,46 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
+## [1.1.0] - 2026-11-22
+
+Visit reports: the technician says how each visit went, and the coordinator reads it against the plan. No server and
+no account: the report is a small file that travels the way the route pack does.
+
+### Added
+
+- **Report a visit (Route tab).** Under each stop: *Done*, *Partly done* or *Not done*; a reason when it was not wholly
+  done (customer not there, no access, part missing, no time, other); the time it was finished (filled in with the
+  time now); and remarks of up to 500 characters, with a warning not to write customer names or phone numbers. What is
+  entered is saved on the phone at once and survives closing the app, and it works with no connection.
+- **Send report.** Makes a `report-<technician>-<day>.json` file and offers it to the phone's share sheet (as plain
+  text first, like the route pack), or saves it. It can be sent again after a change.
+- **Reports from technicians (Plan tab).** Opens many report files at once and reads them against the plan of the
+  chosen day: visits reported, done, partly done and not done; the visits not wholly done with their reason and remark;
+  the technicians who have not reported. A file that cannot be used is listed with the reason and the rest are read.
+  Opening a file twice changes nothing, and the newest report of a case wins whatever order the files are opened in.
+- **Mark reported done as done.** Marks the cases reported *Done* as done in the workspace, so the next plan does not
+  visit them again. Nothing is marked until the coordinator presses it.
+- **A sixth table, Reports from technicians,** in the Excel and CSV exports, with the same guard against spreadsheet
+  formulas. Reports are in backups.
+- Hindi text for all of it (a draft, like the rest).
+
+### Changed
+
+- **Remove** of a saved route on the phone also removes what was entered for it, and the confirmation says so.
+- **Delete all my data** also removes the visit reports, and what technicians entered on the phone.
+- The privacy statement, the notice in the app and the phone guide describe the reports, and say plainly that remarks
+  are free text that the app cannot check.
+
+### Known limits
+
+- Tried in Chrome on a computer (320 px, light and dark, English and Hindi, an accessibility audit with no findings),
+  not yet on a real phone. The share sheet may refuse `.json` and `.txt` for the report as it did for the route pack;
+  the file is then saved to Downloads.
+- A report is not tied to the version of the plan it was made for. If the plan is made again after a technician has
+  reported, reports of cases that are no longer in the plan of that day are counted separately.
+- No photos, signatures or customer confirmation. A live feed of reports (no files) needs a server and is a later
+  release.
+
 ## [1.0.0] - 2026-11-22
 
 The first complete release: a planner that runs in the browser for any service centre, works offline, and can send a

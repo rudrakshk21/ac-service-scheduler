@@ -7,7 +7,7 @@ import { isoOf, weekdayName } from './dates'
 export type Cell = string | number
 
 /** The fixed names of the tables, the same in every language: used for file names. */
-export type TableId = 'schedule' | 'dayRoutes' | 'notPlanned' | 'summary' | 'changeLog'
+export type TableId = 'schedule' | 'dayRoutes' | 'notPlanned' | 'summary' | 'changeLog' | 'reports'
 
 /** One sheet of an export: a name, a header row and rows of text and numbers. */
 export interface Table {
@@ -84,6 +84,10 @@ export function buildTables(
 
   const changes: Cell[][] = w.changes.map((c) => [c.caseId, c.field, c.previous, c.next, c.reason])
 
+  const reports: Cell[][] = [...w.reports]
+    .sort((a, b) => a.date.localeCompare(b.date) || a.technician.localeCompare(b.technician) || a.caseId.localeCompare(b.caseId))
+    .map((r) => [r.date, r.caseId, r.technician, t(`report.status.${r.status}`), r.reason === undefined ? '' : t(`report.reason.${r.reason}`), r.finishedAt ?? '', r.remarks ?? '', r.reportedAt])
+
   return [
     {
       id: 'schedule', name: t('table.schedule'), rows: schedule,
@@ -96,5 +100,9 @@ export function buildTables(
     { id: 'notPlanned', name: t('table.notPlanned'), headers: heads('col.case', 'col.reason'), rows: notPlanned },
     { id: 'summary', name: t('table.summary'), headers: heads('col.item', 'col.value'), rows: summary },
     { id: 'changeLog', name: t('table.changeLog'), headers: heads('col.case', 'col.field', 'col.before', 'col.after', 'col.reason'), rows: changes },
+    {
+      id: 'reports', name: t('table.reports'), rows: reports,
+      headers: heads('col.date', 'col.case', 'col.technician', 'col.status', 'col.reason', 'col.finishedAt', 'col.remarks', 'col.reportedAt'),
+    },
   ]
 }

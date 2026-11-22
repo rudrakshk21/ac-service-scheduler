@@ -40,13 +40,32 @@ Above the list, a drawn map shows the day's route; tap a stop on it to see its d
 The file holds case numbers, places, times and distances. It holds no customer names or addresses, so the case number
 is what you use to find the details in your own system.
 
-### 4. When the file is out of date
+### 4. Report your visits
+
+Under each stop on the **Route** tab you can say how the visit went:
+
+- **Done**, **Partly done** or **Not done**. Pressing the chosen one again takes the report back.
+- **Why**, for a visit that was not wholly done: customer not there, no access to the place, part missing, no time, other.
+- **Finished at**: the time, filled in with the time now. Change it if you are reporting later.
+- **Remarks**: a short note, up to 500 characters. **Do not write a customer's name or phone number.** The case number is
+  enough for your coordinator.
+
+What you enter is saved on the phone at once, so closing the app or losing the signal loses nothing. When you are ready,
+press **Send report** at the bottom of the Route tab. It makes a small file (a name like
+`report-technician-01-2026-11-23.json`) and opens the phone's share sheet: send it to your coordinator in the same chat
+you got the route from. If the share sheet does not open, the file is saved in **Downloads**; attach it from there.
+
+You can send the report again after a change, or report the visits in two parts: the coordinator keeps the newest report
+of each visit.
+
+### 5. When the file is out of date
 
 A route file is valid for its own day. From the next day the **Route** tab warns that the route was for an earlier date.
 If the plan changed after the file was made (a technician was off, a case was added), ask your coordinator for a new
 file. Opening a new file for the same technician and day replaces the old one.
 
-To remove a saved route, use **Remove** under *Saved on this phone*.
+To remove a saved route, use **Remove** under *Saved on this phone*. This also removes what you entered for that route, so
+send the report first.
 
 ## For coordinators
 
@@ -60,9 +79,27 @@ To remove a saved route, use **Remove** under *Saved on this phone*.
 3. **Route sheet** opens a print page for that technician and day. Use the browser's print dialog; on Android it also
    offers **Save as PDF**.
 4. **Excel file, all tables** and **CSV files, one table at a time** export the schedule, the day routes, the cases not
-   planned, a summary and the change log.
+   planned, a summary, the change log and the reports from technicians.
 
 Make a new route file whenever you change anything that affects the plan, and tell the technician to open it.
+
+### Collecting reports
+
+Technicians send a **report file** back (see *Report your visits* above). Save the files you receive on the computer or
+phone you plan with, then, in **Plan**, under *Reports from technicians*:
+
+1. **Open report files** and pick all of them at once. Files that cannot be used are listed with the reason, and the
+   rest are read anyway. Opening the same file twice changes nothing, and for a case reported more than once the newest
+   report is kept, whatever order the files are opened in.
+2. The panel reads the reports against the plan of the day you chose: how many visits are reported, how many are done,
+   partly done and not done, which were not wholly done and why, and which technicians have not reported yet.
+3. **Mark reported done as done** marks the cases reported *Done* as done in the workspace, so the next plan does not
+   visit them again. Nothing is marked until you press it.
+4. The **Reports from technicians** table in the Excel file (and as a CSV) lists every report with its remarks.
+   **Remove all reports** empties the list.
+
+Report files hold case numbers and free-text remarks, no customer details by design. Read [privacy.md](privacy.md) on
+remarks before you roll this out.
 
 ### Importing
 
@@ -95,6 +132,7 @@ speaker has not yet read; treat its wording with care. Adding a language needs n
 |---|---|
 | There is no install button | Use the menu steps in the table above. Some browsers do not offer installing at all; the app works in them as a normal page. |
 | The route file does not open | The message says why: a damaged file, a file from a newer version of the app, or a bad time or place. Ask for a new file, and reload the app if a new version is ready. |
+| A report file is refused in the Plan tab | The message names the file and says why (not a report, too big, from a newer version, a visit that is damaged). Ask the technician to send it again from the Route tab. |
 | The app is empty after some time | The browser cleared its stored data. Restore your backup. The **Route** tab keeps routes only while the browser keeps data, so ask for a new file. |
 | The route is for yesterday | See *When the file is out of date*. |
 | The page looks old after an update | Press **Reload** in the banner. If there is no banner, close all tabs of the app and open it again with a connection. |
@@ -112,7 +150,15 @@ tab, the phone clearing its stored data and restoring a backup, and the layout o
 results are in [phone-test-result-2026-11-22.md](phone-test-result-2026-11-22.md). The form used, with the exact steps
 and limits, is [phone-test-report.md](phone-test-report.md).
 
+Visit reports (added in 1.1.0) were checked in Chrome on a computer at 320 px, in light and dark, in English and Hindi:
+entering visits, closing and reopening the app, making the report file, opening several report files at once including
+a damaged one and an older report of the same case, marking cases done, the Excel and CSV tables, removing reports and
+deleting all data, and an accessibility audit (axe-core, WCAG 2.2 AA) with no findings. **They have not yet been tried on
+a real phone**: the share sheet may refuse a `.json` file as it did for the route file, in which case the app offers a
+`.txt` file and then a download.
+
 **Not yet checked, and worth doing before relying on it in the field:** Samsung Internet and Firefox on Android; using it
-with TalkBack; Safari on an iPhone, which this guide only mentions; and a route file handed from one phone to another.
+with TalkBack; Safari on an iPhone, which this guide only mentions; sending a report from a phone to the coordinator's
+computer; and a route file handed from one phone to another.
 Planning of 300 cases felt instant on the phone tested; the 2,000-case size has been timed only on a laptop (about a
 second), not on a phone.
