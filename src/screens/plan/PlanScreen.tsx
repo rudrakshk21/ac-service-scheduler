@@ -7,6 +7,7 @@ import { useWorkspace } from '../../workspace/useWorkspace'
 import { setBase, toggleTechnician } from '../setup/setupActions'
 import { baseAdvice, nothingPlannedHint, prepare, sizeNotice, TESTED_SIZE } from './planData'
 import { DayMap } from './DayMap'
+import { ReportsPanel } from './ReportsPanel'
 import { ShareBar } from './ShareBar'
 import { usePlan, type SwitchNote } from './usePlan'
 import '../../demo/demo.css'
@@ -151,6 +152,8 @@ export default function PlanScreen() {
           <DayMap input={input} result={result} day={day} />
 
           <ShareBar workspace={workspace} input={input} caseIds={prepared.caseIds} planStart={prepared.planStart} result={result} day={day} busy={busy} />
+
+          <ReportsPanel workspace={workspace} update={update} input={input} result={result} day={day} />
         </>
       )}
 
