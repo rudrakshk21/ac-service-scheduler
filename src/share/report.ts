@@ -57,7 +57,7 @@ const isReason = (v: unknown): v is Reason => typeof v === 'string' && (REASONS 
 const clip = (s: string): string => Array.from(s.trim()).slice(0, MAX_REMARKS).join('')
 
 /** One visit without empty fields, and without a reason when the visit was done. */
-function clean(v: Visit): Visit {
+export function cleanVisit(v: Visit): Visit {
   const out: Visit = { caseId: v.caseId, status: v.status }
   if (v.status !== 'done' && v.reason !== undefined) out.reason = v.reason
   if (v.finishedAt !== undefined && v.finishedAt !== '') out.finishedAt = v.finishedAt
@@ -78,7 +78,7 @@ export function buildReport(
   const byCase = new Map(entries.map((e) => [e.caseId, e]))
   const visits = pack.stops.flatMap((s): Visit[] => {
     const e = byCase.get(s.caseId)
-    return e === undefined ? [] : [clean(e)]
+    return e === undefined ? [] : [cleanVisit(e)]
   })
   return { reportVersion: 1, site: pack.site, technician: pack.technician, date: pack.date, createdAt, visits }
 }
@@ -109,6 +109,28 @@ function readVisit(raw: unknown, n: number): Visit {
     if (remarks !== '') out.remarks = remarks
   }
   return out
+}
+
+/**
+ * The visits in something stored on the phone: the ones that can be read, once each, up to the limit. A damaged entry is
+ * left out instead of stopping the screen.
+ */
+export function readVisits(raw: unknown): Visit[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  const out: Visit[] = []
+  for (const [i, item] of raw.entries()) {
+    try {
+      const visit = readVisit(item, i + 1)
+      if (!seen.has(visit.caseId)) {
+        seen.add(visit.caseId)
+        out.push(visit)
+      }
+    } catch {
+      // not a visit: left out
+    }
+  }
+  return out.slice(0, MAX_VISITS)
 }
 
 /** Reads a visit report. Throws a `ReportError` with a plain message. Fields that are not part of a report are dropped. */
