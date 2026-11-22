@@ -3,7 +3,7 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
-## [1.0.0] - 2026-11-22 (the version in `package.json`; no release tag has been made yet)
+## [1.0.0] - 2026-11-22
 
 The first complete release: a planner that runs in the browser for any service centre, works offline, and can send a
 technician their day.
@@ -64,7 +64,8 @@ technician their day.
 
 ### Known limits
 
-- Not yet tried on a real Android phone (Chrome, Samsung Internet, Firefox), with TalkBack, or on an iPhone.
+- Tried on one real phone (iQOO Z6 5G, Android 14, Chrome 157): install, offline, import, route pack, storage and layout passed (`docs/phone-test-result-2026-11-22.md`). Not tried: Samsung Internet, Firefox, TalkBack, an iPhone, a second phone for the route-pack hand-over, and the 4G first-load time (measured on Wi-Fi and 5G, without a stopwatch figure).
+- *Share route pack* saves the file on the phone tested (Chrome on Android refused both `.json` and plain text through the share sheet, though CSV exports do open it); the file is then attached from Downloads.
 - The engine's reasons ("Skill match …") are English; translating them needs the reference engine to give codes.
 - The "Longest trip" setting is accepted and saved but the planner does not use it yet.
 - Planning has been timed only on a laptop: 5,000 cases and 200 technicians take about 18 s there and 10,000 cases and

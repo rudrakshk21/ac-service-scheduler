@@ -55,7 +55,8 @@ To remove a saved route, use **Remove** under *Saved on this phone*.
 1. In **Plan**, choose the day.
 2. Under **Share and export**, find the technician. **Share route pack** tries the phone's share sheet first (on a computer,
    or when the browser refuses the file, it saves the file to Downloads instead). Send the file to the technician by any
-   means; if it came as a `.txt` file, that is fine: the **Route** tab opens it.
+   means. If the share sheet did not open, the file is in **Downloads**: in Telegram or WhatsApp tap the paperclip,
+   choose **Document** (or **File**) and pick it from Downloads. A `.json` or `.txt` file both open in the **Route** tab.
 3. **Route sheet** opens a print page for that technician and day. Use the browser's print dialog; on Android it also
    offers **Save as PDF**.
 4. **Excel file, all tables** and **CSV files, one table at a time** export the schedule, the day routes, the cases not
@@ -105,9 +106,13 @@ Checked in Chrome at phone widths (375 and 320 px): every screen, the installed 
 server stopped, the update banner, a route file made in one browser and opened in another with no connection, and an
 accessibility audit of every screen (axe-core, the WCAG 2.2 AA rules) with no remaining findings.
 
-A form for the real-phone test, with the exact steps and limits, is [phone-test-report.md](phone-test-report.md).
+Checked on a real phone (iQOO Z6 5G, Android 14, Chrome 157, 2026-11-22): installing, full screen, opening with no
+connection and planning again, importing with the Android file picker, sending a route file and opening it on the Route
+tab, the phone clearing its stored data and restoring a backup, and the layout of every tab upright and sideways. The
+results are in [phone-test-result-2026-11-22.md](phone-test-result-2026-11-22.md). The form used, with the exact steps
+and limits, is [phone-test-report.md](phone-test-report.md).
 
-**Not yet checked, and needed before relying on it in the field:** installing and using it on a real Android phone, in
-Chrome, Samsung Internet and Firefox; using it with TalkBack; and Safari on an iPhone, which this guide only mentions.
-Planning has been timed only on a laptop (about a second for 2,000 cases and 100 technicians); on a phone it will be
-slower, and has not been timed.
+**Not yet checked, and worth doing before relying on it in the field:** Samsung Internet and Firefox on Android; using it
+with TalkBack; Safari on an iPhone, which this guide only mentions; and a route file handed from one phone to another.
+Planning of 300 cases felt instant on the phone tested; the 2,000-case size has been timed only on a laptop (about a
+second), not on a phone.
