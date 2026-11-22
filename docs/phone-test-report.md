@@ -59,7 +59,7 @@ Phone A has the plan (sections 1 and 2). Phone B is the technician's.
 
 | Step | Expected | Result |
 |---|---|---|
-| On A: *Plan*, pick a day, *Share and export*, *Share route pack* for one technician | The Android share sheet opens (the pack goes as a plain-text file named `route-technician-01-....txt`). If the browser refuses it, the file is saved to Downloads as `.json` instead: note which happened | |
+| On A: *Plan*, pick a day, *Share and export*, *Share route pack* for one technician | The Android share sheet opens, or the file is saved to Downloads as `route-technician-01-....json` (the first test phone did the latter; CSV exports did open the share sheet): note which happened, then attach the file from Downloads | |
 | Send it to B and save it on B | | |
 | On B: open the app, *Route*, *Open a route file*, choose the file | The same ordered stops, arrival times and distances as on A | |
 | On B: switch on airplane mode and reopen the app | The route is still there, with the map | |

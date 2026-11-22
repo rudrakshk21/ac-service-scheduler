@@ -221,7 +221,7 @@ documents. Measured on the owner's laptop (Windows, Node 26, Chrome in the app's
   48 px or more; the skip button is the first stop on the production build, appears on screen, and moves focus into the
   page). No sideways scrolling on any screen at 320 px. Contrast of text drawn in the SVG map, which axe cannot judge:
   6.4:1 or better in dark, 4.8:1 or better in light, for all eight technician colours.
-- **Not done.** Edge, Firefox, Safari and Samsung Internet; TalkBack (AC-34); the real phone (AC-32). The browser pane's
+- **Not done.** Edge, Firefox, Safari and Samsung Internet; TalkBack (AC-34); the real phone (done later, 13.8). The browser pane's
   own device emulation was used, not Playwright.
 
 ### 13.3 Speed and limits (NFR-1, NFR-4, NFR-22)
@@ -257,9 +257,9 @@ documents. Measured on the owner's laptop (Windows, Node 26, Chrome in the app's
 - **Import.** A first-time 5,000-row file: Columns 47 ms, Words 27 ms, Check 0.7 s (against 5,000 stored cases), the
   import itself 45 ms.
 - **Limits stated.** The Plan screen shows a note for more than 2,000 cases, 100 working technicians or 30 days, with the
-  numbers and the size measured, and says it can take much longer, most of all on a phone. A phone has not been measured:
-  NFR-1's 10 s and NFR-22's "without the browser closing the page" are open until the reference phone (PD-9) exists.
-  On this evidence a phone only needs to be 140 times slower than the laptop to miss NFR-1.
+  numbers and the size measured, and says it can take much longer, most of all on a phone. On the first real phone (13.8)
+  planning 300 cases felt instant (no stopwatch figure); the 2,000-case set was not tried on a phone. On this evidence a
+  phone only needs to be 140 times slower than the laptop to miss NFR-1.
 
 ### 13.4 Files (SEC-4)
 
@@ -289,17 +289,17 @@ documents. Measured on the owner's laptop (Windows, Node 26, Chrome in the app's
 ### 13.6 Documents
 
 `README.md` (it was the Vite template), `docs/phone-guide.md` (DL-13), `docs/privacy.md`, `CONTRIBUTING.md` (including how
-to repeat the audit and the measurements), `CHANGELOG.md`; version 1.0.0 in `package.json`. No release tag: the owner's
-decision.
+to repeat the audit and the measurements), `CHANGELOG.md`; version 1.0.0 in `package.json`. The release tag v1.0.0
+follows the real-phone test (13.8), as the owner decided.
 
 ### 13.7 Requirements, and what is open
 
 | Requirement | State |
 |---|---|
-| NFR-1 plan 300 cases, 20 technicians: 3 s laptop, 10 s phone | Laptop 0.07 s. Phone **not measured**. |
+| NFR-1 plan 300 cases, 20 technicians: 3 s laptop, 10 s phone | Laptop 0.07 s. Phone: "instant" (reported, no stopwatch figure). |
 | NFR-3 first download at most 300 KB | 154 KB, enforced in CI. "Usable within 3 s on 4G" not measured. |
 | NFR-4 2,000 cases, 100 technicians, 30 days in 30 s; state limits | 0.8 to 1.1 s (was 42 s). Limits stated in the Plan screen. |
-| NFR-22 phone: plan DS-1, state the largest size | Statement of the measured size done. Phone **not measured**. |
+| NFR-22 phone: plan DS-1, state the largest size | Statement of the measured size done. DS-1 is real data and was not put on a phone; 300 cases ran. |
 | SEC-3 HTTPS, no secret in the repository | HTTPS and HSTS from the host; secrets guard in CI. |
 | SEC-4 file limits, parsed off the thread | 20 MB and 50,000 rows; reading and mapping in a worker. Unpacked `.xlsx` size not limited. |
 | SEC-6 content security policy, no sniffing, no framing | Done, tested. To be read from the live site after the merge. |
@@ -309,12 +309,24 @@ decision.
 | PRV-2, PRV-5, PRV-7, PRV-9 | Done before; PRV-2 now also removes saved routes; a pack never holds a customer name (stricter than PRV-9). |
 | AC-27 network log only to the app's host | Verified locally; repeat on the live site. |
 | AC-29 audit, keyboard, browsers | Audit clean, keyboard walk done; only Chromium tried. |
-| AC-32 360 px, 48 px, real phone | 375 and 320 px and 48 px done; real phone not. |
+| AC-32 360 px, 48 px, real phone | 375 and 320 px and 48 px done; the real phone by hand: passed (reported). |
+| AC-31 install and speed on a real phone | Met on one phone (13.8). |
+| AC-33 route pack | Opens, holds no customer name, works offline; two phones not tried. Share sheet refuses the file; the download works. |
 | AC-34 TalkBack | Not done (owner). |
-| DL-12, DL-13 | Contributor guide and phone guide written; DL-13's Android test report waits for the phone. |
+| DL-12, DL-13 | Contributor guide and phone guide written; the Android test report is `docs/phone-test-result-2026-11-22.md`. |
 
-Open for the owner: a real Android phone (Chrome, Samsung Internet, Firefox; PD-9, AC-31, AC-34, R-19); a decision on
-the licence and the release tag; whether to publish any sample data (PD-6); a native reader for the Hindi draft;
+### 13.8 The real-phone test (2026-11-22)
+
+One phone, iQOO Z6 5G, Android 14, Chrome 157, with the form `docs/phone-test-report.md`; the results are in
+`docs/phone-test-result-2026-11-22.md`. Install, offline, import by the file picker, the route pack, clearing the stored
+data and restoring a backup, and the layout passed. It found two faults, both fixed and checked on the phone: *Open in maps*
+dropped no pin (a bare `geo:` link; now `q=lat,lon(label)`), and *Share route pack* downloaded a file because Chrome on
+Android refuses `.json` in the share sheet (the pack is now also offered as plain text; this phone still refused it, so the
+download is the working path, while CSV exports do open the share sheet). Left as known: stops at exactly the same place
+overlap on the map. Not done: Samsung Internet, Firefox, TalkBack, Hindi on the phone, a second phone, a stopwatch figure
+for 4G and for 2,000 cases.
+
+Open for the owner: Samsung Internet, Firefox and TalkBack (AC-34, R-19); whether to publish any sample data (PD-6); a native reader for the Hindi draft;
 engine reason codes (a reference change) to translate the planner's sentences; whether the "Longest trip" setting
 (`maxKm`) is implemented or dropped; PRV-4; and the git author email (13.5).
 
