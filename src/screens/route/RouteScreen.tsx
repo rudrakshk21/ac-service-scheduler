@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import { t, tn } from '../../i18n'
+import type { Visit } from '../../share/report'
 import { PackError, parsePack, staleness, type RoutePack } from '../../share/routePack'
 import { memoryStore, openIndexedStore, type KeyValueStore } from '../../workspace/db'
 import { readText } from '../files'
 import { longDate, madeText } from './format'
 import { addPack, loadPacks, removePack, savePacks } from './packStore'
 import { PackMap } from './PackMap'
+import { draftVisits, forgetVisit, loadDrafts, markSent, reportVisit, saveDrafts, sentAt, type Draft } from './reportStore'
 import { RouteList } from './RouteList'
+import { SendReport } from './SendReport'
 import './route.css'
 
 const keyOf = (p: Pick<RoutePack, 'technician' | 'date'>): string => `${p.technician}|${p.date}`
@@ -16,6 +19,7 @@ export default function RouteScreen() {
   const [store, setStore] = useState<KeyValueStore | null>(null)
   const [storageNote, setStorageNote] = useState<string | null>(null)
   const [packs, setPacks] = useState<RoutePack[]>([])
+  const [drafts, setDrafts] = useState<Draft[]>([])
   const [chosen, setChosen] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -28,6 +32,7 @@ export default function RouteScreen() {
         if (!live) return
         setStore(s)
         void loadPacks(s).then((list) => { if (live) setPacks(list) }, () => undefined)
+        void loadDrafts(s).then((list) => { if (live) setDrafts(list) }, () => undefined)
       },
       () => {
         if (!live) return
@@ -44,6 +49,13 @@ export default function RouteScreen() {
     setPacks(next)
     if (store !== null) void savePacks(store, next).catch(() => setStorageNote(t('route.storage.saveFailed')))
   }
+
+  /** What the technician enters is kept on the phone at once, so closing the app or losing the signal loses nothing. */
+  const keepDrafts = (next: Draft[]): void => {
+    setDrafts(next)
+    if (store !== null) void saveDrafts(store, next).catch(() => setStorageNote(t('route.storage.saveFailed')))
+  }
+  const visits = pack === undefined ? [] : draftVisits(drafts, pack.technician, pack.date)
 
   async function open(file: File | undefined): Promise<void> {
     if (file === undefined) return
@@ -92,7 +104,15 @@ export default function RouteScreen() {
             <p className="alert" role="alert">{t('route.late', { date: longDate(pack.validFor), ago: tn('route.ago', late.daysAgo) })}</p>
           )}
           <PackMap pack={pack} />
-          <RouteList pack={pack} />
+          <RouteList
+            pack={pack}
+            reports={{
+              visits,
+              onChange: (visit: Visit) => keepDrafts(reportVisit(drafts, pack.technician, pack.date, visit)),
+              onForget: (caseId: string) => keepDrafts(forgetVisit(drafts, pack.technician, pack.date, caseId)),
+            }}
+          />
+          <SendReport pack={pack} visits={visits} sentAt={sentAt(drafts, pack.technician, pack.date)} onSent={(at) => keepDrafts(markSent(drafts, pack.technician, pack.date, at))} />
         </>
       )}
 

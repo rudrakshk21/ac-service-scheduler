@@ -51,3 +51,19 @@
   .print-area .route-stop { break-inside: avoid; }
   .no-print { display: none !important; }
 }
+
+/* Reporting a visit (the Route tab only; nothing of it is printed) */
+.stop-report { display: grid; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.status-btn[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.stop-report textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.send-report { margin-top: 8px; }
