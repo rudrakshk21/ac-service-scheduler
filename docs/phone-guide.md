@@ -34,7 +34,7 @@ the phone, and opens again from the **Route** tab with no connection.
 ### 3. Follow the route
 
 The route lists your stops in order. Each stop shows the arrival time, the case number, the work type, the place, and
-how far and how long the drive is from the last stop. **Open in maps** hands the stop's position to your maps app.
+how far and how long the drive is from the last stop. **Open in maps** hands the stop's position to your maps app, which drops a pin there.
 Above the list, a drawn map shows the day's route; tap a stop on it to see its details.
 
 The file holds case numbers, places, times and distances. It holds no customer names or addresses, so the case number
@@ -53,8 +53,9 @@ To remove a saved route, use **Remove** under *Saved on this phone*.
 ### Sending routes
 
 1. In **Plan**, choose the day.
-2. Under **Share and export**, find the technician. **Share route pack** opens the phone's share sheet (on a computer it
-   saves the file). Send the file to the technician by any means.
+2. Under **Share and export**, find the technician. **Share route pack** tries the phone's share sheet first (on a computer,
+   or when the browser refuses the file, it saves the file to Downloads instead). Send the file to the technician by any
+   means; if it came as a `.txt` file, that is fine: the **Route** tab opens it.
 3. **Route sheet** opens a print page for that technician and day. Use the browser's print dialog; on Android it also
    offers **Save as PDF**.
 4. **Excel file, all tables** and **CSV files, one table at a time** export the schedule, the day routes, the cases not

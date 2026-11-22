@@ -1,4 +1,5 @@
 import { formatNumber, t } from '../../i18n'
+import { mapsLink } from '../../share/mapsLink'
 import type { RoutePack } from '../../share/routePack'
 import './route.css'
 
@@ -21,7 +22,7 @@ export function RouteList({ pack }: { pack: RoutePack }) {
             </div>
             <div>{s.place}</div>
             <div className="muted small">{t('route.stop.drive', { km: formatNumber(s.kilometres), min: formatNumber(s.drivingMinutes) })}</div>
-            <a className="route-maplink no-print" href={`geo:${s.lat},${s.lon}`}>{t('route.stop.maps')}</a>
+            <a className="route-maplink no-print" href={mapsLink(s.lat, s.lon, t('route.stop.pin', { n: formatNumber(s.visit), case: s.caseId }))}>{t('route.stop.maps')}</a>
           </div>
         </li>
       ))}

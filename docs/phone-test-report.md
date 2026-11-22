@@ -21,6 +21,10 @@ the invented sample files below, never real case data**, because the report may 
 1. On a computer: `npm ci`, then `npm run sample-data`. It writes `sample-data/technicians.csv` (20 technicians) and
    `sample-data/cases.csv` (300 cases): the size NFR-1 is written for. For the larger check in section 2:
    `npm run sample-data -- --cases 2000 --technicians 100 --out sample-large`.
+   The made-up jobs lie in the app's starting region, which is empty desert on a real map, so *Open in maps* shows a pin
+   in the sand. To see pins on real streets, scatter them around your own city:
+   `npm run sample-data -- --lat 22.57 --lon 88.36 --out sample-city` (use your city's coordinates). On the *Plan* screen
+   the app then offers *Put the base in the middle of my cases*: tap it once.
 2. Put the files on the phone: by cloud storage, email or a cable. Putting at least one in cloud storage tests FR-28.5.
 3. Have a stopwatch ready. Note which of the steps below you did with a connection and which without.
 
@@ -55,11 +59,11 @@ Phone A has the plan (sections 1 and 2). Phone B is the technician's.
 
 | Step | Expected | Result |
 |---|---|---|
-| On A: *Plan*, pick a day, *Share and export*, *Share route pack* for one technician | The Android share sheet opens. (If a phone cannot share, the file is downloaded instead: note which) | |
+| On A: *Plan*, pick a day, *Share and export*, *Share route pack* for one technician | The Android share sheet opens (the pack goes as a plain-text file named `route-technician-01-....txt`). If the browser refuses it, the file is saved to Downloads as `.json` instead: note which happened | |
 | Send it to B and save it on B | | |
 | On B: open the app, *Route*, *Open a route file*, choose the file | The same ordered stops, arrival times and distances as on A | |
 | On B: switch on airplane mode and reopen the app | The route is still there, with the map | |
-| On B: tap *Open in maps* on a stop | The installed maps app opens at that place with one tap (FR-28.9) | |
+| On B: tap *Open in maps* on a stop | The installed maps app opens at that place **with a pin** (labelled *Stop 1: case ...*), with one tap (FR-28.9). Works with no connection only if the maps app has the area saved offline: the app only hands over the position | |
 | Look at the file in a text editor, or ask the coordinator: does it hold a customer name or an address? | It holds none | |
 | Open a pack whose date has passed (a day later, or the phone's date set a day ahead) | A warning that the route was for an earlier date | |
 

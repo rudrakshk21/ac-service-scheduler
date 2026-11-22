@@ -46,6 +46,7 @@
   "route.stop.aria": "स्टॉप {n}",
   "route.stop.drive": "पिछले स्टॉप से {km} किमी, {min} मिनट की ड्राइव",
   "route.stop.maps": "मैप में खोलें",
+  "route.stop.pin": "स्टॉप {n}: केस {case}",
   "sheet.aria": "{name} की रूट शीट",
   "sheet.made": "{site}। {when} को सिर्फ़ इसी दिन के लिए बनाई गई। अगर इसके बाद योजना बदली है, तो नई शीट माँगें।",
   "sheet.print": "प्रिंट करें",

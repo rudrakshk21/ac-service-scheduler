@@ -42,6 +42,7 @@
   "route.stop.aria": "Stop {n}",
   "route.stop.drive": "{km} km, {min} min driving from the last stop",
   "route.stop.maps": "Open in maps",
+  "route.stop.pin": "Stop {n}: case {case}",
   "sheet.aria": "Route sheet of {name}",
   "sheet.made": "{site}. Made {when} for this day only. If the plan has changed since, ask for a new sheet.",
   "sheet.print": "Print",

@@ -49,6 +49,30 @@ describe('sampleFiles: invented files for trying the app (for instance on a phon
     expect(technicians).toMatch(/Technician 01/)
   })
 
+  it('scatter the cases around a centre of your choice, so a pin lands on real streets when you test Open in maps', () => {
+    const { cases } = sampleFiles({ cases: 100, technicians: 5, centerLat: 22.57, centerLon: 88.36 })
+    const points = cases.trim().split('\n').slice(1).map((line) => line.split(',')).map((c) => [Number(c[2]), Number(c[3])])
+    expect(points).toHaveLength(100)
+    for (const [lat, lon] of points) {
+      expect(Math.abs(lat - 22.57)).toBeLessThanOrEqual(0.3)
+      expect(Math.abs(lon - 88.36)).toBeLessThanOrEqual(0.3)
+    }
+  })
+
+  it("use the made-up region of the app's starting base when no centre is given", () => {
+    const { cases } = sampleFiles({ cases: 50, technicians: 5 })
+    for (const line of cases.trim().split('\n').slice(1)) {
+      const c = line.split(',')
+      expect(Math.abs(Number(c[2]) - 20)).toBeLessThanOrEqual(0.3)
+      expect(Math.abs(Number(c[3]) - 30)).toBeLessThanOrEqual(0.3)
+    }
+  })
+
+  it('refuse a centre that is not on the earth', () => {
+    expect(() => sampleFiles({ cases: 5, technicians: 2, centerLat: 95, centerLon: 0 })).toThrow(/centerLat/)
+    expect(() => sampleFiles({ cases: 5, technicians: 2, centerLat: 0, centerLon: 200 })).toThrow(/centerLon/)
+  })
+
   it('refuse a size that makes no sense', () => {
     expect(() => sampleFiles({ cases: 0, technicians: 3 })).toThrow(/cases/)
     expect(() => sampleFiles({ cases: 10, technicians: 0 })).toThrow(/technicians/)
