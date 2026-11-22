@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Visit } from '../../share/report'
 import { memoryStore } from '../../workspace/db'
-import { clearDrafts, draftVisits, forgetVisit, loadDrafts, markSent, MAX_DRAFTS, reportVisit, saveDrafts, sentAt, type Draft } from './reportStore'
+import { clearDrafts, draftVisits, dropDraft, forgetVisit, loadDrafts, markSent, MAX_DRAFTS, reportVisit, saveDrafts, sentAt, type Draft } from './reportStore'
 
 const T = 'Asha K.'
 const D = '2026-11-23'
@@ -51,6 +51,22 @@ describe('forgetVisit', () => {
   })
   it('is fine for a visit that was never entered', () => {
     expect(forgetVisit([], T, D, 'A1')).toEqual([])
+  })
+})
+
+describe('dropDraft', () => {
+  it('takes everything entered for one route and leaves the other routes alone', () => {
+    let list = reportVisit(reportVisit([], T, D, v('A1', { remarks: 'gate locked' })), T, D, v('A2'))
+    list = reportVisit(list, T, '2026-11-24', v('B1'))
+    list = reportVisit(list, 'Bo', D, v('C1'))
+    const next = dropDraft(list, T, D)
+    expect(draftVisits(next, T, D)).toEqual([])
+    expect(draftVisits(next, T, '2026-11-24').map((x) => x.caseId)).toEqual(['B1'])
+    expect(draftVisits(next, 'Bo', D).map((x) => x.caseId)).toEqual(['C1'])
+    expect(draftVisits(list, T, D)).toHaveLength(2)
+  })
+  it('is fine for a route with nothing entered', () => {
+    expect(dropDraft([], T, D)).toEqual([])
   })
 })
 

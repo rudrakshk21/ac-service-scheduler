@@ -47,6 +47,11 @@ export function forgetVisit(list: Draft[], technician: string, date: string, cas
   })
 }
 
+/** The list without everything entered for a route (used when the route itself is removed from the phone). */
+export function dropDraft(list: Draft[], technician: string, date: string): Draft[] {
+  return list.filter((d) => !same(d, technician, date))
+}
+
 /** The list with the time a route's report was made into a file. */
 export function markSent(list: Draft[], technician: string, date: string, at: string): Draft[] {
   return list.map((d) => (same(d, technician, date) ? { ...d, sentAt: at } : d))

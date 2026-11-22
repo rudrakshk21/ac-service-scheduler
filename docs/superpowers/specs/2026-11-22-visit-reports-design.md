@@ -65,3 +65,22 @@ translate; remarks are the person's own words.
 
 A technician can report a route offline and send the file; the planner opens many files and sees the day's results next to the
 plan, exports them, and can mark done cases done; nothing leaves the device except by the file the person chooses to send.
+
+## 7. As built
+
+All seven pieces are built. Where the build differs from the plan above, or settles something the plan left open:
+
+- `reportsOfDay` became `daySummary(reports, date, planned)`; it also returns the technicians who have not reported and the
+  reports of the day that are not in its plan (`other`: done cases marked done and planned again, or cases moved).
+- Files are merged in the order of their `createdAt`, and for one case the newer `reportedAt` wins whatever the order, so the
+  result does not depend on the order the files were picked in. The same file twice counts as *already known*.
+- The Route tab reports a stop by pressing a status; pressing the chosen status again takes the report back. The time
+  defaults to now; a reason is offered only for *Partly done* and *Not done* and is dropped from a *Done* visit.
+- The phone keeps at most 20 routes' entries. Removing a saved route removes its entries (and says so); *Delete all my data*
+  removes all of them. This was not in the plan; without it remarks would stay on the phone with no way to delete them.
+- *Send report* hands the file to the share sheet as `.json`, then as `.txt` (text/plain), then downloads it, the same ladder
+  as the route pack, because Chrome on Android refused `.json` on the test phone. The Plan tab opens both.
+- Messages use plural forms (`tn`) wherever a count can be one. The remark is shown in quotation marks in the problems list so
+  it reads as the technician's own words in any language.
+- Checked in the built app at 320 px in light and dark, English and Hindi, with an axe audit of the Plan panel and the Route
+  controls (no findings) and a content-security-policy listener (no violations). Not yet tried on a real phone.

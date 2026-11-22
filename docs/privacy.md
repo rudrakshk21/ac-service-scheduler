@@ -12,6 +12,8 @@ Everything below is on the device and browser you use, and nowhere else.
 |---|---|---|
 | Your cases, technicians, places, set-up, saved column matchings, import history, change log, holidays | The browser's IndexedDB (database `ac-scheduler`) | *Set-up, Your data and files, Delete all my data*, or clearing the site's data in the browser |
 | Route files you opened on a phone (the Route tab) | The same IndexedDB | *Remove* in the Route tab, or the same ways as above |
+| What a technician entered about their visits, before and after sending it (the Route tab) | The same IndexedDB, on the technician's phone | *Remove* of that route in the Route tab (it takes the entries with it), *Delete all my data*, or the same ways as above |
+| Report files a coordinator opened (the Plan tab) | The coordinator's IndexedDB, with the workspace | *Remove all reports* in the Plan tab, *Delete all my data*, or the same ways as above |
 | Your language choice | The browser's local storage (`locale`) | Clearing the site's data |
 | The app itself: its pages, scripts, fonts and templates | The browser's cache, for offline use | Clearing the site's data; replaced when a new version is installed |
 
@@ -54,13 +56,37 @@ is valid for, and per stop the visit number, case number, work type, place, coor
 driving minutes. When a pack is opened, anything else in the file is dropped, so a file that had been altered to carry a
 customer name would still show none.
 
-A **backup** contains everything in the app, including any address or notes you mapped. Keep backups private.
+A **backup** contains everything in the app, including any address or notes you mapped, and the reports from
+technicians that were opened. Keep backups private.
+
+## Reports from technicians
+
+A technician reports each visit on the Route tab: done, partly done or not done; a reason (customer not there, no
+access, part missing, no time, other); the time it was finished; and **remarks**. A **report file** holds the centre's
+name, the technician, the day, when it was made, and per visit the case number, the status, the reason, the time and the
+remarks. No customer name, address or phone number is asked for, and no photo.
+
+- **Remarks are free text, and the app cannot know what is typed in them.** The Route tab warns the technician not to
+  write a customer's name or phone number. The warning is the only protection: a remark that does contain one is kept
+  and sent like any other. Reports are for case numbers and short notes about the visit.
+- **Where it goes.** The report file is made on the technician's phone and sent by the technician through whatever app
+  they choose (chat, email, a shared folder), like a route pack. It is not encrypted, and that service handles it under
+  its own terms. The coordinator opens the files in the Plan tab; they are read in the browser and sent nowhere.
+- **Checked on opening.** Like a route pack, a report is read against a fixed list of fields. Anything else in the file is
+  dropped, a file that is too big or damaged is refused with a message, and a report that does not fit the format is never
+  partly read. The same case reported again keeps the newer report.
+- **Exports.** The Reports table is in the Excel and CSV exports with the same guard against spreadsheet formulas.
+  It is the only table that carries free text, so treat an export that includes it as you would the reports themselves.
+- **Removing it.** On the phone, removing a route in the Route tab removes what was entered for it. In the Plan tab,
+  *Remove all reports* removes every report that was opened. *Delete all my data* removes both, on the device where it
+  is used.
 
 ## What the app cannot protect
 
 - **The device.** Anyone who can open your browser profile can read what the app stores. Use the phone's own lock, and do
   not use the app in a shared browser profile.
-- **Files you send.** A route pack and an Excel export are not encrypted. Anyone who has the file can read it, and the
+- **What is typed in remarks.** See *Reports from technicians*. A warning is not a filter.
+- **Files you send.** A route pack, a report file and an Excel export are not encrypted. Anyone who has the file can read it, and the
   chat or email service you send it through handles it under its own terms. A route pack holds places, coordinates and
   case numbers, no customer details, but the places are where your technicians will be.
 - **A cleared browser.** If the browser removes its data, the app's data is gone. Keep a backup.
@@ -82,6 +108,7 @@ A **backup** contains everything in the app, including any address or notes you 
 ## Your choices
 
 - Do not map the personal columns; the plan works without them.
+- Tell technicians what the remarks are for, and not to write personal details in them.
 - *Set-up, Your data and files, Delete all my data* removes everything from the browser. It cannot be undone.
 - Use a browser's private window or a separate profile for a trial; closing it removes the data.
 

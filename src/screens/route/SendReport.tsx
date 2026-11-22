@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatNumber, t } from '../../i18n'
+import { formatNumber, t, tn } from '../../i18n'
 import { buildReport, reportFileName, serialiseReport, type Visit } from '../../share/report'
 import type { RoutePack } from '../../share/routePack'
 import { shareOrDownload } from '../../share/shareFile'
@@ -36,7 +36,7 @@ export function SendReport({ pack, visits, sentAt, onSent }: Props) {
       <h2 className="step-heading">{t('report.title')}</h2>
       <p className="muted">{t('report.lede')}</p>
       <p className="alert alert-note">{t('report.warning')}</p>
-      <p>{t('report.summary', { entered: formatNumber(entered), total: formatNumber(pack.stops.length) })}</p>
+      <p>{t('report.summary', { entered: formatNumber(entered), visits: tn('plan.visits', pack.stops.length) })}</p>
       <div className="row">
         <button type="button" className="btn btn-primary" disabled={entered === 0} onClick={() => void send()}>{t('report.send')}</button>
       </div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { PlanInput, PlanResult } from '../../engine'
 import { dayLabel } from '../../demo/viewModel'
-import { formatNumber, t } from '../../i18n'
+import { formatNumber, t, tn } from '../../i18n'
 import { isoOf } from '../../share/dates'
 import { MAX_REPORT_CHARS, parseReport, type ReportFile } from '../../share/report'
 import { clearReports, daySummary, markReportedDone, mergeReports } from '../../workspace/reports'
@@ -62,7 +62,7 @@ export function ReportsPanel({ workspace, update, input, result, day }: Props) {
     good.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))
     const merged = mergeReports(workspace, good)
     update(() => merged.workspace)
-    setMessage(t('reports.read', { files: formatNumber(good.length), added: formatNumber(merged.counts.added), updated: formatNumber(merged.counts.updated), unchanged: formatNumber(merged.counts.unchanged), older: formatNumber(merged.counts.older) }))
+    setMessage(t('reports.read', { files: tn('reports.files', good.length), added: formatNumber(merged.counts.added), updated: formatNumber(merged.counts.updated), unchanged: formatNumber(merged.counts.unchanged), older: formatNumber(merged.counts.older) }))
   }
 
   const markDone = (): void => {
@@ -86,7 +86,7 @@ export function ReportsPanel({ workspace, update, input, result, day }: Props) {
       {message !== '' && <p role="status" aria-live="polite">{message}</p>}
       {refused.length > 0 && (
         <div className="alert" role="alert">
-          <p>{t('reports.refused', { count: formatNumber(refused.length) })}</p>
+          <p>{t('reports.refused', { files: tn('reports.files', refused.length) })}</p>
           <ul className="issues">
             {refused.slice(0, 5).map((r) => <li key={r.name}>{t('reports.refusedLine', { name: r.name, message: r.message })}</li>)}
           </ul>
@@ -100,11 +100,11 @@ export function ReportsPanel({ workspace, update, input, result, day }: Props) {
         <div className="stack-tight">
           <p>
             {t('reports.day', {
-              day: `${label.weekday} ${label.date}`, reported: formatNumber(summary.reported), planned: formatNumber(summary.planned),
+              day: `${label.weekday} ${label.date}`, reported: formatNumber(summary.reported), planned: tn('plan.visits', summary.planned),
               done: formatNumber(summary.done), partly: formatNumber(summary.partly), notDone: formatNumber(summary.notDone),
             })}
           </p>
-          {summary.other > 0 && <p className="muted small">{t('reports.other', { count: formatNumber(summary.other) })}</p>}
+          {summary.other > 0 && <p className="muted small">{tn('reports.other', summary.other)}</p>}
         </div>
       )}
 
@@ -116,7 +116,7 @@ export function ReportsPanel({ workspace, update, input, result, day }: Props) {
               <li key={`${p.caseId}|${p.date}`}>
                 <b>{p.caseId}</b>, {p.technician}: {t(`report.status.${p.status}`)}
                 {p.reason !== undefined && `, ${t(`report.reason.${p.reason}`)}`}
-                {p.remarks !== undefined && `. ${p.remarks}`}
+                {p.remarks !== undefined && `, “${p.remarks}”`}
               </li>
             ))}
           </ul>
@@ -145,7 +145,7 @@ export function ReportsPanel({ workspace, update, input, result, day }: Props) {
           {confirming ? (
             <>
               <button type="button" className="btn danger" onClick={() => { update(clearReports); setConfirming(false); setMessage(t('reports.removed')); setRefused([]) }}>
-                {t('reports.removeYes', { count: formatNumber(workspace.reports.length) })}
+                {t('reports.removeYes', { reports: tn('reports.count', workspace.reports.length) })}
               </button>
               <button type="button" className="btn" onClick={() => setConfirming(false)}>{t('reports.keep')}</button>
             </>
