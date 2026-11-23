@@ -1,5 +1,5 @@
 import { formatNumber, t } from '../../i18n'
-import { mapsLink } from '../../share/mapsLink'
+import { mapsKind, mapsLink } from '../../share/mapsLink'
 import type { Visit } from '../../share/report'
 import type { RoutePack } from '../../share/routePack'
 import { StopReport } from './StopReport'
@@ -14,6 +14,7 @@ export interface StopReports {
 
 /** The ordered stops of one route. Read-only on the printed sheet; on the Route tab each stop can also be reported. */
 export function RouteList({ pack, reports }: { pack: RoutePack; reports?: StopReports }) {
+  const kind = mapsKind(navigator.userAgent)
   return (
     <ol className="route-list" aria-label={t('route.list.aria', { name: pack.technician })}>
       {pack.stops.map((s) => (
@@ -31,7 +32,14 @@ export function RouteList({ pack, reports }: { pack: RoutePack; reports?: StopRe
             </div>
             <div>{s.place}</div>
             <div className="muted small">{t('route.stop.drive', { km: formatNumber(s.kilometres), min: formatNumber(s.drivingMinutes) })}</div>
-            <a className="route-maplink no-print" href={mapsLink(s.lat, s.lon, t('route.stop.pin', { n: formatNumber(s.visit), case: s.caseId }))}>{t('route.stop.maps')}</a>
+            {/* A computer or an iPhone cannot open a geo: link, so there it is a web link, in a new tab so the route stays open. */}
+            <a
+              className="route-maplink no-print"
+              href={mapsLink(s.lat, s.lon, t('route.stop.pin', { n: formatNumber(s.visit), case: s.caseId }), kind)}
+              {...(kind === 'web' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              {t('route.stop.maps')}
+            </a>
             {reports !== undefined && (
               <StopReport
                 n={formatNumber(s.visit)}

@@ -64,6 +64,18 @@ The company that hosts the app's files (Cloudflare) serves them, and like any we
 them was made: the address of the device, the time and the browser. That happens when the app is first opened and when
 it checks for a new version. It concerns the files, not your data, which the app does not send.
 
+**One tap that leaves the app: *Open in maps*.** On the Route tab each stop has this link, and it sends nothing until it is
+tapped.
+
+- **On an Android phone** it hands the stop's position (and a label with the visit and case number) to the phone's own
+  maps app, through the phone's operating system. The app sends nothing over the network; what the maps app then does is
+  that app's business.
+- **On a computer or an iPhone** it opens Google Maps in a new browser tab, at an address that holds **only the stop's
+  coordinates**. Google then sees the coordinates and the device's address, as for any web page you open. The case number
+  and the technician's name are not in it. It needs a connection.
+
+Both are a person's tap, not something the app does by itself, and the content security policy is unchanged.
+
 ## Personal data in your files
 
 The planner does not need customer names or addresses. In the import, the columns that usually hold them (customer
