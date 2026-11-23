@@ -3,6 +3,23 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
+## [1.2.3] - 2026-11-23
+
+### Fixed
+
+- **Stops at the same place were drawn on top of each other on the map**, so only one could be seen or tapped. Cases take
+  their coordinates from places, so this was the usual case with real data, and was a known limit of 1.0. The markers of
+  stops at one place are now set side by side on a ring (the first on the left, the rest clockwise, so they read in
+  order), and markers that are merely close are pushed apart until they no longer overlap. A small dot marks the true
+  place, joined to the marker by a thin line, and a line under the map says so. Markers that were already apart do not
+  move, no marker moves further than three marker widths, and markers stay inside the frame (the spreading takes the
+  edge into account, so a cluster at the edge is not squeezed). It is worked out in screen pixels, so zooming in separates
+  places that are different. A very crowded map (over 1,000 markers) gets fewer passes and stays as it was where there is
+  no room: zoom in. The route lines still go to the true places.
+- Measured: a day of 13 stops at 6 places on a phone-sized map went from markers 27 px apart (overlapping) to 40 px
+  (the least) with every marker inside the frame and tappable; the work takes about 20 ms for 300 markers and 60 to 80 ms
+  for 2,400 on a laptop.
+
 ## [1.2.2] - 2026-11-23
 
 ### Fixed

@@ -338,3 +338,16 @@ engine reason codes (a reference change) to translate the planner's sentences; w
 - E: the day's routes appear on a map at 360 px without sideways scroll.
 - F: switching the language changes every visible word and mirrors the layout for right-to-left.
 - Tests, lint, type check and build pass; checks green on GitHub; the live site verified after each merge with real controls.
+
+## 14. Stops at one place (1.2.3)
+
+The phone test (section 13) left "same-place stops overlap on the map" as a known limit. Because a case takes its coordinates from
+its place, many stops share one point in real data, so the markers lay exactly on top of each other and only the last drawn could be
+seen or tapped. `src/map/declutter.ts` (pure, tested, no randomness) works in screen pixels: markers on one spot (less than 1 px
+apart) go on a ring around it, the first on the left and the rest clockwise, then markers still closer than 40 px are pushed apart
+in up to 40 passes (10 above 1,000 markers). No marker moves more than 120 px from its true place, and the markers are kept inside
+the frame, which the spreading itself takes into account (a first version clamped afterwards and squeezed a cluster at the top edge:
+27 px apart instead of 40, found at 320 px on the built app and reproduced as a test from the measured positions). `MapCanvas`
+recomputes it when the zoom or the width changes (not when panning), draws a small dot at the true place joined by a line to the
+moved marker, and says so under the map. Route lines are unchanged: they go to the true places. Keyboard order, labels and the
+accessible names are unchanged; axe finds nothing, in light and dark at 320 px.

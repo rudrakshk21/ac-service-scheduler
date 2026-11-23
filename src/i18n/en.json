@@ -63,6 +63,7 @@
   "map.legend.item.other": "{name}, {count} stops",
   "map.detail": "{name}, stop {visit}: case {case}, arrival {time}, {place}.",
   "map.hint": "Tap a stop to see its details. Distances are drawn true to scale; there is no street map.",
+  "map.moved": "Stops at the same place are drawn side by side. The small dot joined to a stop by a line is its true place.",
   "map.day.aria": "Map of the day",
   "map.day.heading": "Map of {day}",
   "share.title": "Share and export",
