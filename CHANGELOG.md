@@ -3,6 +3,20 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
+## [1.2.1] - 2026-11-22
+
+A check of a centre with 300 technicians (the owner's target size), and the numbers it gave.
+
+### Changed
+
+- The Plan screen's note about a large set now appears above **300** technicians (it was 100), because 300 was measured:
+  on a laptop, planning 2,000 cases takes about 2.1 s and 3,000 cases about 3.7 s even when every technician can do every
+  case (about 0.5 s and 1.1 s when each has one skill); 300 report files open in about 0.14 s in the browser; a month of
+  their reports (72,000 records, 14.7 MB) is written to the browser's storage in about 55 ms and read back in 65 ms. The
+  screens (board, share list, map, report panel) were tried at 300 technicians and 2,400 cases in the browser. 1,000
+  technicians are still not covered (planning 2,000 cases took 18 s), and nothing was timed on a phone.
+- The measurement is kept in the repository: `VITE_MEASURE_SPEED=1 npx vitest run src/workspace/scale.measure.test.ts`.
+
 ## [1.2.0] - 2026-11-22
 
 Retention of finished work (requirement PRV-4): an option to remove finished cases and old reports after a time you choose.

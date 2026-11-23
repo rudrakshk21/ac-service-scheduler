@@ -105,8 +105,9 @@ remarks before you roll this out.
 
 The app reads a file of up to 20 MB and 50,000 rows. A bigger file is refused with a message; export only the cases you
 need (for example the open ones), or split it. While a large file is checked the screen shows *Checking the file…*, and
-stays usable. For a centre larger than 2,000 cases, 100 technicians or 30 days, the Plan screen says that the app was
-measured only up to that size.
+stays usable. For a centre larger than 2,000 cases, 300 technicians or 30 days, the Plan screen says that the app was
+measured only up to that size. (A centre of 300 technicians was measured on a laptop: planning 2,000 cases takes about two
+seconds. It has not been timed on a phone, so use a computer for the planning of a large centre.)
 
 ### Updates
 
