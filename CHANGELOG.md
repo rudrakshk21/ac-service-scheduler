@@ -3,6 +3,16 @@
 All notable changes. The format follows [Keep a Changelog](https://keepachangelog.com), and versions follow
 [Semantic Versioning](https://semver.org). Each pull request that changes what a user sees adds a line here.
 
+## [1.2.2] - 2026-11-23
+
+### Fixed
+
+- **Open in maps did nothing on a computer.** The link was a `geo:` link, which only an Android phone opens; Windows (checked
+  on Windows 11: no `geo:` handler is registered) and macOS have none, so a click was dropped silently. On a computer and on
+  an iPhone it is now Google's Maps URL, opened in a new tab, with a pin at the stop's coordinates. On Android it is the
+  same `geo:` link as before (it was confirmed on a phone). The web link carries the coordinates only, not the case number.
+  It needs a connection. The privacy statement and the phone guide say so.
+
 ## [1.2.1] - 2026-11-22
 
 A check of a centre with 300 technicians (the owner's target size), and the numbers it gave.
