@@ -36,7 +36,9 @@ the phone, and opens again from the **Route** tab with no connection.
 The route lists your stops in order. Each stop shows the arrival time, the case number, the work type, the place, and
 how far and how long the drive is from the last stop. **Open in maps** shows the stop on a map with a pin: on an Android phone it opens your maps app (which can have the area
 saved for use with no signal); on a computer or an iPhone it opens Google Maps in a new tab, which needs a connection.
-Above the list, a drawn map shows the day's route; tap a stop on it to see its details.
+Above the list, a drawn map shows the day's route; tap a stop on it to see its details. Stops at the same place would lie
+on top of each other, so their markers are drawn side by side, each joined by a thin line to a small dot that marks the
+real place.
 
 The file holds case numbers, places, times and distances. It holds no customer names or addresses, so the case number
 is what you use to find the details in your own system.

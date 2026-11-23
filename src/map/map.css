@@ -51,6 +51,10 @@
 .map-line { fill: none; stroke: var(--c); stroke-linejoin: round; stroke-linecap: round; }
 .map-leg { fill: none; stroke: var(--c); stroke-linecap: round; opacity: 0.6; }
 
+/* Stops at one place have their markers moved apart; a small dot marks the true place and a thin line joins it to the marker. */
+.map-leader line { stroke: var(--c); stroke-linecap: round; opacity: 0.75; }
+.map-leader circle { fill: var(--c); stroke: var(--surface); }
+
 .map-stop { cursor: pointer; outline: none; }
 .map-stop .dot { fill: var(--c); stroke: var(--surface); }
 .map-stop .ring { fill: none; stroke: var(--ink); opacity: 0; }

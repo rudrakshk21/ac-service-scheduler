@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { formatNumber, t, tn } from '../i18n'
+import { declutter } from './declutter'
 import type { MapData, MapLayer, MapStop } from './layers'
 import { fitProjection, fullView, MAX_ZOOM, panView, scaleBar, zoomOf, zoomView, type View } from './project'
 import './map.css'
@@ -8,6 +9,21 @@ const W = 720
 const H = 480
 const PAD = 44
 const CANVAS = { w: W, h: H }
+/** Markers nearer than this many screen pixels overlap (a marker is 38 px across with its ring). */
+const MARKER_SPACING = 40
+/** Half a marker in screen pixels: a moved marker is kept this far inside the frame. */
+const MARKER_RADIUS = 19
+/** A marker moved less than this many screen pixels is not marked as moved. */
+const MOVED = 2
+
+/** Where a stop's marker is drawn, and where the stop really is. */
+interface Placed {
+  x: number
+  y: number
+  trueX: number
+  trueY: number
+  moved: boolean
+}
 
 /** The length of the scale bar written in the language in use: kilometres, or metres when it is under one. */
 const scaleLabel = (km: number): string => (km >= 1 ? t('unit.km', { n: formatNumber(km) }) : t('unit.m', { n: formatNumber(Math.round(km * 1000)) }))
@@ -45,6 +61,24 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
   /** Frame units for a length in screen pixels. */
   const px = (n: number): number => n / ((width > 0 ? width : W) / view.w)
   const at = (p: { lat: number; lon: number }) => projection.project(p)
+
+  // Stops at one place (or close together) would be drawn on top of each other; their markers are moved apart in screen
+  // pixels, so zooming in, which spreads the places, moves them back. The route lines still go to the true places.
+  const placed = useMemo(() => {
+    const scale = (width > 0 ? width : W) / view.w
+    const stops = data.layers.flatMap((l) => l.stops.map((s) => ({ key: `${l.key}-${s.visit}`, s })))
+    const home = stops.map(({ s }) => {
+      const p = projection.project(s)
+      return { x: p.x * scale, y: p.y * scale }
+    })
+    // A moved marker is kept a marker's radius inside the frame, and the spreading takes that into account.
+    const apart = declutter(home, MARKER_SPACING, 3 * MARKER_SPACING, { x0: MARKER_RADIUS, y0: MARKER_RADIUS, x1: W * scale - MARKER_RADIUS, y1: H * scale - MARKER_RADIUS })
+    const out = new Map<string, Placed>()
+    stops.forEach(({ key }, i) => {
+      out.set(key, { x: apart[i].x / scale, y: apart[i].y / scale, trueX: home[i].x / scale, trueY: home[i].y / scale, moved: Math.hypot(apart[i].x - home[i].x, apart[i].y - home[i].y) > MOVED })
+    })
+    return out
+  }, [data, projection, view.w, width])
   const line = (ps: { lat: number; lon: number }[]): string => ps.map((p) => `${at(p).x.toFixed(1)},${at(p).y.toFixed(1)}`).join(' ')
 
   const zoomBy = (factor: number): void => setView((v) => zoomView(v, CANVAS, factor))
@@ -83,7 +117,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
   const pickedStop = pickedLayer?.stops.find((s) => s.visit === picked?.visit)
 
   const stopMarker = (layer: MapLayer, s: MapStop) => {
-    const { x, y } = at(s)
+    const { x, y } = placed.get(`${layer.key}-${s.visit}`) ?? at(s)
     const on = picked?.key === layer.key && picked.visit === s.visit
     const choose = (): void => setPicked(on ? null : { key: layer.key, visit: s.visit })
     return (
@@ -143,6 +177,22 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
           </g>
         )}
 
+        {/* Where a moved marker really is: a small dot, joined to its marker by a thin line. */}
+        {data.layers.map((layer) => (
+          <g key={layer.key} className={`map-leader map-c${layer.colour}`} aria-hidden="true">
+            {layer.stops.map((s) => {
+              const p = placed.get(`${layer.key}-${s.visit}`)
+              if (p === undefined || !p.moved) return null
+              return (
+                <g key={s.visit}>
+                  <line x1={p.trueX.toFixed(1)} y1={p.trueY.toFixed(1)} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} strokeWidth={px(1.5)} />
+                  <circle cx={p.trueX.toFixed(1)} cy={p.trueY.toFixed(1)} r={px(3.5)} strokeWidth={px(1)} />
+                </g>
+              )
+            })}
+          </g>
+        ))}
+
         {data.layers.map((layer) => layer.stops.map((s) => stopMarker(layer, s)))}
 
         <g className="map-scale" aria-hidden="true">
@@ -171,6 +221,7 @@ export default function MapCanvas({ data, title }: { data: MapData; title: strin
           ? t('map.detail', { name: pickedLayer.name, visit: pickedStop.visit, case: pickedStop.caseId, time: pickedStop.arrival, place: pickedStop.place })
           : t('map.hint')}
       </p>
+      {[...placed.values()].some((p) => p.moved) && <p className="muted small">{t('map.moved')}</p>}
     </div>
   )
 }
